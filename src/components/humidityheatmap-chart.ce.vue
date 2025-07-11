@@ -1,5 +1,5 @@
 <script setup>
-import {nextTick, ref, watch, watchEffect} from "vue";
+import {ref, watch, watchEffect} from "vue";
 import {CommunicationService} from "../services/CommunicationService.js";
 import VueApexCharts  from "vue3-apexcharts"
 import { luxonDateTimeToString } from "../common/dateUtils.js"

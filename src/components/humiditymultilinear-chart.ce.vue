@@ -28,7 +28,7 @@ let options = ref({responsive: true, maintainAspectRatio: false})
 let showChart = ref(false)
 const loadingFlag = ref(false)
 
-const props = defineProps(['config','selectedTimestamp'])
+const props = defineProps(['config'])
 const emit = defineEmits(['selectTimestamp'])
 const endpoint = 'humidityBins'
 
