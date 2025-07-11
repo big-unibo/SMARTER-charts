@@ -1,29 +1,62 @@
 # SMARTER-charts
 
-This template should help get you started developing with Vue 3 in Vite.
+In this package are distributed the charts components developed for the precision irrigation system **SMARTER** by the *Business Intelligence Group* of University of Bologna.
 
-## Recommended IDE Setup
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
+## Installation
+```bash
+npm install smarter-charts
+```
+## Usage
 
-## Customize configuration
+All the components are exposed as Custum Elements that are defined by the funcion `registerChartComponents()` and then they can be used directly as HTML tags. 
 
-See [Vite Configuration Reference](https://vitejs.dev/config/).
+```js
+import {registerChartComponents} from 'smarter-charts'
 
-## Project Setup
+registerChartComponents()
 
-```sh
-npm install
 ```
 
-### Compile and Hot-Reload for Development
+## Global `config` Prop
 
-```sh
-npm run dev
+All components accept a `config` object to handle backend connection, resource paths, and time filtering.
+
+```js
+config: {
+  environment: {
+    host: string,  // Backend API base URL
+    token: string  // Authorization token for API calls
+  },
+  paths: {
+    refStructureName: string,
+    companyName: string,
+    fieldName: string,
+    sectorName: string,
+    plantRow: string // name of the thesis
+  },  // One or more resource identifiers (e.g., field IDs, sensors, plots)
+  params: {
+    timeFilterFrom?: string,  // ISO date string or timestamp (start of time range)
+    timeFilterTo?: string     // ISO date string or timestamp (end of time range)
+  }
+}
 ```
 
-### Compile and Minify for Production
+## Available Components
 
-```sh
-npm run build
-```
+| Component Tag| Description| Props/Events|
+|----------------------------------------------|-------------------------------------------------------------------------|---|
+| `<delta-chart-smarter>`                      | Line chart showing humidity level in relation to optimal state ||
+| `<airtemperature-chart-smarter>`             | Line chart for air temperature trends |
+| `<meancountor-chart-smarter>`                | Heatmap of monitored soil portion for **mean** of matric potential in a given period|
+| `<stdcountor-chart-smarter>`                 | Heatmap of monitored soil portion for **standard deviation** of matric potential in a given period |
+| `<dripperandpluv-chart-smarter>`             | Line chart showing irrigation and rainfall |
+| `<groundwaterpot-chart-smarter>`             | Line chart for matric potential of grid sensors |
+| `<humiditymap-smarter>`                      | Heatmap of monitored soil portion showing the matric potential | `:selectedTimestamp` timestamp of image to show
+| `<humiditymultiline-chart-smarter>`          | Area chart of humidity levels over times | `@selectTimestamp` events emitted containing the timestamp clicked
+| `<heatmap-animation-smarter>`                | Animation of humidity heatmap over time |
+| `<optimal-humidity-heatmap-smarter>`         | Heatmaps of optimal soil state to obtain with cell weights | `:selectedTimestamp` timestamp of image to show <br>`:showDistance` flag that indicates if show the distance matrix
+| `<calendar-smarter>`                         | Calendar with irrigation events |
+| `<water-aggregate-chart-smarter>`            | Bar chart to summarize daily irrigation and rainfalls|
+
+
