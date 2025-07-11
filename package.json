@@ -1,5 +1,5 @@
 {
-  "name": "abds-watering-chart-components",
+  "name": "smarter-charts",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -30,11 +30,11 @@
   "files": [
     "dist"
   ],
-  "main": "dist/abds-watering-chart-components.umd.js",
-  "module": "dist/abds-watering-chart-components.es.js",
+  "main": "dist/smarter-charts.umd.js",
+  "module": "dist/smarter-charts.es.js",
   "exports": {
-    "import": "./dist/abds-watering-chart-components.es.js",
-    "require": "./dist/abds-watering-chart-components.umd.js"
+    "import": "./dist/smarter-charts.es.js",
+    "require": "./dist/smarter-charts.umd.js"
   },
   "peerDependencies": {
     "vue": "^3.4.15"

@@ -10,8 +10,8 @@ export default defineConfig({
   build: {
     lib: {
       entry: path.resolve(__dirname, 'src/main.js'),
-      name: 'abds-watering-chart-components',
-      fileName: (format) => `abds-watering-chart-components.${format}.js`
+      name: 'smarter-charts',
+      fileName: (format) => `smarter-charts.${format}.js`
     }
   },
   rollupOptions: {
@@ -21,8 +21,5 @@ export default defineConfig({
         vue: 'Vue'
       }
     }
-  },
-  define: {
-    'process.env': process.env
   }
 })
