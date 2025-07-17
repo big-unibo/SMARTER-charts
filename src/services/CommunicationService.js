@@ -40,6 +40,7 @@ export class CommunicationService {
 
     async updateEvent(environment, endpoint, thesisIdentifier, newEvent) {
         return axios.put(this.buildURL(environment.host, "/wateringSchedule", undefined, endpoint), {
+            source: thesisIdentifier.source,
             refStructureName: thesisIdentifier.refStructureName,
             companyName: thesisIdentifier.companyName,
             fieldName: thesisIdentifier.fieldName,
