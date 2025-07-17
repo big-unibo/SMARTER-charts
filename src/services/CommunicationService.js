@@ -67,7 +67,7 @@ export class CommunicationService {
     async setOptimalStateByTimestamp(environment, endpoint, thesisIdentifier, timestamp){
         return axios.put(this.buildURL(environment.host, "/fields",thesisIdentifier,endpoint),{},{
             params: {
-                timestamp: timestamp
+                imageTimestamp: timestamp
             },
             headers: {
                 Authorization: 'Bearer ' + environment.token
