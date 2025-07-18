@@ -10,6 +10,8 @@ const weightsSeries = ref([])
 const optValueChartOptions = ref({emitsOptions: false})
 const weightsChartOptions = ref({emitsOptions: false})
 const image = ref({})
+const matrixId = ref(null)
+
 const containerOptimal = ref(null)
 
 const props = defineProps(['config', 'selectedTimestamp', 'showDistance'])
@@ -174,7 +176,7 @@ async function drawValuesImage(){
       width: 0
     },
     title: {
-      text: 'Matrice ottima',
+      text: 'Matrice ottima (Id: ' + matrixId.value +')',
       align: 'center',
       offsetY: 10,
     },
@@ -343,14 +345,15 @@ async function mountChart() {
   params["timestamp"] = selectedTimestamp
   showChart.value = false
   loadingFlag.value = true
-  const chartDataResponse = await communicationService.getChartData(parsed.environment, parsed.paths, params, endpoint, 'optimalState')
+  const chartDataResponse = await communicationService.getChartData(parsed.environment, parsed.paths, params, endpoint, "")
   if(JSON.stringify(parsed) !== props.config || selectedTimestamp !== props.selectedTimestamp){
       return
   }
   if(chartDataResponse) {
-    showChart.value = chartDataResponse.length > 0
+    showChart.value = chartDataResponse.optimalState.length > 0
     if(showChart.value){
-        image.value = chartDataResponse
+        image.value = chartDataResponse.optimalState
+        matrixId.value = chartDataResponse.matrixId
         await drawValuesImage()
         await drawWeightsImage()
     }

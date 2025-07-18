@@ -5,7 +5,8 @@ export const average = arr => arr.reduce((acc,v) => acc + v) / arr.length;
 
 // Utility function to get a nested property
 export const getNestedProperty = (obj, keyPath) => {
+    if (!keyPath) return obj;
     return keyPath.split('.').reduce((acc, key) => {
-        return acc && acc[key] !== undefined ? acc[key] : null;
+        return acc?.[key] !== undefined ? acc[key] : null;
     }, obj);
 };
