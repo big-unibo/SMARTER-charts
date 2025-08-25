@@ -45,7 +45,7 @@ export class CommunicationService {
             companyName: thesisIdentifier.companyName,
             fieldName: thesisIdentifier.fieldName,
             sectorName: thesisIdentifier.sectorName,
-            plantRow: thesisIdentifier.plantRow,
+            thesisName: thesisIdentifier.thesisName,
             ...newEvent
         }, {
             headers: {
@@ -107,7 +107,7 @@ export class CommunicationService {
     buildURL(host, primaryPath, pathsParams, endpoint) {
         let path = ""
         if (pathsParams) {
-            path = '/' + pathsParams.refStructureName + '/' + pathsParams.companyName + '/' + pathsParams.fieldName + '/' + pathsParams.sectorName + '/' + pathsParams.plantRow
+            path = '/' + pathsParams.refStructureName + '/' + pathsParams.companyName + '/' + pathsParams.fieldName + '/' + pathsParams.sectorName + '/' + pathsParams.thesisName
         }
         return host + primaryPath + path + '/' + endpoint;
 

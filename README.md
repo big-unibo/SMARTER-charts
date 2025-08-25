@@ -33,7 +33,7 @@ config: {
     companyName: string,
     fieldName: string,
     sectorName: string,
-    plantRow: string // name of the thesis
+    thesisName: string // name of the thesis
   },  // One or more resource identifiers (e.g., field IDs, sensors, plots)
   params: {
     timeFilterFrom?: string,  // ISO date string or timestamp (start of time range)
