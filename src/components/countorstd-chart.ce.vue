@@ -61,7 +61,7 @@ async function mountChart() {
       for (const [key2, value2] of Object.entries(dataTemp2)) {
         let stds_to_std = []
         let temp_y, temp_x
-        dataTemp2.forEach(d => {
+        value2.forEach(d => {
           stds_to_std.push(parseFloat(d.std))
           temp_x = d.xx;
           temp_y = d.yy;

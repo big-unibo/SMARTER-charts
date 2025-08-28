@@ -61,7 +61,7 @@ async function mountChart() {
       for (const [key2, value2] of Object.entries(dataTemp2)) {
         let means_to_mean = []
         let temp_y, temp_x
-        dataTemp2.forEach(d => {
+        value2.forEach(d => {
           means_to_mean.push(parseFloat(d.mean))
           temp_x = d.xx;
           temp_y = d.yy;
