@@ -8,7 +8,7 @@ const communicationService = new CommunicationService();
 const chartRef = ref(null);
 
 const props = defineProps(['config'])
-const endpoint = 'statisticsChart'
+const endpoint = 'profileStatistics'
 const showChart = ref(false)
 const loadingFlag = ref(false)
 const container = ref(null)

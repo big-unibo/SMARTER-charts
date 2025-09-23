@@ -54,6 +54,7 @@ function addUnitMeasure(key) {
     return 'Pluv Curr (mm)'
   if (key === 'Sprinkler')
     return 'Sprinkler (L)'
+  return key
 }
 
 const createDatasets = (groupedMeasures) => {
