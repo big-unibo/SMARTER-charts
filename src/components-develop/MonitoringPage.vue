@@ -1,11 +1,9 @@
 <script setup>
-//import AppNavBar from "./AppNavBar.vue";
+import AppNavBar from "./AppNavBar.vue";
 import Monitoring from "@/components-develop/Monitoring.vue";
 import authService from "@/services-develop/auth.service.js";
 import {onMounted, onUnmounted, reactive} from "vue";
-//import {useRouter} from "vue-router";
 
-//const router = useRouter()
 
 let token = reactive({});
 let user = reactive({});
@@ -50,7 +48,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-   <!-- <AppNavBar :user="user"/> -->
+  <AppNavBar :user="user"/> 
   <Monitoring :user="user" :token="token" class="justify-content-md-center col-12"></Monitoring>
 </template>
 

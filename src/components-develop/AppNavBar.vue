@@ -1,8 +1,6 @@
 <script setup>
   import {reactive} from "vue";
   import authService from "../services-develop/auth.service.js";
-  //import {useRouter} from "vue-router";
-  const router = useRouter()
 
   const props = defineProps(['user'])
   if(props.user) {
@@ -12,7 +10,6 @@
 
   const handleLogout = async () => {
     authService.logout()
-    await router.push('/logout')
   }
 
 
