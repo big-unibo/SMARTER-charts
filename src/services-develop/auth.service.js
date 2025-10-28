@@ -15,9 +15,8 @@ class AuthService {
     async login(user) {
         try {
             const response = await axiosInstance.post('/login', {
-                username: user.authUser,
-                password: hashPassword(user.authPass),
-                auth_type: 'pwd'
+                email: user.authEmail,
+                password: user.authPass,
             });
             if (response.data.token) {
                 localStorage.setItem('appToken', JSON.stringify(response.data.token));
@@ -40,25 +39,25 @@ class AuthService {
         else return undefined;
     }
 
-    async retrieveUserFieldPermissions(token, timeFilterFrom, timeFilterTo) {
-        let params = undefined
-        if (timeFilterFrom && timeFilterTo) {
-            params = { timeFilterFrom: timeFilterFrom, timeFilterTo: timeFilterTo }
-        }
-        return axiosInstance.get('/userFields', {
-            headers: {
-                'Authorization': 'Bearer ' + token
-            },
-            params: params
-        }).then(response => {
-            if(response.data)
-                return response.data
-        }).catch(error => {
-            console.log(error)
-            console.error(`Get fields request failed: ${error.message}`)
-            this.logout()
-        });
-    }
+    // async retrieveUserFieldPermissions(token, timeFilterFrom, timeFilterTo) {
+    //     let params = undefined
+    //     if (timeFilterFrom && timeFilterTo) {
+    //         params = { timeFilterFrom: timeFilterFrom, timeFilterTo: timeFilterTo }
+    //     }
+    //     return axiosInstance.get('/userFields', {
+    //         headers: {
+    //             'Authorization': 'Bearer ' + token
+    //         },
+    //         params: params
+    //     }).then(response => {
+    //         if(response.data)
+    //             return response.data
+    //     }).catch(error => {
+    //         console.log(error)
+    //         console.error(`Get fields request failed: ${error.message}`)
+    //         this.logout()
+    //     });
+    // }
 
 }
 

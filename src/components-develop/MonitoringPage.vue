@@ -2,18 +2,18 @@
 import AppNavBar from "./AppNavBar.vue";
 import Monitoring from "@/components-develop/Monitoring.vue";
 import authService from "@/services-develop/auth.service.js";
-import {onMounted, onUnmounted, reactive} from "vue";
+import {ref, onMounted, onUnmounted, reactive} from "vue";
 
 
-let token = reactive({});
+let token = ref('');
 let user = reactive({});
 
 const checkInterval = 36000000;
 
 async function loginDemoAccount() {
 	await authService.login({
-	    authUser: import.meta.env.VITE_DEMO_USER,
-        authPass: import.meta.env.VITE_DEMO_USER_PSW  
+	    authEmail: import.meta.env.VITE_DEMO_EMAIL,
+    	authPass: import.meta.env.VITE_DEMO_PSW  
 	})
 }; 
 
@@ -21,26 +21,26 @@ onMounted(async () => {
 	await loginDemoAccount();
 	token.value = await authService.authHeader();
 	if (token.value) {
-		const result = await authService.retrieveUserFieldPermissions(token.value);
+		//const result = await authService.retrieveUserFieldPermissions(token.value);
 		//if(!result) await router.push('/logout')
-		user.value = {user: result.user, affiliation: result.affiliation, role: result.role}
+		//user.value = {user: result.user, affiliation: result.affiliation, role: result.role}
 	}else{
-
 	}
-		userTokenUpdate()
+	//userTokenUpdate()
 });
 
 const userTokenUpdate = () => {
   intervalId = setInterval(async () => {
     token.value = await authService.authHeader();
     if (token.value) {
-      const result = await authService.retrieveUserFieldPermissions(token.value);
-      if(!result) await router.push('/logout')
-      user.value = result
+      //const result = await authService.retrieveUserFieldPermissions(token.value);
+      //if(!result) await router.push('/logout')
+      //user.value = result
     }
   }, checkInterval);
 };
 let intervalId = null;
+
 onUnmounted(() => {
     clearInterval(intervalId);
 });
@@ -48,8 +48,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <AppNavBar :user="user"/> 
-  <Monitoring :user="user" :token="token" class="justify-content-md-center col-12"></Monitoring>
+  <!-- <AppNavBar :user="user"/>  -->
+  <Monitoring :token="token" class="justify-content-md-center col-12"></Monitoring>
 </template>
 
 <style scoped>

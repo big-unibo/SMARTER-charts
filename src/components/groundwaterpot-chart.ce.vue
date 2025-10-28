@@ -28,26 +28,46 @@ const options = ref({responsive: true, maintainAspectRatio: false})
 const showChart = ref(false)
 const loadingFlag = ref(false)
 
-const props = defineProps(['config'])
+const props = defineProps(['config','extraParams'])
 
-const endpoint = 'groundWaterPotential'
+const endpoint = 'signals'
 
 
-const groupByType = (measures) => {
-  return measures.reduce((accumulator, currentValue) => {
-    const key = currentValue.detectedValueTypeDescription
-    if(!accumulator.has(key))
-      accumulator.set(key, []);
-    accumulator.get(key).push(JSON.stringify({x: luxonDateTime(currentValue.timestamp), y: Number(currentValue.value).toFixed(2)}));
-    return accumulator;
-  }, new Map());
-}
+// const groupByType = (measures) => {
+//   return measures.reduce((accumulator, currentValue) => {
+//     const key = currentValue.detectedValueTypeDescription
+//     if(!accumulator.has(key))
+//       accumulator.set(key, []);
+//     accumulator.get(key).push(JSON.stringify({x: luxonDateTime(currentValue.timestamp), y: Number(currentValue.value).toFixed(2)}));
+//     return accumulator;
+//   }, new Map());
+// }
 
-const createDatasets = (groupedMeasures) => {
-  return Array.from(groupedMeasures, ([key, jsonValues]) => {
-    return new LineDatasetData(key, jsonValues, false, 3, 0.3, colorFunction);
+
+// const createDatasets = (groupedMeasures) => {
+//   return Array.from(groupedMeasures, ([key, jsonValues]) => {
+//     return new LineDatasetData(key, jsonValues, false, 3, 0.3, colorFunction);
+//   });
+// };
+
+const createDatasets = (data) => {
+  console.log(data)
+  const datasets = [];
+  data.forEach(signalType => {
+    signalType.signals.forEach(signal => {
+      const label = `${signalType.signalTypeDescription} (${signal.x}, ${signal.y})`;
+      const dataPoints = signal.measurements.map(m => 
+        JSON.stringify({
+          x: luxonDateTime(m.timestamp),
+          y: Number(m.value).toFixed(2)
+        })
+      );
+      datasets.push(new LineDatasetData(label, dataPoints, false, 3, 0.3, colorFunction));
+    });
   });
-};
+  console.log(datasets)
+  return datasets
+}
 
 const colorFunction = (str) => {
   let hash = 200;
@@ -75,24 +95,38 @@ watchEffect(async () => {
 });
 
 async function mountChart() {
-  const parsed = JSON.parse(props.config);
-  let data = []
+  const configParsed = JSON.parse(props.config);
+  const extraParamsParsed = JSON.parse(props.extraParams)
+  const mergedParams = {
+    ...configParsed.params,
+    ...extraParamsParsed 
+  };
 
-  showChart.value = false
-  loadingFlag.value = true
-  const chartDataResponse = await communicationService.getChartData(parsed.environment, parsed.paths, parsed.params, endpoint, 'values.0.measures')
-  if(JSON.stringify(parsed) !== props.config){
-      return
-  }
+  let data = [];
+  showChart.value = false;
+  loadingFlag.value = true;
+
+  const chartDataResponse = await communicationService.getChartData(
+    configParsed.environment,
+    configParsed.paths,
+    mergedParams,
+    endpoint,
+    'values.0.measures'
+  );
+  // if(JSON.stringify(parsed) !== props.config){
+  //     return
+  // }
+
+
   if(chartDataResponse) {
     data = chartDataResponse
     showChart.value = data.length > 0
   } else data = []
 
 
-  const groupByData = groupByType(data);
+  //const groupByData = groupByType(data);
 
-  const datasets = createDatasets(groupByData).map(bin => bin.getDataSet(colorFunction)).sort( (a,b) => {
+  const datasets = createDatasets(data).map(bin => bin.getDataSet(colorFunction)).sort( (a,b) => {
     if (a.label < b.label) return -1;
     if (a.label > b.label) return 1;
     return 0;
