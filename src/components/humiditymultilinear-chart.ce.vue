@@ -34,24 +34,24 @@ const endpoint = 'humidityBins'
 
 
 const colorFunction = (value) => {
-  if (value.includes(", 0]")) {
+  if (value === 6) {
     return d3.interpolateRdBu(1);
-  } else if (value.includes(", -30]")) {
+  } else if (value === 5) {
     return d3.interpolateRdBu(0.80);
-  } else if (value.includes(", -100]")) {
+  } else if (value === 4) {
     return d3.interpolateRdBu(0.70);
-  } else if (value.includes(", -200]")) {
+  } else if (value === 3) {
     return d3.interpolateRdBu(0.30);
-  } else if (value.includes(", -300]")) {
+  } else if (value === 2) {
     return d3.interpolateRdBu(0.15);
-  } else if (value.includes(", -1500]")) {
+  } else if (value === 1) {
     return d3.interpolateRdBu(0.05);
   } else return d3.interpolateRdBu(0)
 };
 
-const cleanHumidityBin = (bin) => {
-  return bin.split('*')[1].trim();
-}
+// const cleanHumidityBin = (bin) => {
+//   return bin.split('*')[1].trim();
+// }
 
 const groupByHumidityBin = (bins) => {
   const totalBinTimestamp = bins.reduce((accumulator,currentValue)=>{
@@ -63,24 +63,27 @@ const groupByHumidityBin = (bins) => {
   }, new Map());
 
   return bins.reduce((accumulator, currentValue) => {
-    const key = cleanHumidityBin(currentValue.humidityBin);
-    if(!accumulator.has(key))
-      accumulator.set(key, []);
-    accumulator.get(key).push(JSON.stringify({x: luxonDateTime(currentValue.timestamp), y: currentValue.count/totalBinTimestamp.get(currentValue.timestamp)*100}));
+    const key = {
+      label: currentValue.humidityBinDescription,
+      colorKey: currentValue.humidityBin 
+    };
+    const mapKey = JSON.stringify(key); 
+
+    if (!accumulator.has(mapKey)) accumulator.set(mapKey, []);
+    accumulator.get(mapKey).push(JSON.stringify({
+      x: luxonDateTime(currentValue.timestamp),
+      y: currentValue.count / totalBinTimestamp.get(currentValue.timestamp) * 100
+    }));
     return accumulator;
-  }, new Map());
+    }, new Map());
 }
 
-const createDatasets = (map) => {
-  let index = 0;
-  const myArray = Array.from(map, ([key, jsonValues]) => {
-    const linedataset = new LineDatasetData(key, jsonValues, 'origin', 0 ,0.3, colorFunction);
-    index++
-    return linedataset
+const createDatasets = (entriesArray) => {
+  return entriesArray.map(([mapKey, jsonValues]) => {
+    const { label, colorKey } = JSON.parse(mapKey);
+    return new LineDatasetData(label, jsonValues, 'origin', 0, 0.3, colorFunction, colorKey);
   });
-
-  return myArray
-}
+};
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler, TimeScale)
 
@@ -92,12 +95,14 @@ watchEffect(async () => {
 });
 
 async function mountChart() {
-  const parsed = JSON.parse(props.config);
+  const configParsed = JSON.parse(props.config);
+
   let data = []
   showChart.value = false
   loadingFlag.value = true
-  const chartDataResponse = await communicationService.getChartData(parsed.environment, parsed.paths, parsed.params, endpoint, 'values.0.measures')
-  if(JSON.stringify(parsed) !== props.config){
+
+  const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, configParsed.params, endpoint, 'measures')
+  if(JSON.stringify(configParsed ) !== props.config){
       return
   }
   if(chartDataResponse) {
@@ -108,10 +113,16 @@ async function mountChart() {
   }
 
   const groupByData = groupByHumidityBin(data);
-  emit('selectTimestamp',Math.max(...data.map(e=>e.timestamp),0))
+  const sortedEntries = Array.from(groupByData.entries())
+  .sort(([aKeyStr], [bKeyStr]) => {
+    const aKey = JSON.parse(aKeyStr);
+    const bKey = JSON.parse(bKeyStr);
+    return aKey.colorKey - bKey.colorKey;
+  });
+  //emit('selectTimestamp',Math.max(...data.map(e=>e.timestamp),0))
 
   chartData.value = {
-    datasets: createDatasets(groupByData).map(bin => bin.getDataSet())
+    datasets: createDatasets(sortedEntries).map(bin => bin.getDataSet())
   }
 
   options.value = {

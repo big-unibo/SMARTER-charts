@@ -51,7 +51,6 @@ const endpoint = 'signals'
 // };
 
 const createDatasets = (data) => {
-  console.log(data)
   const datasets = [];
   data.forEach(signalType => {
     signalType.signals.forEach(signal => {
@@ -65,7 +64,6 @@ const createDatasets = (data) => {
       datasets.push(new LineDatasetData(label, dataPoints, false, 3, 0.3, colorFunction));
     });
   });
-  console.log(datasets)
   return datasets
 }
 
@@ -110,13 +108,11 @@ async function mountChart() {
     configParsed.environment,
     configParsed.paths,
     mergedParams,
-    endpoint,
-    'values.0.measures'
+    endpoint
   );
-  // if(JSON.stringify(parsed) !== props.config){
-  //     return
-  // }
-
+  if(JSON.stringify(configParsed ) !== props.config){
+      return
+  }
 
   if(chartDataResponse) {
     data = chartDataResponse

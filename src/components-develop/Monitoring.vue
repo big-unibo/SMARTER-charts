@@ -15,7 +15,7 @@ let customSelectedTimestampFrom = ref(getCurrentTimestampMinusDays(2))
 
 let selectedFieldName = ref("Seleziona un campo")
 let selectedThesisName = ref("Seleziona una tesi")
-let selectedThesis = ref({thesisId: 291})
+let selectedThesis = ref({thesisId: 311})
 let selectedTimeLabel = ref("")
 let showDynamicHeatmap = ref(false)
 let showOptimalMatrix = ref(false)
@@ -224,20 +224,20 @@ function selectedTime(time) {
 			</div>
 		</div>
 
-		<div v-if="hasUserPermission('MO')" class="my-3 container col-md-12">
+		<div v-if="true" class="my-3 container col-md-12">
 			<div class="humidity-card card">
 				<div class="card-header d-flex justify-content-between align-items-center">
 					<span>Matrice dell'umidità</span>
-					<div>
-						<WateringAdviceSimulatorComponent v-if="hasUserPermission('WA')"
+					<!-- <div>
+						<WateringAdviceSimulatorComponent v-if="true"
 							:config="JSON.stringify(connectionParams)" :selectedTimestamp="selectedTimestamp" />
-						<UpdateOptimalStateComponent v-if="hasUserPermission('WA')"
+						<UpdateOptimalStateComponent v-if="true"
 							:config="JSON.stringify(connectionParams)" :selectedTimestamp="selectedTimestamp" />
 						<button class="btn btn-sm btn-secondary m-1" type="button" @click="enableOptimalMatrix"
 							id="optimal-heatmap-button">Mostra ottimo</button>
 						<button class="btn btn-sm btn-secondary m-1" type="button" @click="enableDynamicHeatmap"
 							id="dynamic-heatmap-button">Mostra evoluzione</button>
-					</div>
+					</div> -->
 				</div>
 				<div class="card-body">
 					<div class="row">
@@ -245,17 +245,17 @@ function selectedTime(time) {
 							umidità (Con "<strong>G</strong>"
 							si denota la posizione del gocciolatore):</span>
 						<div class="col-lg-6 align-content-center">
-							<humiditymultiline-chart-smarter :config="JSON.stringify(connectionParams)"
+							<humiditymultiline-chart-smarter :config="baseConnectionParams"
 								@selectTimestamp="selectedTime"></humiditymultiline-chart-smarter>
 						</div>
-						<div class="col-lg-6">
+						<!-- <div class="col-lg-6">
 							<humiditymap-smarter :config="JSON.stringify(connectionParams)"
 								:selectedTimestamp="selectedTimestamp"></humiditymap-smarter>
-						</div>
+						</div> -->
 					</div>
-					<optimal-humidity-heatmap-smarter v-if="showOptimalMatrix"
+					<!-- <optimal-humidity-heatmap-smarter v-if="showOptimalMatrix"
 						:config="JSON.stringify(connectionParams)" :selectedTimestamp="selectedTimestamp"
-						:showDistance="hasUserPermission('*')"></optimal-humidity-heatmap-smarter>
+						:showDistance="hasUserPermission('*')"></optimal-humidity-heatmap-smarter> -->
 				</div>
 			</div>
 		</div>

@@ -3,11 +3,10 @@ import { getNestedProperty } from "../common/utils";
 
 export class CommunicationService {
 
-    async getChartData(environment, pathsParams, queryParams, endpoint, dataKey) {
+    async getChartData(environment, pathsParams, queryParams, endpoint, dataKey = null) {
         const response = await this.getAPI(environment, "/fieldCharts", pathsParams, queryParams, endpoint);
         if (response) {
-            //return getNestedProperty(response, dataKey);
-            return response;
+            return dataKey ? getNestedProperty(response, dataKey) : response;
         }
         return null;
     }
