@@ -251,7 +251,6 @@ function selectedTime(time) {
 						<div class="col-lg-6">
 							<humiditymap-smarter :config="baseConnectionParams"
 								:selectedTimestamp="selectedTimestamp"></humiditymap-smarter>
-							<p> {{ selectedTimestamp }} </p>
 						</div> 
 					</div>
 					<!-- <optimal-humidity-heatmap-smarter v-if="showOptimalMatrix"

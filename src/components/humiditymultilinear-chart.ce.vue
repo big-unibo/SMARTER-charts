@@ -95,7 +95,7 @@ async function mountChart() {
       return
   }
   if(chartDataResponse) {
-    data = chartDataResponse
+    data = chartDataResponse.data
     showChart.value = data.length > 0
   } else {
     showChart.value = false

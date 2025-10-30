@@ -3,16 +3,26 @@ import { getNestedProperty } from "../common/utils";
 
 export class CommunicationService {
 
+    /** Passing dataKey allows to get automatically extracted data nested in a certain specified way,
+     * separetly returing thesis and device data. 
+     * Not doing it allows to recieve hust the raw data.
+    */
     async getChartData(environment, pathsParams, queryParams, endpoint, dataKey = null) {
         const response = await this.getAPI(environment, "/fieldCharts", pathsParams, queryParams, endpoint);
         if (response) {
-            return dataKey ? getNestedProperty(response, dataKey) : response;
+            return dataKey ? 
+                {
+                    deviceId: response.deviceId,
+                    binningId: response.binningId,
+                    data: getNestedProperty(response, dataKey)
+                } 
+                : response;
         }
         return null;
     }
 
     async getAPI(environment, primaryPath, pathsParams, queryParams, endpoint) {
-        return axios.get(this.buildURL(environment.host, primaryPath, pathsParams, endpoint), {
+        return axios.get(this.buildURL(environment.host, primaryPath, pathsParams.thesisId, endpoint), {
             params: queryParams,
             headers: {
                 Authorization: 'Bearer ' + environment.token
@@ -26,6 +36,27 @@ export class CommunicationService {
             console.error(`Error on communication service: ${error.message}`)
             throw new Error(error.message);
         })
+    }
+
+    async getBinningInfo(environment, binningId, dataKey = null) {
+        const response = await axios.get(this.buildURL(environment.host, "/profileBins", binningId), {
+            headers: {
+                Authorization: 'Bearer ' + environment.token
+            }
+        }).then(response => {
+            if (response.data)
+                return response.data;
+            return null;
+        }).catch(error => {
+            console.error(`Error response: ${error}`)
+            console.error(`Error on communication service: ${error.message}`)
+            throw new Error(error.message);
+        })
+        
+        if (response) {
+            return dataKey ? getNestedProperty(response, dataKey) : response;
+        }
+        return null;
     }
 
     // async getFieldInfo(environment, pathsParams, params, endpoint) {
@@ -104,11 +135,13 @@ export class CommunicationService {
     //     })
     // }
 
-    buildURL(host, primaryPath, pathsParams, endpoint) {
-        let path = ""
-        if (pathsParams) {
-            path = '/' + pathsParams.thesisId
+    buildURL(host, primaryPath, pathParam, endpoint = null) {
+        let path = "";
+        if (pathParam) {
+            path = '/' + pathParam;
         }
-        return host + primaryPath + path + '/' + endpoint;
+        const endpointPart = endpoint ? '/' + endpoint : '';
+        return host + primaryPath + path + endpointPart;
     }
+
 }
