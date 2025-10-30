@@ -15,7 +15,7 @@ let customSelectedTimestampFrom = ref(getCurrentTimestampMinusDays(2))
 
 let selectedFieldName = ref("Seleziona un campo")
 let selectedThesisName = ref("Seleziona una tesi")
-let selectedThesis = ref({thesisId: 311})
+let selectedThesis = ref({thesisId: 13})
 let selectedTimeLabel = ref("")
 let showDynamicHeatmap = ref(false)
 let showOptimalMatrix = ref(false)

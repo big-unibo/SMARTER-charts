@@ -22,6 +22,7 @@ import {
 } from 'chart.js'
 import {LineDatasetData} from "../common/LineDatasetData.js";
 import * as d3 from "d3";
+import { binningColorConfig } from "@/common/colorsConfig.js";
 
 let chartData = ref({datasets: [], labels: []})
 let options = ref({responsive: true, maintainAspectRatio: false})
@@ -34,19 +35,7 @@ const endpoint = 'humidityBins'
 
 
 const colorFunction = (value) => {
-  if (value === 6) {
-    return d3.interpolateRdBu(1);
-  } else if (value === 5) {
-    return d3.interpolateRdBu(0.80);
-  } else if (value === 4) {
-    return d3.interpolateRdBu(0.70);
-  } else if (value === 3) {
-    return d3.interpolateRdBu(0.30);
-  } else if (value === 2) {
-    return d3.interpolateRdBu(0.15);
-  } else if (value === 1) {
-    return d3.interpolateRdBu(0.05);
-  } else return d3.interpolateRdBu(0)
+  return binningColorConfig(value)
 };
 
 // const cleanHumidityBin = (bin) => {
