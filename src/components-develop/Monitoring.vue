@@ -248,10 +248,11 @@ function selectedTime(time) {
 							<humiditymultiline-chart-smarter :config="baseConnectionParams"
 								@selectTimestamp="selectedTime"></humiditymultiline-chart-smarter>
 						</div>
-						<!-- <div class="col-lg-6">
-							<humiditymap-smarter :config="JSON.stringify(connectionParams)"
+						<div class="col-lg-6">
+							<humiditymap-smarter :config="baseConnectionParams"
 								:selectedTimestamp="selectedTimestamp"></humiditymap-smarter>
-						</div> -->
+							<p> {{ selectedTimestamp }} </p>
+						</div> 
 					</div>
 					<!-- <optimal-humidity-heatmap-smarter v-if="showOptimalMatrix"
 						:config="JSON.stringify(connectionParams)" :selectedTimestamp="selectedTimestamp"

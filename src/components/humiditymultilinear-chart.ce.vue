@@ -119,7 +119,7 @@ async function mountChart() {
     const bKey = JSON.parse(bKeyStr);
     return aKey.colorKey - bKey.colorKey;
   });
-  //emit('selectTimestamp',Math.max(...data.map(e=>e.timestamp),0))
+  emit('selectTimestamp',Math.max(...data.map(e=>e.timestamp),0))
 
   chartData.value = {
     datasets: createDatasets(sortedEntries).map(bin => bin.getDataSet())

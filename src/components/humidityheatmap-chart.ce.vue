@@ -3,6 +3,7 @@ import {ref, watch, watchEffect} from "vue";
 import {CommunicationService} from "../services/CommunicationService.js";
 import VueApexCharts  from "vue3-apexcharts"
 import { luxonDateTimeToString } from "../common/dateUtils.js"
+import * as d3 from "d3";
 
 const communicationService = new CommunicationService();
 const heatmapSeries = ref([]);
@@ -32,24 +33,25 @@ async function drawImage(timestamp){
   if (!(Object.keys(images.value).length == 0)){
     return
   }
-  timestamp = String(timestamp)
+
+  timestamp = Number(timestamp)
   if(!images.value.has(timestamp)){
     console.log("Image " + timestamp + " is missing")
     return
   }
  
-  const parsed = JSON.parse(props.config);
-  const dripperPos = await communicationService.getFieldInfo(parsed.environment, parsed.paths, {timestamp: timestamp}, "dripperInfo")
-  if(JSON.stringify(parsed) !== props.config){
-      return
-  }
+  //const parsed = JSON.parse(props.config);
+  // const dripperPos = await communicationService.getFieldInfo(parsed.environment, parsed.paths, {timestamp: timestamp}, "dripperInfo")
+  // if(JSON.stringify(parsed) !== props.config){
+  //     return
+  // }
 
   const image = images.value.get(timestamp)
   let xValues = []
   const series = Array.from(image.reduce((accumulator, currentValue) => {
-    if (!accumulator.has(currentValue.yy))
-      accumulator.set(currentValue.yy, []);
-      accumulator.get(currentValue.yy).push({ x: currentValue.xx,
+    if (!accumulator.has(currentValue.y))
+      accumulator.set(currentValue.y, []);
+      accumulator.get(currentValue.y).push({ x: currentValue.x,
       value: currentValue.value.toFixed(2)
     })
     return accumulator
@@ -61,7 +63,10 @@ async function drawImage(timestamp){
       name: key,
       data: value.sort((a,b)=> a.x - b.x).map(e => e.value)
     }
-  }).sort((a,b)=> b.name - a.name)
+  }).sort((a,b)=> a.name - b.name)
+
+
+  console.log(series)
 
 
   const dripperSeries = {
@@ -69,7 +74,8 @@ async function drawImage(timestamp){
     data: new Array(series[0].data.length).fill(1)
   }
 
-  dripperSeries.data[xValues.indexOf(dripperPos.xx)] = 0
+  // dripperSeries.data[xValues.indexOf(dripperPos.x)] = 0
+  dripperSeries.data[xValues.indexOf(0)] = 0
 
   series.push(dripperSeries)
 
@@ -114,46 +120,46 @@ async function drawImage(timestamp){
         colorScale: {
           ranges: [
           {
-            from: 0.01,
-            to: 1000,
+            from: -1000,
+            to: -0.01,
             name: " ",
             color: '#ffffff'
           },  
           {
-            from: -29.99,
-            to: 0,
+            from: 0,
+            to: 12.5,
             name: '(-30,0]',
-            color: '#053061'
+            color: '#053861'
           },
           {
-            from: -99.99,
-            to: -30,
+            from: 12.5,
+            to: 15.625,
             name: '(-100,-30]',
             color: '#337CB7'
           },
           {
-            from: -199.99,
-            to: -100,
+            from: 15.625,
+            to: 18.75,
             name: '(-200,-100]',
             color: '#8FC2DD'
           },
           {
-            from: -299.99,
-            to: -200,
+            from: 18.75,
+            to: 21.785,
             name: '(-300,-200]',
             color: '#F1A385'
           },
           {
-            from: -1499.99,
-            to: -300,
+            from: 21.785,
+            to: 25,
             name: '(-1500,-300]',
             color: '#C33D3D'
           },
           {
-            from: -2500,
-            to: -1500,
+            from: 25,
+            to: 100,
             name: '(-∞,-1500]',
-            color: '#8C0D25'
+            color: d3.interpolateRdBu(0.15)
           }]
         }
       },
@@ -229,13 +235,16 @@ async function drawImage(timestamp){
 }
 
 async function mountChart() {
-  const parsed = JSON.parse(props.config);
+  const configParsed = JSON.parse(props.config);
+
   showChart.value = false
   loadingFlag.value = true
-  const chartDataResponse = await communicationService.getChartData(parsed.environment, parsed.paths, parsed.params, endpoint, 'values.0.measures')
-  if(JSON.stringify(parsed) !== props.config){
+  
+  const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, configParsed.params, endpoint, 'images')
+  if(JSON.stringify(configParsed) !== props.config){
       return
   }
+
   if(chartDataResponse) {
     images.value = new Map(chartDataResponse.map(obj => [obj.timestamp, obj.image]))
     showChart.value = images.value.size > 0
