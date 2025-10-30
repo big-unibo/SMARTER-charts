@@ -26,27 +26,18 @@ watchEffect(async () => {
 });
 
 watch(() => props.selectedTimestamp, async (timestamp) => {
-  if (timestamp) {
+  if (timestamp && images.value.size > 0 && binningInfo.value.length > 0) {
     await drawImage(timestamp)
   }
 })
 
 async function drawImage(timestamp) {
-  // if (!(Object.keys(images.value).length == 0)){
-  //   return
-  // }
-
+  console.log(binningInfo.value)
   timestamp = Number(timestamp)
   if (!images.value.has(timestamp)) {
     console.log("Image " + timestamp + " is missing")
     return
   }
-
-  //const parsed = JSON.parse(props.config);
-  // const dripperPos = await communicationService.getFieldInfo(parsed.environment, parsed.paths, {timestamp: timestamp}, "dripperInfo")
-  // if(JSON.stringify(parsed) !== props.config){
-  //     return
-  // }
 
   const image = images.value.get(timestamp)
   let xValues = []
@@ -68,8 +59,6 @@ async function drawImage(timestamp) {
     }
   }).sort((a, b) => b.name - a.name)
 
-
-  console.log(binningInfo.value)
   const maxUpperBound = Math.max(...binningInfo.value.map(bin => Number(bin.upperBound)));
   const EMPTY_VALUE = maxUpperBound + 1;
   const DRIPPER_VALUE = maxUpperBound;
@@ -78,8 +67,14 @@ async function drawImage(timestamp) {
     name: "0",
     data: new Array(series[0].data.length).fill(EMPTY_VALUE)
   }
-
+  //const parsed = JSON.parse(props.config);
+  // const dripperPos = await communicationService.getFieldInfo(parsed.environment, parsed.paths, {timestamp: timestamp}, "dripperInfo")
+  // if(JSON.stringify(parsed) !== props.config){
+  //     return
+  // }
+  // const dripperPos = await communicationService.getFieldInfo(parsed.environment, parsed.paths, {timestamp: timestamp}, "dripperInfo")
   // dripperSeries.data[xValues.indexOf(dripperPos.x)] = 0
+
   dripperSeries.data[xValues.indexOf(0)] = DRIPPER_VALUE
 
   series.push(dripperSeries)
@@ -225,19 +220,15 @@ async function mountChart() {
   const binningId = response.binningId
   const chartDataResponse = response.data
 
-
-  binningInfo.value = await communicationService.getBinningInfo(configParsed.environment, binningId, 'bins')
-  if (JSON.stringify(configParsed) !== props.config) {
-    return
-  }
-
-  // const dripperPos = await communicationService.getFieldInfo(parsed.environment, parsed.paths, {timestamp: timestamp}, "dripperInfo")
-  console.log(chartDataResponse)
-
   if (chartDataResponse) {
     images.value = new Map(chartDataResponse.map(obj => [obj.timestamp, obj.image]))
-    showChart.value = images.value.size > 0
-    if (showChart.value) {
+    binningInfo.value = await communicationService.getBinningInfo(configParsed.environment, binningId, 'bins')
+    if (JSON.stringify(configParsed) !== props.config) {
+      return
+    }
+
+    if (images.value.size > 0 && binningInfo.value.length > 0) {
+      showChart.value = true
       const timestamps = Array.from(images.value.keys()).sort()
       if (props.selectedTimestamp) {
         await drawImage(props.selectedTimestamp)
