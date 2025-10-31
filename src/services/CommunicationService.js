@@ -1,6 +1,8 @@
 import axios from "axios";
 import { getNestedProperty } from "../common/utils";
 
+const DRIPPER_SIGNAL_TYPE = "DRIPPER"
+
 export class CommunicationService {
 
     /** Passing dataKey allows to get automatically extracted data nested in a certain specified way,
@@ -10,12 +12,12 @@ export class CommunicationService {
     async getChartData(environment, pathsParams, queryParams, endpoint, dataKey = null) {
         const response = await this.getAPI(environment, "/fieldCharts", pathsParams, queryParams, endpoint);
         if (response) {
-            return dataKey ? 
+            return dataKey ?
                 {
                     deviceId: response.deviceId,
                     binningId: response.binningId,
                     data: getNestedProperty(response, dataKey)
-                } 
+                }
                 : response;
         }
         return null;
@@ -52,9 +54,33 @@ export class CommunicationService {
             console.error(`Error on communication service: ${error.message}`)
             throw new Error(error.message);
         })
-        
+
         if (response) {
             return dataKey ? getNestedProperty(response, dataKey) : response;
+        }
+        return null;
+    }
+
+
+    async getDripperInfo(environment, pathsParams, queryParams, endpoint ) {
+        queryParams["signalTypes"] = [DRIPPER_SIGNAL_TYPE]
+        const response = await axios.get(this.buildURL(environment.host, "/theses", pathsParams.thesisId, endpoint), {
+            params: queryParams,
+            headers: {
+                Authorization: 'Bearer ' + environment.token
+            }
+        }).then(response => {
+            if (response.data)
+                return response.data;
+            return null;
+        }).catch(error => {
+            console.error(`Error response: ${error}`)
+            console.error(`Error on communication service: ${error.message}`)
+            throw new Error(error.message);
+        })
+
+        if (response) {
+            return  getNestedProperty(response, "0.signals.0");
         }
         return null;
     }

@@ -17,6 +17,7 @@ const props = defineProps(['config', 'selectedTimestamp'])
 const showChart = ref(false)
 const loadingFlag = ref(false)
 const endpoint = 'heatmap'
+const signalsEndpoint = 'signals'
 
 watchEffect(async () => {
   let value = props.config;
@@ -66,15 +67,17 @@ async function drawImage(timestamp) {
     name: "0",
     data: new Array(series[0].data.length).fill(EMPTY_VALUE)
   }
-  //const parsed = JSON.parse(props.config);
+
+  const parsed = JSON.parse(props.config);
   // const dripperPos = await communicationService.getFieldInfo(parsed.environment, parsed.paths, {timestamp: timestamp}, "dripperInfo")
   // if(JSON.stringify(parsed) !== props.config){
   //     return
   // }
   // const dripperPos = await communicationService.getFieldInfo(parsed.environment, parsed.paths, {timestamp: timestamp}, "dripperInfo")
   // dripperSeries.data[xValues.indexOf(dripperPos.x)] = 0
-
-  dripperSeries.data[xValues.indexOf(0)] = DRIPPER_VALUE
+  const dripperData = await communicationService.getDripperInfo(parsed.environment, parsed.paths, {timestamp: timestamp}, signalsEndpoint )
+  const dripperX = dripperData?.x ?? 0;
+  dripperSeries.data[xValues.indexOf(dripperX)] = DRIPPER_VALUE;
 
   series.push(dripperSeries)
 

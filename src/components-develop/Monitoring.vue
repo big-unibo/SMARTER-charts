@@ -6,16 +6,16 @@ import { computed, watch, onMounted, reactive, ref, watchEffect } from "vue";
 
 const props = defineProps(['token', 'user'])
 
-let selectedTimestampFrom = ref(getCurrentTimestampMinusDays(7))
-let selectedTimestampTo = ref(getCurrentTimestampMinusDays(0))
+let selectedTimestampFrom = ref(getCurrentTimestampMinusDays(90))
+let selectedTimestampTo = ref(getCurrentTimestampMinusDays(10))
 
-let customSelectedTimestampTo = ref(getCurrentTimestampMinusDays(0))
-let customSelectedTimestampFrom = ref(getCurrentTimestampMinusDays(2))
+let customSelectedTimestampTo = ref(getCurrentTimestampMinusDays(10))
+let customSelectedTimestampFrom = ref(getCurrentTimestampMinusDays(90))
 
 
 let selectedFieldName = ref("Seleziona un campo")
 let selectedThesisName = ref("Seleziona una tesi")
-let selectedThesis = ref({thesisId: 13})
+let selectedThesis = ref({thesisId: 78})
 let selectedTimeLabel = ref("")
 let showDynamicHeatmap = ref(false)
 let showOptimalMatrix = ref(false)
