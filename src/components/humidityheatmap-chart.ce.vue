@@ -193,23 +193,23 @@ async function drawImage(timestamp) {
       custom: function ({ series, seriesIndex, dataPointIndex, w }) {
         let value = series[seriesIndex][dataPointIndex]
         if (value == EMPTY_VALUE) {
-          value = "-"
+          return ""
+        }else{
+          if (value == DRIPPER_VALUE) {
+            value = "G"
+          }
+          return ('<div class="arrow_box m-1">' +
+            '<div> <strong>val</strong>: ' + value + '</div>' +
+            '<div> <strong>x</strong>: ' + xValues[dataPointIndex] + '</div>' +
+            '<div> <strong>y</strong>: ' + heatmapSeries.value[seriesIndex].name + '</div>' +
+            '</div>')
         }
-        if (value == DRIPPER_VALUE) {
-          value = "G"
-        }
-        return ('<div class="arrow_box m-1">' +
-          '<div> <strong>val</strong>: ' + value + '</div>' +
-          '<div> <strong>x</strong>: ' + xValues[dataPointIndex] + '</div>' +
-          '<div> <strong>y</strong>: ' + heatmapSeries.value[seriesIndex].name + '</div>' +
-          '</div>')
       }
     }
   }
 }
 
 async function mountChart() {
-  console.log("Carico")
   const configParsed = JSON.parse(props.config);
 
   showChart.value = false
@@ -223,7 +223,7 @@ async function mountChart() {
   const binningId = response.binningId
   const chartDataResponse = response.data
 
-  if (chartDataResponse) {
+  if (chartDataResponse && binningId) {
     images.value = new Map(chartDataResponse.map(obj => [obj.timestamp, obj.image]))
     binningInfo.value = await communicationService.getBinningInfo(configParsed.environment, binningId, 'bins')
     if (JSON.stringify(configParsed) !== props.config) {
@@ -235,10 +235,8 @@ async function mountChart() {
       const timestamps = Array.from(images.value.keys()).sort()
       await nextTick()
       if (props.selectedTimestamp) {
-        console.log("disegno da props")
         await drawImage(props.selectedTimestamp)
       } else {
-        console.log("disegno da Disegno da array timestamps")
         await drawImage(timestamps[timestamps.length - 1])
       }
     }
