@@ -228,16 +228,16 @@ function selectedTime(time) {
 			<div class="humidity-card card">
 				<div class="card-header d-flex justify-content-between align-items-center">
 					<span>Matrice dell'umidità</span>
-					<!-- <div>
-						<WateringAdviceSimulatorComponent v-if="true"
+					<div>
+						<!-- <WateringAdviceSimulatorComponent v-if="true"
 							:config="JSON.stringify(connectionParams)" :selectedTimestamp="selectedTimestamp" />
 						<UpdateOptimalStateComponent v-if="true"
 							:config="JSON.stringify(connectionParams)" :selectedTimestamp="selectedTimestamp" />
 						<button class="btn btn-sm btn-secondary m-1" type="button" @click="enableOptimalMatrix"
-							id="optimal-heatmap-button">Mostra ottimo</button>
+							id="optimal-heatmap-button">Mostra ottimo</button> -->
 						<button class="btn btn-sm btn-secondary m-1" type="button" @click="enableDynamicHeatmap"
 							id="dynamic-heatmap-button">Mostra evoluzione</button>
-					</div> -->
+					</div>
 				</div>
 				<div class="card-body">
 					<div class="row">
@@ -266,8 +266,9 @@ function selectedTime(time) {
 					<span>Evoluzione matrice dell'umidità</span>
 				</div>
 				<div class="card-body">
-					<heatmap-animation-smarter v-if="hasUserPermission('MO')"
-						:config="JSON.stringify(connectionParams)"></heatmap-animation-smarter>
+					<!-- <heatmap-animation-smarter v-if="hasUserPermission('MO')" -->
+					 	<heatmap-animation-smarter v-if="true"
+						:config="baseConnectionParams"></heatmap-animation-smarter>
 				</div>
 			</div>
 		</div>

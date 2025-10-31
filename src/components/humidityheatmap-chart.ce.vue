@@ -133,8 +133,8 @@ async function drawImage(timestamp) {
             color: "#ffffff"
           }
           ]
-        },
-      },
+        }
+      }
     },
     dataLabels: {
       formatter: function (value, { seriesIndex, dataPointIndex, w }) {

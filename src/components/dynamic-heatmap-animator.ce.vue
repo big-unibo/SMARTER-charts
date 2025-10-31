@@ -22,6 +22,7 @@ const endpoint = 'humidityBins'
 
 const data = ref([]);
 const timestamps = ref(new Set());
+const timestampsArray = ref([]);
 const currentTimestamp = ref('');
 const currentIndex = ref(0);
 const interval = ref(null);
@@ -43,33 +44,38 @@ function updateConfig(currentTimestamp, lastTimestamp) {
 }
 
 async function calculateTimestampLength() {
-  const parsed = JSON.parse(props.config);
-  const chartDataResponse = await communicationService.getChartData(parsed.environment, parsed.paths, parsed.params, endpoint, 'values.0.measures')
-  if(JSON.stringify(parsed) !== props.config){
-      return
-  }
-  if(chartDataResponse) {
-    data.value = chartDataResponse
-    timestamps.value = new Set()
+  const configParsed = JSON.parse(props.config);
+  const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, configParsed.params, endpoint, "measures");
+
+  if (JSON.stringify(configParsed) !== props.config) return;
+  if (chartDataResponse) {
+    data.value = chartDataResponse.data;
+    timestamps.value = new Set();
   } else {
-    data.value = []
+    data.value = [];
   }
 
   data.value.forEach(d => {
     timestamps.value.add(d.timestamp);
   });
+
+  timestampsArray.value = Array.from(timestamps.value).sort((a, b) => a - b);
 }
 
 function startLoop() {
+  const arr = timestampsArray.value;
+
   interval.value = setInterval(() => {
-    const timestampsArray = Array.from(timestamps.value);
-    currentTimestamp.value = timestampsArray[currentIndex.value];
-    currentIndex.value = (currentIndex.value + 1) % timestampsArray.length;
-    currentDate.value = new Date(currentTimestamp.value * 1000).toLocaleDateString('it-IT')
-    updateConfig(timestampsArray[currentIndex.value],timestampsArray[Math.max(currentIndex.value - 1,0)])
-    if(currentIndex.value + 1 === timestamps.value.size) {
-      stopLoop()
-      reset()
+    currentTimestamp.value = arr[currentIndex.value];
+    currentDate.value = new Date(currentTimestamp.value * 1000).toLocaleDateString('it-IT');
+
+    const prevIndex = currentIndex.value > 0 ? currentIndex.value - 1 : 0;
+    updateConfig(arr[currentIndex.value], arr[prevIndex]);
+    currentIndex.value++;
+
+    if (currentIndex.value >= arr.length) {
+      stopLoop();
+      reset();
     }
   }, animationSpeed.value);
 }
@@ -108,9 +114,14 @@ function changeAnimationSpeed(value) {
 
 function selectTimestamp(index) {
   currentIndex.value = index;
-  currentTimestamp.value = Array.from(timestamps.value)[currentIndex.value];
-  currentDate.value = new Date(currentTimestamp.value * 1000).toLocaleDateString('it-IT');
-  stopLoop()
+  const arr = timestampsArray.value;
+  const prevIndex = index > 0 ? index - 1 : 0;
+
+  currentTimestamp.value = arr[index];
+  currentDate.value = new Date(arr[index] * 1000).toLocaleDateString('it-IT');
+  updateConfig(arr[index], arr[prevIndex]);
+  buttonText.value = buttonTexts.resume
+  stopLoop();
 }
 
 function getLeftOffset(dataLen, index) {
@@ -143,17 +154,6 @@ watchEffect(async () => {
         </div>
       </div>
 
-      <div class="charts-wrapper row">
-        <div class="heatmap-dataviz col-6">
-          <DynamicHeatmap style="margin-left: -10px" :config="animatorConfig" :selectTimestamp="currentTimestamp"></DynamicHeatmap>
-        </div>
-        <div class="col-1"><p></p></div>
-        <div class="line_charts col-5">
-          <generic-linear-chart style="height: 200px" :config="animatorConfig" :endpoint="'dripper'" :yTitle="'L'" :label="'Dripper'" :color="'rgb(31, 119, 180)'"></generic-linear-chart>
-          <generic-linear-chart style="height: 200px" :config="animatorConfig" :endpoint="'pluv'" :yTitle="'mm'"  :label="'Pluv'" :color="'rgb(31, 119, 180)'"></generic-linear-chart>
-        </div>
-      </div>
-
       <div class="row animator-controllers justify-content-end">
         <div class="col-auto">
           <button type="button" class="btn btn-secondary" @click="changeAnimationSpeed(500)">Bassa</button>
@@ -164,6 +164,17 @@ watchEffect(async () => {
         <div class="col-auto">
           <button type="button" class="btn btn-secondary" @click="changeAnimationSpeed(100)">Veloce</button>
         </div>
+      </div>
+
+      <div class="charts-wrapper row">
+        <div class="heatmap-dataviz col-6">
+          <DynamicHeatmap style="margin-left: -10px" :config="animatorConfig" :selectTimestamp="currentTimestamp"></DynamicHeatmap>
+        </div>
+        <div class="col-1"><p></p></div>
+        <!-- <div class="line_charts col-5">
+          <generic-linear-chart style="height: 200px" :config="animatorConfig" :endpoint="'dripper'" :yTitle="'L'" :label="'Dripper'" :color="'rgb(31, 119, 180)'"></generic-linear-chart>
+          <generic-linear-chart style="height: 200px" :config="animatorConfig" :endpoint="'pluv'" :yTitle="'mm'"  :label="'Pluv'" :color="'rgb(31, 119, 180)'"></generic-linear-chart>
+        </div> -->
       </div>
     </div>
   </div>
