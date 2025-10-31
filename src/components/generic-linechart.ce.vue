@@ -23,6 +23,7 @@ import {
 
 const props = defineProps({
   config: String,
+  extraParams: String,
   endpoint: String,
   yTitle: String,
   label: String,
@@ -50,15 +51,21 @@ function addValueAndMaintainSize(value) {
 }
 
 async function mountChart() {
-  const parsed = JSON.parse(props.config);
+  const configParsed = JSON.parse(props.config);
+  const extraParamsParsed = JSON.parse(props.extraParams)
+  const mergedParams = {
+    ...configParsed.params,
+    ...extraParamsParsed 
+  };
 
-  const chartDataResponse = await communicationService.getChartData(parsed.environment, parsed.paths, parsed.params, props.endpoint, 'values.0.measures')
-  if(JSON.stringify(parsed) !== props.config){
+  const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, mergedParams, props.endpoint, "0.signals.0.measurements")
+  if(JSON.stringify(configParsed) !== props.config){
       return
   }
-  if(chartDataResponse) {
-    console.log(`È arrivato un dato: ${chartDataResponse[0].value}`)
-    addValueAndMaintainSize(chartDataResponse[0].value)
+
+  const responseData = chartDataResponse.data
+  if(responseData && responseData[0] && responseData[0].value) {
+    addValueAndMaintainSize(responseData[0].value)
   }
 
   chartData.value = {

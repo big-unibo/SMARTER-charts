@@ -290,7 +290,6 @@ function selectedTime(time) {
 						:config="baseConnectionParams"
 						:extraParams="JSON.stringify({
 							signalTypes: ['SOIL_WATER_CONTENT', 'SOIL_WATER_POTENTIAL'],
-					
 							aggregationType: 'AVG'
 						})"
 					/>
