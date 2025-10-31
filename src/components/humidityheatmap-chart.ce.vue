@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, watchEffect } from "vue";
+import { ref, watch, watchEffect, nextTick } from "vue";
 import { CommunicationService } from "../services/CommunicationService.js";
 import VueApexCharts from "vue3-apexcharts"
 import { luxonDateTimeToString } from "../common/dateUtils.js"
@@ -32,7 +32,6 @@ watch(() => props.selectedTimestamp, async (timestamp) => {
 })
 
 async function drawImage(timestamp) {
-  console.log(binningInfo.value)
   timestamp = Number(timestamp)
   if (!images.value.has(timestamp)) {
     console.log("Image " + timestamp + " is missing")
@@ -207,6 +206,7 @@ async function drawImage(timestamp) {
 }
 
 async function mountChart() {
+  console.log("Carico")
   const configParsed = JSON.parse(props.config);
 
   showChart.value = false
@@ -230,9 +230,12 @@ async function mountChart() {
     if (images.value.size > 0 && binningInfo.value.length > 0) {
       showChart.value = true
       const timestamps = Array.from(images.value.keys()).sort()
+      await nextTick()
       if (props.selectedTimestamp) {
+        console.log("disegno da props")
         await drawImage(props.selectedTimestamp)
       } else {
+        console.log("disegno da Disegno da array timestamps")
         await drawImage(timestamps[timestamps.length - 1])
       }
     }
