@@ -359,12 +359,17 @@ function selectedTime(time) {
 			</div>
 		</div>
 
-		<div v-if="hasUserPermission('MO')" class="my-3 container col-md-12">
+		<div v-if="true" class="my-3 container col-md-12">
 			<div class="card">
 				<div class="card-header">Temperatura dell'aria</div>
 				<div class="card-body">
 					<airtemperature-chart-smarter style="height: 300px"
-						:config="JSON.stringify(connectionParams)"></airtemperature-chart-smarter>
+						:config="baseConnectionParams"
+						:extraParams="JSON.stringify({
+							signalTypes: ['AIR_TEMP'],
+							aggregationType: 'AVG'
+						})"
+						></airtemperature-chart-smarter>
 				</div>
 			</div>
 		</div>

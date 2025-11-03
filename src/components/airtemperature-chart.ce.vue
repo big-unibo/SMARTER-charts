@@ -20,19 +20,20 @@ import {
   Filler,
   TimeScale
 } from 'chart.js'
+import { signalsColorFunction } from "@/common/colorsConfig.js";
 
-const props = defineProps(['config'])
+const props = defineProps(['config', 'extraParams'])
 
-const endpoint = 'airTemp'
+const endpoint = 'signals'
 
 const chartData = ref({datasets: [], labels: []})
 const options = ref({responsive: true, maintainAspectRatio: false})
 const showChart = ref(false)
 const loadingFlag = ref(false)
 
-const getData = (measures) => {
-  return measures.map(measure => ({ x: luxonDateTime(measure.timestamp), y: measure.value }));
-};
+// const getData = (measures) => {
+//   return measures.map(measure => ({ x: luxonDateTime(measure.timestamp), y: measure.value }));
+// };
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler, TimeScale)
 
@@ -44,34 +45,54 @@ watchEffect(async () => {
 });
 
 async function mountChart() {
-  const parsed = JSON.parse(props.config);
+  const configParsed = JSON.parse(props.config);
+  const extraParamsParsed = JSON.parse(props.extraParams)
+  const mergedParams = {
+    ...configParsed.params,
+    ...extraParamsParsed 
+  };
+
   let data = []
   showChart.value = false
   loadingFlag.value = true
-  const chartDataResponse = await communicationService.getChartData(parsed.environment, parsed.paths, parsed.params, endpoint, 'values.0.measures')
-  if(JSON.stringify(parsed) !== props.config){
+
+  const chartDataResponse = await communicationService.getChartData(
+    configParsed.environment,
+    configParsed.paths,
+    mergedParams,
+    endpoint,
+    "0.signals.0.measurements"
+  );
+
+  if(JSON.stringify(configParsed) !== props.config){
       return
   }
-  if(chartDataResponse) {
-    data = getData(chartDataResponse)
+
+  let unit = "C°"
+  if (chartDataResponse) {
+    data = chartDataResponse.data
     showChart.value = data.length > 0
+    unit = chartDataResponse.unit ?? unit;
   } else data = []
 
   chartData.value = {
-    datasets: [{
-      data: data,
-      borderColor: '#339CFF',
-      backgroundColor: '#339CFF',
-      label: "AirTemp"
-    }]
-  }
+  datasets: [{
+    data: data.map(d => ({
+      timestamp: Number(d.timestamp) * 1000, 
+      value: d.value
+    })),
+    borderColor: signalsColorFunction('Air Temperature'),
+    backgroundColor: signalsColorFunction('Air Temperature'),
+    label: "AirTemp"
+  }]
+}
 
   options.value = {
     responsive: true,
     maintainAspectRatio: false,
     parsing: {
-      xAxisKey: 'x',
-      yAxisKey: 'y'
+      xAxisKey: 'timestamp',
+      yAxisKey: 'value'
     },
     scales: {
       x: {
@@ -98,7 +119,7 @@ async function mountChart() {
       y: {
         title: {
           display: true,
-          text: '°C'
+          text: unit
         }
       }
     }

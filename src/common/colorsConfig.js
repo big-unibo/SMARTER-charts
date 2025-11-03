@@ -29,4 +29,6 @@ export const signalsColorFunction = (str) => {
     return '#4CAF50C5'
   if (str === 'Sprinkler')
     return '#99ceff'
+  if (str === 'Air Temperature')
+    return '#339CFF'
 }

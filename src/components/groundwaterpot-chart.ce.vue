@@ -138,7 +138,7 @@ async function mountChart() {
     datasets: datasets
   }
 
-   const yLabel = unitLabel.value || "sconosciuto";
+  const yLabel = unitLabel.value || "sconosciuto";
 
   options.value = {
     responsive: true,
