@@ -7,7 +7,7 @@ import { computed, watch, onMounted, reactive, ref, watchEffect } from "vue";
 const props = defineProps(['token', 'user'])
 
 let selectedTimestampFrom = ref(getCurrentTimestampMinusDays(90))
-let selectedTimestampTo = ref(getCurrentTimestampMinusDays(10))
+let selectedTimestampTo = ref(getCurrentTimestampMinusDays(85))
 
 let customSelectedTimestampTo = ref(getCurrentTimestampMinusDays(10))
 let customSelectedTimestampFrom = ref(getCurrentTimestampMinusDays(90))
@@ -308,7 +308,7 @@ function selectedTime(time) {
 			</div>
 		</div>
 
-		<div v-if="hasUserPermission('MO')" class="my-3 container col-md-12">
+		<div v-if="true" class="my-3 container col-md-12">
 			<div class="card">
 				<div class="card-header d-flex justify-content-between align-items-center">
 					<span>Consiglio Irriguo, Irrigazione e Precipitazioni</span>
@@ -317,7 +317,8 @@ function selectedTime(time) {
 				</div>
 				<div v-if="!showDetailedWatering">
 					<water-aggregate-chart-smarter
-						:config="JSON.stringify(connectionParams)"></water-aggregate-chart-smarter>
+						:config="baseConnectionParams"
+					></water-aggregate-chart-smarter>
 				</div>
 				<div v-else>
 					<dripperandpluv-chart-smarter

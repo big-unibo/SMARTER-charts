@@ -74,6 +74,7 @@ const colorFunction = (str) => {
 }
 
 watchEffect(async () => {
+  console.log("a")
   let value = props.config;
   if (value) {
     await mountChart()
@@ -81,14 +82,28 @@ watchEffect(async () => {
 });
 
 async function mountChart() {
-  const parsed = JSON.parse(props.config);
+  const configParsed = JSON.parse(props.config);
+  const extraParamsParsed = JSON.parse(props.extraParams)
+  const mergedParams = {
+    ...configParsed.params,
+    ...extraParamsParsed 
+  };
+
   let data = []
   showChart.value = false
   loadingFlag.value = true
-  const chartDataResponse = await communicationService.getChartData(parsed.environment, parsed.paths, parsed.params, endpoint, 'values.0.measures')
-  if(JSON.stringify(parsed) !== props.config){
+
+  const chartDataResponse = await communicationService.getChartData(
+    configParsed.environment,
+    configParsed.paths,
+    mergedParams,
+    endpoint
+  );
+
+  if(JSON.stringify(configParsed) !== props.config){
       return
   }
+
   if (chartDataResponse) {
     data = chartDataResponse
     showChart.value = data.length > 0

@@ -11,91 +11,121 @@ import {
   TimeScale
 } from 'chart.js'
 import { Bar } from 'vue-chartjs'
-import { ref, watchEffect} from "vue";
+import { ref, watchEffect } from "vue";
 import 'chartjs-adapter-luxon';
-import {luxonDateTime} from '../common/dateUtils.js'
-import {CommunicationService} from "../services/CommunicationService.js";
-import {BarDatasetData} from "../common/BarDatasetData.js";
+import { luxonDateTime } from '../common/dateUtils.js'
+import { CommunicationService } from "../services/CommunicationService.js";
+import { BarDatasetData } from "../common/BarDatasetData.js";
+import { signalsColorFunction } from '@/common/colorsConfig.js';
 
 const communicationService = new CommunicationService();
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, TimeScale)
 
-const chartData = ref({datasets: [], labels: []})
-const options = ref({responsive: true, maintainAspectRatio: false})
+const chartData = ref({ datasets: [], labels: [] })
+const options = ref({ responsive: true, maintainAspectRatio: false })
 const showChart = ref(false)
 const loadingFlag = ref(false)
 
-const props = defineProps(['config'])
+const props = defineProps(['config', 'extraParams'])
 
 const endpoint = 'waterAggregate'
 
 const totalGroups = ref(null)
+const unitGroups = ref(null)
 
-const colorFunction = (str) => {
-  if (str === 'Dripper (L)')
-    return '#339CFFC5'
-  if (str === 'Pluv Curr (mm)')
-    return '#FFCD3DC5'
-  if (str === 'Advice (L)')
-    return '#6064C8C5'
-  if (str === 'Pot Evap (mm)')
-    return '#FA4443C5'
-  if (str === 'Expected Water (L)')
-    return '#4CAF50C5'
-  if (str === 'Sprinkler (L)')
-    return '#99ceff'
-}
+// const groupByType = (data) => {
+//   return data.reduce((accumulator, currentValue) => {
+//     const key = currentValue.signalTypeDescription
+//     if(!accumulator.has(key))
+//       accumulator.set(key, []);
 
-const groupByType = (measures) => {
-  return measures.reduce((accumulator, currentValue) => {
-    const key = currentValue.detectedValueTypeDescription
-    if(!accumulator.has(key))
-      accumulator.set(key, []);
+//     accumulator.get(key).push(JSON.stringify({ x: luxonDateTime(currentValue.timestamp), y: Number(currentValue.value).toFixed(2) }));
+//     return accumulator;
+//   }, new Map());
+// }
 
-    accumulator.get(key).push(JSON.stringify({ x: luxonDateTime(currentValue.timestamp), y: Number(currentValue.value).toFixed(2) }));
-    return accumulator;
-  }, new Map());
-}
+// const createDatasets = (groupedMeasures) => {
+//   return Array.from(groupedMeasures, ([key, jsonValues]) => {
+//     return new BarDatasetData(key, jsonValues, 'y', colorFunction);
+//   });
+// };
 
-const createDatasets = (groupedMeasures) => {
-  return Array.from(groupedMeasures, ([key, jsonValues]) => {
-    return new BarDatasetData(key, jsonValues, 'y', colorFunction);
+const createDatasets = (data) => {
+  const datasets = [];
+
+  data.forEach(signalType => {
+    const type = signalType.signalTypeDescription;
+    const unit = signalType.signals?.[0]?.unit || '';
+    const label = unit ? `${type} (${unit})` : type;
+
+    const dataPoints = signalType.signals
+      .flatMap(signal =>
+        signal.measurements.map(m =>
+          JSON.stringify({
+            x: luxonDateTime(m.timestamp),
+            y: Number(m.value).toFixed(2)
+          })
+        )
+      );
+
+    datasets.push(new BarDatasetData(label, dataPoints, 'y', signalsColorFunction, type));
   });
+
+  return datasets;
 };
+
+
+const getTotalGroups = data =>
+  new Map(
+    (Array.isArray(data) ? data : []).map(type => {
+      const total = type.signals?.flatMap(s => s.measurements || [])
+        .reduce((sum, m) => sum + Number(m?.value || 0), 0);
+
+      const unit = type.signals?.[0]?.unit || '';
+      return [type.signalTypeDescription, { total, unit }];
+    })
+  );
+
+const getUnitGroups = totalGroups =>
+  new Map(
+    Object.entries(
+      Array.from(totalGroups.entries()).reduce((acc, [type, { unit }]) => {
+        const u = unit || 'N/A';
+        if (!acc[u]) acc[u] = [];
+        acc[u].push(type);
+        return acc;
+      }, {})
+    )
+  );
+
 
 watchEffect(async () => {
   let value = props.config;
-  if(value) {
+  if (value) {
     await mountChart()
   }
 });
 
 async function mountChart() {
-  const parsed = JSON.parse(props.config);
+  const configParsed = JSON.parse(props.config);
+
   let data = []
   showChart.value = false
   loadingFlag.value = true
-  const chartDataResponse = await communicationService.getChartData(parsed.environment, parsed.paths, parsed.params, endpoint, 'values.0.measures')
-  if(JSON.stringify(parsed) !== props.config){
-      return
+  const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, configParsed.params, endpoint)
+  if (JSON.stringify(configParsed) !== props.config) {
+    return
   }
-  if(chartDataResponse) {
+  if (chartDataResponse) {
     data = chartDataResponse
     showChart.value = data.length > 0
   } else data = []
 
-  const values = data.map(item => item.value);
+  totalGroups.value = getTotalGroups(data)
+  unitGroups.value = getUnitGroups(totalGroups.value);
 
-  const minValue = Math.min(...values);
-  const maxValue = Math.max(...values);
-
-  const groupByData = groupByType(data);
-  totalGroups.value = new Map(Array(...groupByData.entries()).map(([k,v])=> {
-    return [k,v.reduce((a,b)=> a+parseFloat(JSON.parse(b).y),0)]
-  }))
-
-  const datasets = createDatasets(groupByData).map(bin => bin.getDataSet()) 
+  const datasets = createDatasets(data).map(bin => bin.getDataSet())
 
   chartData.value = {
     datasets: datasets
@@ -130,17 +160,17 @@ async function mountChart() {
         beginAtZero: true,
         title: {
           display: true,
-          text: 'L'
+          text: ''
         },
         position: 'left',
         display: 'auto',
       }
     },
     legend: {
-      onClick: function(e, legendItem) {
-        di=legendItem.datasetIndex
+      onClick: function (e, legendItem) {
+        di = legendItem.datasetIndex
         myBarChart.data.datasets[di].hidden = !myBarChart.data.datasets[di].hidden;
-        myBarChart.options.scales.yAxes[0].ticks.suggestedMax=getMax(myBarChart)+100;
+        myBarChart.options.scales.yAxes[0].ticks.suggestedMax = getMax(myBarChart) + 100;
         myBarChart.update()
       }
     }
@@ -153,10 +183,19 @@ async function mountChart() {
 </script>
 
 <template>
-  <pre class="p-2"><b>Advice</b>, <b>Pluv Curr</b>, <b>Pot Evap</b> espressi in <b>mm</b><br><b>Dripper</b>, <b>Sprinkler</b> espresso in <b>L</b></pre>
+  <div v-if="unitGroups && unitGroups.size" class="p-2">
+    <template v-for="([unit, types], i) in Array.from(unitGroups)" :key="unit">
+      <p class="mb-1">
+        <b>{{ types.join(', ') }}</b>
+        espress{{ types.length > 1 ? 'i' : 'o' }} in <b>{{ unit }}</b>
+      </p>
+    </template>
+  </div>
+
   <div class="d-flex flex-wrap justify-content-end">
-    <div v-for="([group, total]) in totalGroups" :key="group" class="px-2 p-1 m-1 mx-auto" :style="{backgroundColor: colorFunction(group) , borderColor: colorFunction(group), borderRadius: '8px', borderWidth: '1px', borderStyle: 'solid' }">
-        <div>Totale {{ group }}: {{ total.toFixed(2) }}</div>
+    <div v-for="([group, { unit, total }]) in totalGroups" :key="group" class="px-2 p-1 m-1 mx-auto"
+      :style="{ backgroundColor: signalsColorFunction(group), borderColor: signalsColorFunction(group), borderRadius: '8px', borderWidth: '1px', borderStyle: 'solid' }">
+      <div>Totale {{ group }}: {{ total.toFixed(2) }} ({{ unit }})</div>
     </div>
   </div>
   <div class="card-body">
@@ -169,7 +208,7 @@ async function mountChart() {
       </div>
     </div>
     <div v-else>Nessun dato disponibile.</div>
-  </div>  
+  </div>
 </template>
 
 <style>

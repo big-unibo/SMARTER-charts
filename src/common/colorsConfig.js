@@ -14,3 +14,19 @@ export const binningColorConfig = function (value) {
         return 'rgb(140, 13, 37)';
     } else return 'rgb(255, 255, 255)'
 };
+
+// Function assigning colors to every signal type
+export const signalsColorFunction = (str) => {
+  if (str === 'Dripper')
+    return '#339CFFC5'
+  if (str === 'Pluv Curr')
+    return '#FFCD3DC5'
+  if (str === 'Advice')
+    return '#6064C8C5'
+  if (str === 'Potential Evapotranspiration')
+    return '#FA4443C5'
+  if (str === 'Expected Water')
+    return '#4CAF50C5'
+  if (str === 'Sprinkler')
+    return '#99ceff'
+}
