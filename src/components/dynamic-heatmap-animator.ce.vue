@@ -172,8 +172,8 @@ watchEffect(async () => {
         </div>
         <div class="col-1"><p></p></div>
         <div class="line_charts col-5">
-          <generic-linear-chart style="height: 200px" :config="animatorConfig" :extraParams="JSON.stringify({signalTypes: ['DRIPPER']})" :endpoint="'signals'" :yTitle="'L'" :label="'Dripper'" :color="'rgb(31, 119, 180)'"></generic-linear-chart>
-          <generic-linear-chart style="height: 200px" :config="animatorConfig" :extraParams="JSON.stringify({signalTypes: ['PLUV_CURR']})" :endpoint="'signals'" :yTitle="'mm'"  :label="'Pluv'" :color="'rgb(31, 119, 180)'"></generic-linear-chart>
+          <generic-linear-chart style="height: 200px" :config="animatorConfig" :extraParams="JSON.stringify({signalTypes: ['DRIPPER']})" :endpoint="'signals'" :label="'Dripper'" :color="'rgb(31, 119, 180)'"></generic-linear-chart>
+          <generic-linear-chart style="height: 200px" :config="animatorConfig" :extraParams="JSON.stringify({signalTypes: ['PLUV_CURR']})" :endpoint="'signals'"  :label="'Pluv'" :color="'rgb(31, 119, 180)'"></generic-linear-chart>
         </div>
       </div>
     </div>

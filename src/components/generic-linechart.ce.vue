@@ -1,10 +1,10 @@
 <script setup>
 
-import {Line} from "vue-chartjs";
-import { ref, watchEffect} from "vue";
+import { Line } from "vue-chartjs";
+import { ref, watchEffect } from "vue";
 import 'chartjs-adapter-luxon';
-import {luxonDateTime} from '../common/dateUtils.js'
-import {CommunicationService} from "../services/CommunicationService.js";
+import { luxonDateTime } from '../common/dateUtils.js'
+import { CommunicationService } from "../services/CommunicationService.js";
 
 const communicationService = new CommunicationService();
 
@@ -33,6 +33,7 @@ const props = defineProps({
 const chartData = ref(null)
 const options = ref(null)
 const data = ref(new Array(20).fill(0))
+const yUnit = ref(null)
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler, TimeScale)
 
@@ -55,16 +56,20 @@ async function mountChart() {
   const extraParamsParsed = JSON.parse(props.extraParams)
   const mergedParams = {
     ...configParsed.params,
-    ...extraParamsParsed 
+    ...extraParamsParsed
   };
 
   const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, mergedParams, props.endpoint, "0.signals.0.measurements")
-  if(JSON.stringify(configParsed) !== props.config){
-      return
+  if (JSON.stringify(configParsed) !== props.config) {
+    return
   }
 
   const responseData = chartDataResponse.data
-  if(responseData && responseData[0] && responseData[0].value) {
+  if (props.yTitle == null && chartDataResponse.unit != null) {
+    yUnit.value = chartDataResponse.unit;
+  }
+
+  if (responseData?.[0]?.value != null) {
     addValueAndMaintainSize(responseData[0].value)
   }
 
@@ -82,7 +87,7 @@ async function mountChart() {
   options.value = {
     maintainAspectRatio: true,
     animation: {
-        duration: 0
+      duration: 0
     },
     scales: {
       x: {
@@ -93,7 +98,7 @@ async function mountChart() {
       y: {
         title: {
           display: true,
-          text: props.yTitle
+          text: props.yTitle || yUnit.value || '?'
         },
         min: 0
       }
@@ -113,8 +118,8 @@ async function mountChart() {
 
 <style>
 @import '../assets/main.css';
-.generic-line-chart{
+
+.generic-line-chart {
   height: 200px;
 }
-
 </style>

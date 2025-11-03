@@ -163,11 +163,11 @@ async function drawImage(timestamp) {
 async function mountChart() {
   const configParsed = JSON.parse(props.config);
   const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, configParsed.params, endpoint, 'images')
-  const binningId = chartDataResponse.binningId
 
-  const data = chartDataResponse.data;
   if (chartDataResponse) {
+    const data = chartDataResponse.data;
     images.value = new Map(data.map(obj => [obj.timestamp, obj.image]))
+    const binningId = chartDataResponse.binningId ?? 1;
     binningInfo.value = await communicationService.getBinningInfo(configParsed.environment, binningId, 'bins')
     showChart.value = images.value.size > 0
     await nextTick()

@@ -8,18 +8,26 @@ export class CommunicationService {
     /** Passing dataKey allows to get automatically extracted data nested in a certain specified way,
      * separetly returing thesis and device data. 
      * Not doing it allows to recieve hust the raw data.
+     * 
+     * While unnesting data, it also tries to retrieve info about
+     * deviceId, binningId and unit.
     */
     async getChartData(environment, pathsParams, queryParams, endpoint, dataKey = null) {
         const response = await this.getAPI(environment, "/fieldCharts", pathsParams, queryParams, endpoint);
+
         if (response) {
-            return dataKey ?
-                {
-                    deviceId: response.deviceId,
-                    binningId: response.binningId,
-                    data: getNestedProperty(response, dataKey)
+            return dataKey
+            ? {
+                deviceId: response?.deviceId ?? null,
+                binningId: response?.binningId ?? null,
+                unit: Array.isArray(response[0]?.signals)
+                    ? response[0].signals[0]?.unit ?? null
+                    : response[0]?.signals?.unit ?? null,   
+                data: getNestedProperty(response, dataKey)
                 }
-                : response;
+            : response;
         }
+
         return null;
     }
 
