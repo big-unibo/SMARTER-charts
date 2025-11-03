@@ -28,6 +28,8 @@ const options = ref({responsive: true, maintainAspectRatio: false})
 const showChart = ref(false)
 const loadingFlag = ref(false)
 
+const unitLabel = ref(null);
+
 const props = defineProps(['config','extraParams'])
 
 const endpoint = 'signals'
@@ -55,6 +57,11 @@ const createDatasets = (data) => {
   data.forEach(signalType => {
     signalType.signals.forEach(signal => {
       const label = `${signalType.signalTypeDescription} (${signal.x}, ${signal.y})`;
+
+      if (unitLabel.value === null && signal?.unit != null) {
+        unitLabel.value = signal.unit;
+      }
+
       const dataPoints = signal.measurements.map(m => 
         JSON.stringify({
           x: luxonDateTime(m.timestamp),
@@ -101,8 +108,10 @@ async function mountChart() {
   };
 
   let data = [];
+
   showChart.value = false;
   loadingFlag.value = true;
+  unitLabel.value = null;
 
   const chartDataResponse = await communicationService.getChartData(
     configParsed.environment,
@@ -119,9 +128,6 @@ async function mountChart() {
     showChart.value = data.length > 0
   } else data = []
 
-
-  //const groupByData = groupByType(data);
-
   const datasets = createDatasets(data).map(bin => bin.getDataSet(colorFunction)).sort( (a,b) => {
     if (a.label < b.label) return -1;
     if (a.label > b.label) return 1;
@@ -131,6 +137,8 @@ async function mountChart() {
   chartData.value = {
     datasets: datasets
   }
+
+   const yLabel = unitLabel.value || "sconosciuto";
 
   options.value = {
     responsive: true,
@@ -176,7 +184,7 @@ async function mountChart() {
       y: {
         title: {
           display: true,
-          text: 'cbar'
+          text: yLabel
         },
         ticks: {
           stepSize: 20
