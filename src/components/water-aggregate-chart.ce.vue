@@ -113,6 +113,7 @@ async function mountChart() {
   let data = []
   showChart.value = false
   loadingFlag.value = true
+  
   const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, configParsed.params, endpoint)
   if (JSON.stringify(configParsed) !== props.config) {
     return
@@ -183,7 +184,7 @@ async function mountChart() {
 </script>
 
 <template>
-  <div v-if="unitGroups && unitGroups.size" class="p-2">
+  <div v-if="unitGroups && unitGroups.size" class="p-2" style="padding-left: 20px; padding-top: 10px;">
     <template v-for="([unit, types], i) in Array.from(unitGroups)" :key="unit">
       <p class="mb-1">
         <b>{{ types.join(', ') }}</b>

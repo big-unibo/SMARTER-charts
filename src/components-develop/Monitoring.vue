@@ -322,7 +322,12 @@ function selectedTime(time) {
 				</div>
 				<div v-else>
 					<dripperandpluv-chart-smarter
-						:config="JSON.stringify(connectionParams)"></dripperandpluv-chart-smarter>
+						:config="baseConnectionParams"
+						:extraParams="JSON.stringify({
+							signalTypes: ['DRIPPER', 'PLUV_CURR', 'SPRINKLER'],
+							aggregationType: 'SUM'
+						})">
+					</dripperandpluv-chart-smarter>
 				</div>
 			</div>
 		</div>

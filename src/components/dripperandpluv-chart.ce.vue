@@ -7,6 +7,9 @@ import {luxonDateTime} from '../common/dateUtils.js'
 import {CommunicationService} from "../services/CommunicationService.js";
 import {MultiAxisLineDatasetData} from "../common/MultiAxisLineDatasetData.js";
 
+import { signalsColorFunction } from '@/common/colorsConfig.js';
+
+
 const communicationService = new CommunicationService();
 
 import {
@@ -30,51 +33,74 @@ const options = ref({responsive: true, maintainAspectRatio: false})
 const showChart = ref(false)
 const loadingFlag = ref(false)
 
-const props = defineProps(['config'])
+const pluvCurrUnit = ref(null)
+const dripperUnit = ref(null)
 
-const endpoint = 'dripperAndPluv'
+const props = defineProps(['config', 'extraParams'])
 
-const groupByType = (measures) => {
-  return measures.reduce((accumulator, currentValue) => {
-    const key = currentValue.detectedValueTypeDescription
-    if (!accumulator.has(key))
-      accumulator.set(key, []);
-    accumulator.get(key).push(JSON.stringify({
-      x: luxonDateTime(currentValue.timestamp),
-      y: Number(currentValue.value).toFixed(2)
-    }));
-    return accumulator;
-  }, new Map());
-}
+const endpoint = 'signals'
 
-function addUnitMeasure(key) {
-  if (key === 'Dripper')
-    return 'Dripper (L)'
-  if (key === 'Pluv Curr')
-    return 'Pluv Curr (mm)'
-  if (key === 'Sprinkler')
-    return 'Sprinkler (L)'
-  return key
-}
+// const groupByType = (measures) => {
+//   return measures.reduce((accumulator, currentValue) => {
+//     const key = currentValue.detectedValueTypeDescription
+//     if (!accumulator.has(key))
+//       accumulator.set(key, []);
+//     accumulator.get(key).push(JSON.stringify({
+//       x: luxonDateTime(currentValue.timestamp),
+//       y: Number(currentValue.value).toFixed(2)
+//     }));
+//     return accumulator;
+//   }, new Map());
+// }
 
-const createDatasets = (groupedMeasures) => {
-  return Array.from(groupedMeasures, ([key, jsonValues]) => {
-    key = addUnitMeasure(key)
-    return new MultiAxisLineDatasetData(key, jsonValues, key.includes("(mm)") ? 'y1' : 'y', colorFunction);
+// function addUnitMeasure(key) {
+//   if (key === 'Dripper')
+//     return 'Dripper (L)'
+//   if (key === 'Pluv Curr')
+//     return 'Pluv Curr (mm)'
+//   if (key === 'Sprinkler')
+//     return 'Sprinkler (L)'
+//   return key
+// }
+
+// const createDatasets = (groupedMeasures) => {
+//   // return Array.from(groupedMeasures, ([key, jsonValues]) => {
+//   //   key = addUnitMeasure(key)
+//   //   return new MultiAxisLineDatasetData(key, jsonValues, key.includes("(mm)") ? 'y1' : 'y', colorFunction);
+//   // });
+// };
+
+const createDatasets = (data) => {
+  const datasets = [];
+
+  data.forEach(signalType => {
+    const type = signalType.signalTypeDescription;
+    const unit = signalType.signals?.[0]?.unit || '';
+    const label = unit ? `${type} (${unit})` : type;
+    const yAxisID = ['Dripper', 'Sprinkler'].includes(type) ? 'y' : 'y1';
+
+    if (dripperUnit.value === null && ['Dripper', 'Sprinkler'].includes(type))
+      dripperUnit.value = unit;
+    else if (pluvCurrUnit.value === null  && type === 'Pluv Curr')
+      pluvCurrUnit.value = unit;
+
+    const dataPoints = signalType.signals
+      .flatMap(signal =>
+        signal.measurements.map(m =>
+          JSON.stringify({
+            x: luxonDateTime(m.timestamp),
+            y: Number(m.value).toFixed(2)
+          })
+        )
+      );
+
+    datasets.push(new MultiAxisLineDatasetData(label, dataPoints, yAxisID, signalsColorFunction, type));
   });
+
+  return datasets;
 };
 
-const colorFunction = (str) => {
-  if (str === 'Dripper (L)')
-    return '#339CFF'
-  if (str === 'Pluv Curr (mm)')
-    return '#FFCD3D'
-  if (str === 'Sprinkler (L)')
-    return '#99ceff'
-}
-
 watchEffect(async () => {
-  console.log("a")
   let value = props.config;
   if (value) {
     await mountChart()
@@ -109,13 +135,16 @@ async function mountChart() {
     showChart.value = data.length > 0
   } else data = []
 
-  const values = data.map(item => item.value);
+  // const values = data.map(item => item.value);
 
-  const minValue = Math.min(...values);
+  // const minValue = Math.min(...values);
 
-  const groupByData = groupByType(data);
+  // const groupByData = groupByType(data);
 
-  const datasets = createDatasets(groupByData).map(bin => bin.getDataSet())
+  const datasets = createDatasets(data).map(bin => bin.getDataSet())
+
+  const yLabel = dripperUnit.value || "L";
+  const y1Label = pluvCurrUnit.value || "mm";
 
   chartData.value = {
     datasets: datasets
@@ -150,7 +179,7 @@ async function mountChart() {
         beginAtZero: true,
         title: {
           display: true,
-          text: 'L'
+          text: yLabel
         },
         position: 'left',
       },
@@ -159,7 +188,7 @@ async function mountChart() {
         position: 'right',
         title: {
           display: true,
-          text: 'mm'
+          text: y1Label
         },
       }
     }
@@ -170,7 +199,15 @@ async function mountChart() {
 </script>
 
 <template>
-  <pre style="padding-left: 20px; padding-top: 10px;"><b>Pluv Curr</b> espresso in <b>mm</b><br><b>Dripper</b>, <b>Sprinkler</b> espresso in <b>L</b></pre>
+  <div v-if="pluvCurrUnit || dripperUnit" class="p-2" style="padding-left: 20px; padding-top: 10px;">
+    <p v-if="pluvCurrUnit" class="mb-1">
+      <b>Pluv Curr</b> espresso in <b>{{ pluvCurrUnit }}</b>
+    </p>
+    <p v-if="dripperUnit" class="mb-1">
+      <b>Dripper</b>, <b>Sprinkler</b> espressi in <b>{{ dripperUnit }}</b>
+    </p>
+  </div>
+  
   <div class="card-body">
     <div v-if="showChart">
       <Line style="height: 320px;" :data="chartData" :options="options"/>
