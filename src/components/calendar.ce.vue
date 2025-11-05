@@ -91,20 +91,23 @@ function titleFunction(event) {
 }
 
 async function mountChart(timeFilter) {
-  const parsed = JSON.parse(props.config);
+  const configParsed = JSON.parse(props.config);
   eventsData = []
 
+  console.log(configParsed);
+
   if(!timeFilter){
-    timeFilter = {...parsed.params}
+    timeFilter = {...configParsed.params}
     selectedDate.value = new Date(timeFilter.timeFilterTo * 1000);
     timeFilter.timeFilterTo = timeFilter.timeFilterTo + 604800 //one week
   }
 
 
-  const calendarResponse = await communicationService.getWateringSchedule(parsed.environment, parsed.paths, timeFilter, getEventsEndpoint)
-  if(JSON.stringify(parsed) !== props.config){
+  const calendarResponse = await communicationService.getWateringSchedule(configParsed.environment, configParsed.paths, timeFilter, getEventsEndpoint)
+  if(JSON.stringify(configParsed) !== props.config){
       return
   }
+
   if(calendarResponse) {
     eventsData = calendarResponse.events
     const eventsCalendar = [] 
@@ -119,11 +122,11 @@ async function mountChart(timeFilter) {
 
       const eventDescription = `<div><p><strong>Stato:</strong> ${e.enabled ? "Abilitata" : "Disabilitata"}</span></p>
       <p><strong>Tesi Considerata:</strong> ${e.thesisName}</span></p>
+      ${ e.adviceTimestamp ? "<p><strong>Profilo di suolo considerato:</strong> " + luxonDateTimeToString(e.adviceTimestamp) + "</p>": ""}
       <p class="mb-0"><strong>Acqua extra sistema:</strong> ${e.expectedWater ? e.expectedWater : 0} L</p>
       <p class="form-text">Es.(fertirrigazione, pioggia prevista)</p>
       <p><strong>Consiglio irriguo:</strong> ${e.advice !== null ? e.advice + " L" : "Non calcolato"} </p>
       <p><strong>Durata:</strong> ${e.duration !== null ? e.duration + " minuti" : "Non calcolata"}</p>
-      ${ e.adviceTimestamp ? "<p><strong>Profilo di suolo considerato:</strong> " + luxonDateTimeToString(e.adviceTimestamp) + "</p>": ""}
       ${e.note ? ("<p><strong>Note:</strong> " + e.note + "</p>") : ""}
       ${ e.wateringStart * 1000 > Date.now() + SCHEDULE_SAFE_PERIOD ? "<button type=\"button\" class=\"btn btn-primary update-event\" id=" + e.date + ">Modifica</button>":""}</div>`
 

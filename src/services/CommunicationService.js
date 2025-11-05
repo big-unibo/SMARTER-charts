@@ -93,6 +93,23 @@ export class CommunicationService {
         return null;
     }
 
+    async getWateringSchedule(environment, pathsParams, queryParams, endpoint) {
+        return await axios.get(this.buildURL(environment.host, "/wateringSchedule", pathsParams.sectorId, endpoint), {
+            params: queryParams,
+            headers: {
+                Authorization: 'Bearer ' + environment.token
+            }
+        }).then(response => {
+            if (response.data)
+                return response.data;
+            return null;
+        }).catch(error => {
+            console.error(`Error response: ${error}`)
+            console.error(`Error on communication service: ${error.message}`)
+            throw new Error(error.message);
+        })
+    }
+
     // async getFieldInfo(environment, pathsParams, params, endpoint) {
     //     const response = await this.getAPI(environment, "/fields", pathsParams, params, endpoint)
     //     return response;

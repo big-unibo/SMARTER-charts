@@ -15,7 +15,7 @@ let customSelectedTimestampFrom = ref(getCurrentTimestampMinusDays(90))
 
 let selectedFieldName = ref("Seleziona un campo")
 let selectedThesisName = ref("Seleziona una tesi")
-let selectedThesis = ref({thesisId: 78})
+let selectedThesis = ref({thesisId: 78, sectorId: 30})
 let selectedTimeLabel = ref("")
 let showDynamicHeatmap = ref(false)
 let showOptimalMatrix = ref(false)
@@ -52,7 +52,7 @@ function updateConnectionParams() {
         host: import.meta.env.VITE_BACKEND_ADDRESS,
         token: token.value,
       },
-      paths: selectedThesis.value,
+      paths:  selectedThesis.value,
       params: {
         timeFilterFrom: selectedTimestampFrom.value,
         timeFilterTo: selectedTimestampTo.value,
@@ -297,13 +297,14 @@ function selectedTime(time) {
 			</div>
 		</div>
 
-		<div v-if="hasUserPermission('WA')" class="my-3 container col-md-12">
+		<!-- <div v-if="hasUserPermission('WA')" class="my-3 container col-md-12"> -->
+		<div v-if="true" class="my-3 container col-md-12">
 			<div class="card">
 				<div class="card-header d-flex justify-content-between align-items-center">
 					<span>Calendario Irrigazione</span>
 				</div>
 				<div class="card-body p-1">
-					<calendar-smarter :config="JSON.stringify(connectionParams)"></calendar-smarter>
+					<calendar-smarter :config="baseConnectionParams"></calendar-smarter>
 				</div>
 			</div>
 		</div>
