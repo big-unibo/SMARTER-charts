@@ -94,8 +94,6 @@ async function mountChart(timeFilter) {
   const configParsed = JSON.parse(props.config);
   eventsData = []
 
-  console.log(configParsed);
-
   if(!timeFilter){
     timeFilter = {...configParsed.params}
     selectedDate.value = new Date(timeFilter.timeFilterTo * 1000);
@@ -163,7 +161,6 @@ async function openModal(eventDate) {
       note: selectedEvent.value.note
     }
     await nextTick()
-    console.log(updateModal.value)
     if (updateModal.value) {
       activeModal = new Modal(updateModal.value)
       activeModal.show()

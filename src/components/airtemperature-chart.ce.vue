@@ -71,6 +71,11 @@ async function mountChart() {
   let unit = "C°"
   if (chartDataResponse) {
     data = chartDataResponse.data
+
+    if(!Array.isArray(data)){
+      loadingFlag.value = false
+      return
+    }
     showChart.value = data.length > 0
     unit = chartDataResponse.unit ?? unit;
   } else data = []
