@@ -57,7 +57,7 @@ async function drawImage(timestamp) {
       name: key,
       data: value.sort((a, b) => a.x - b.x).map(e => e.value)
     }
-  }).sort((a, b) => b.name - a.name)
+  }).sort((a, b) => a.name - b.name)
 
   const maxUpperBound = Math.max(...binningInfo.value.map(bin => Number(bin.upperBound)));
   const EMPTY_VALUE = maxUpperBound + 1;
@@ -80,7 +80,7 @@ async function drawImage(timestamp) {
   dripperSeries.data[xValues.indexOf(dripperX)] = DRIPPER_VALUE;
 
   series.push(dripperSeries)
-
+  
   heatmapSeries.value = series
   if (!container.value) {
     return

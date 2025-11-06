@@ -15,7 +15,7 @@ let customSelectedTimestampFrom = ref(getCurrentTimestampMinusDays(90))
 
 let selectedFieldName = ref("Seleziona un campo")
 let selectedThesisName = ref("Seleziona una tesi")
-let selectedThesis = ref({thesisId: 78, sectorId: 30})
+let selectedThesis = ref({ sectorId: 126})
 let selectedTimeLabel = ref("")
 let showDynamicHeatmap = ref(false)
 let showOptimalMatrix = ref(false)
@@ -208,12 +208,16 @@ function selectedTime(time) {
 					</li>
 				</ul>
 			</div>
-			<div v-if="thesis.value" class="d-flex align-items-center flex-wrap">
+			<div>
+				Tesi: <input type="text"  name="thesisId" v-model="selectedThesis.thesisId" ></input>
+			</div>
+			<div v-if="false" class="d-flex align-items-center flex-wrap">
 				<p class="px-2 mb-0">Tesi: </p>
 				<button class="btn btn-secondary dropdown-toggle my-1 px-2" type="button" id="dropdownMenuButton"
 					data-bs-toggle="dropdown" aria-expanded="false">
 					{{ selectedThesisName }}
 				</button>
+				
 				<ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
 					<li v-for="(item, index) in thesis.value" :key="index">
 						<a class="dropdown-item" href="#" @click.prevent="selectItem(item)">
