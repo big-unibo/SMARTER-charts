@@ -27,14 +27,14 @@ class AuthService {
         }
     }
 
-    logout(){
+    logout() {
         localStorage.removeItem('appToken');
     }
 
-    authHeader(){
+    authHeader() {
         const tokenItem = localStorage.getItem('appToken')
         const token = JSON.parse(tokenItem);
-        if(token)
+        if (token)
             return token;
         else return undefined;
     }
@@ -58,6 +58,42 @@ class AuthService {
     //         this.logout()
     //     });
     // }
+
+    async retrieveUserSectors(token, timeFilterFrom, timeFilterTo) {
+        let params = undefined
+        if (timeFilterFrom && timeFilterTo) {
+            params = { timeFilterFrom: timeFilterFrom, timeFilterTo: timeFilterTo }
+        }
+        return await axiosInstance.get('/sectors', {
+            headers: {
+                'Authorization': 'Bearer ' + token
+            },
+            params: params
+        }).then(response => {
+            if (response.data)
+                return response.data
+        }).catch(error => {
+            console.log(error)
+            console.error(`Get fields request failed: ${error.message}`)
+            this.logout()
+        });
+    }
+
+
+    async getSectorInfo(token, sectorId) {
+        return await axiosInstance.get(`/sectors/${sectorId}`, {
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        }).then(response => {
+            if (response.data)
+                return response.data
+        }).catch(error => {
+            console.log(error)
+            console.error(`Get fields request failed: ${error.message}`)
+            this.logout()
+        });
+    }
 
 }
 

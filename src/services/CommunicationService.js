@@ -17,15 +17,15 @@ export class CommunicationService {
 
         if (response) {
             return dataKey
-            ? {
-                deviceId: response?.deviceId ?? null,
-                binningId: response?.binningId ?? null,
-                unit: Array.isArray(response[0]?.signals)
-                    ? response[0].signals[0]?.unit ?? null
-                    : response[0]?.signals?.unit ?? null,   
-                data: getNestedProperty(response, dataKey)
+                ? {
+                    deviceId: response?.deviceId ?? null,
+                    binningId: response?.binningId ?? null,
+                    unit: Array.isArray(response[0]?.signals)
+                        ? response[0].signals[0]?.unit ?? null
+                        : response[0]?.signals?.unit ?? null,
+                    data: getNestedProperty(response, dataKey)
                 }
-            : response;
+                : response;
         }
 
         return null;
@@ -70,7 +70,7 @@ export class CommunicationService {
     }
 
 
-    async getDripperInfo(environment, pathsParams, queryParams, endpoint ) {
+    async getDripperInfo(environment, pathsParams, queryParams, endpoint) {
         queryParams["signalTypes"] = [DRIPPER_SIGNAL_TYPE]
         const response = await axios.get(this.buildURL(environment.host, "/theses", pathsParams.thesisId, endpoint), {
             params: queryParams,
@@ -88,7 +88,7 @@ export class CommunicationService {
         })
 
         if (response) {
-            return  getNestedProperty(response, "0.signals.0");
+            return getNestedProperty(response, "0.signals.0");
         }
         return null;
     }
@@ -186,7 +186,7 @@ export class CommunicationService {
     //     })
     // }
 
-    buildURL(host, primaryPath, pathParam, endpoint = null) {
+    buildURL(host, primaryPath, pathParam = null, endpoint = null) {
         let path = "";
         if (pathParam) {
             path = '/' + pathParam;

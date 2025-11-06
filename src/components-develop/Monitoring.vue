@@ -13,9 +13,9 @@ let customSelectedTimestampTo = ref(getCurrentTimestampMinusDays(10))
 let customSelectedTimestampFrom = ref(getCurrentTimestampMinusDays(90))
 
 
-let selectedFieldName = ref("Seleziona un campo")
+let selectedSectorName = ref("Seleziona un settore")
 let selectedThesisName = ref("Seleziona una tesi")
-let selectedThesis = ref({ sectorId: 126})
+let selectedThesis = ref({})
 let selectedTimeLabel = ref("")
 let showDynamicHeatmap = ref(false)
 let showOptimalMatrix = ref(false)
@@ -26,14 +26,15 @@ const baseConnectionParams = ref("{}")
 
 const token = computed(() => props.token);
 watch(token, () => {
-  updateConnectionParams();
+	updateUserSectors();
+	updateConnectionParams();
 });
 
 //const user = reactive(props.user)
 const userPermissions = reactive({})
 
-const fields = reactive([])
-const thesis = reactive([])
+const sectors = reactive([])
+const theses = reactive([])
 let activeThesis
 
 // watchEffect(async () => {
@@ -44,22 +45,21 @@ let activeThesis
 // 	}
 // })
 
-
 function updateConnectionParams() {
-  if (selectedThesis.value) {
-    const params = {
-      environment: {
-        host: import.meta.env.VITE_BACKEND_ADDRESS,
-        token: token.value,
-      },
-      paths:  selectedThesis.value,
-      params: {
-        timeFilterFrom: selectedTimestampFrom.value,
-        timeFilterTo: selectedTimestampTo.value,
-      },
-    }
-    baseConnectionParams.value = JSON.stringify(params)
-  }
+	if (selectedThesis.value) {
+		const params = {
+			environment: {
+				host: import.meta.env.VITE_BACKEND_ADDRESS,
+				token: token.value,
+			},
+			paths: selectedThesis.value,
+			params: {
+				timeFilterFrom: selectedTimestampFrom.value,
+				timeFilterTo: selectedTimestampTo.value,
+			},
+		}
+		baseConnectionParams.value = JSON.stringify(params)
+	}
 }
 updateConnectionParams()
 
@@ -100,46 +100,53 @@ function updateCustomTimestamps() {
 	updateConnectionParams()
 }
 
-function selectItem(item) {
-	selectedThesisName = createThesisName(item)
-	selectedThesis.value = item
+function selectThesis(thesis) {
+	selectedThesisName = createThesisName(thesis)
+	selectedThesis.value.thesisId = thesis.id
 	updateConnectionParams()
 }
 
-function selectField(field) {
-	selectedFieldName.value = createFieldName(field)
-	thesis.value = activeThesis.get(JSON.stringify(field))
-	selectedThesis.value = thesis.value[0]
-	selectItem(selectedThesis.value)
+async function selectSector(sector) {
+	selectedSectorName.value = createSectorName(sector)
+	selectedThesis.value.sectorId = sector.id
+	const sectorInfo = await authService.getSectorInfo(token.value, sector.id)
+	theses.value = sectorInfo?.theses ?? []
+	if (theses.value.length > 0) {
+		selectThesis(theses.value[0])
+	}
 }
 
-function createFieldName(item) {
+function createSectorName(item) {
 	if (!item) return ''
-	return `${item.refStructureName}; ${item.companyName}; ${item.fieldName}`
+	return `${item.organization.name}; ${item.company.name}; ${item.field.name}; ${item.name}`
 }
 
 function createThesisName(item) {
 	if (!item) return ''
-	return `Settore ${item.sectorName}; Tesi ${item.thesisName}; ${item.colture}; ${item.coltureType}`
+	return `Tesi ${item.name}`
 }
 
-async function updateUserPermission() {
-	if (token.value) {
-		userPermissions.value = await authService.retrieveUserFieldPermissions(token.value, selectedTimestampFrom.value, selectedTimestampTo.value)
-		activeThesis = userPermissions.value.permissions.reduce((accumulator, currentValue) => {
-			const field = JSON.stringify({
-				refStructureName: currentValue.refStructureName,
-				companyName: currentValue.companyName,
-				fieldName: currentValue.fieldName
-			})
-			if (!accumulator.has(field)) {
-				accumulator.set(field, [])
-			}
-			accumulator.get(field).push(currentValue)
-			return accumulator
-		}, new Map())
+async function updateUserSectors() {
+	// if (token.value) {
+	// 	userPermissions.value = await authService.retrieveUserFieldPermissions(token.value, selectedTimestampFrom.value, selectedTimestampTo.value)
+	// 	activeThesis = userPermissions.value.permissions.reduce((accumulator, currentValue) => {
+	// 		const field = JSON.stringify({
+	// 			refStructureName: currentValue.refStructureName,
+	// 			companyName: currentValue.companyName,
+	// 			fieldName: currentValue.fieldName
+	// 		})
+	// 		if (!accumulator.has(field)) {
+	// 			accumulator.set(field, [])
+	// 		}
+	// 		accumulator.get(field).push(currentValue)
+	// 		return accumulator
+	// 	}, new Map())
 
-		fields.value = Array(...activeThesis.keys()).map(f => JSON.parse(f))
+	// 	fields.value = Array(...activeThesis.keys()).map(f => JSON.parse(f))
+	// }
+
+	if (token.value) {
+		sectors.value = await authService.retrieveUserSectors(token.value, selectedTimestampFrom.value, selectedTimestampTo.value)
 	}
 }
 
@@ -194,33 +201,30 @@ function selectedTime(time) {
 			</div>
 		</div>
 		<div class="m-2 col-md-12 d-flex flex-row justify-content-center flex-wrap">
-			<div v-if="fields.value" class="d-flex align-items-center flex-wrap">
-				<p class="px-2 m-0">Campo:</p>
+			<div v-if="sectors" class="d-flex align-items-center flex-wrap">
+				<p class="px-2 m-0">Settore:</p>
 				<button class="btn btn-secondary dropdown-toggle my-1 px-2" type="button" id="dropdownMenuButton"
 					data-bs-toggle="dropdown" aria-expanded="false">
-					{{ selectedFieldName }}
+					{{ selectedSectorName }}
 				</button>
 				<ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-					<li v-for="(item, index) in fields.value" :key="index">
-						<a class="dropdown-item" href="#" @click.prevent="selectField(item)">
-							{{ createFieldName(item) }}
+					<li v-for="(item, index) in sectors.value" :key="index">
+						<a class="dropdown-item" href="#" @click.prevent="selectSector(item)">
+							{{ createSectorName(item) }}
 						</a>
 					</li>
 				</ul>
 			</div>
-			<div>
-				Tesi: <input type="text"  name="thesisId" v-model="selectedThesis.thesisId" ></input>
-			</div>
-			<div v-if="false" class="d-flex align-items-center flex-wrap">
+			<div v-if="theses" class="d-flex align-items-center flex-wrap">
 				<p class="px-2 mb-0">Tesi: </p>
 				<button class="btn btn-secondary dropdown-toggle my-1 px-2" type="button" id="dropdownMenuButton"
 					data-bs-toggle="dropdown" aria-expanded="false">
 					{{ selectedThesisName }}
 				</button>
-				
+
 				<ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-					<li v-for="(item, index) in thesis.value" :key="index">
-						<a class="dropdown-item" href="#" @click.prevent="selectItem(item)">
+					<li v-for="(item, index) in theses.value" :key="index">
+						<a class="dropdown-item" href="#" @click.prevent="selectThesis(item)">
 							{{ createThesisName(item) }}
 						</a>
 					</li>
@@ -255,7 +259,7 @@ function selectedTime(time) {
 						<div class="col-lg-6">
 							<humiditymap-smarter :config="baseConnectionParams"
 								:selectedTimestamp="selectedTimestamp"></humiditymap-smarter>
-						</div> 
+						</div>
 					</div>
 					<!-- <optimal-humidity-heatmap-smarter v-if="showOptimalMatrix"
 						:config="JSON.stringify(connectionParams)" :selectedTimestamp="selectedTimestamp"
@@ -271,8 +275,7 @@ function selectedTime(time) {
 				</div>
 				<div class="card-body">
 					<!-- <heatmap-animation-smarter v-if="hasUserPermission('MO')" -->
-					 	<heatmap-animation-smarter v-if="true"
-						:config="baseConnectionParams"></heatmap-animation-smarter>
+					<heatmap-animation-smarter v-if="true" :config="baseConnectionParams"></heatmap-animation-smarter>
 				</div>
 			</div>
 		</div>
@@ -285,24 +288,20 @@ function selectedTime(time) {
 				</div>
 			</div>
 		</div>	 -->
-		<div v-if="true" class="my-3 container col-md-12">
+		<div v-if="selectedThesis.thesisId" class="my-3 container col-md-12">
 			<div class="groundwaterpot-card card">
 				<div class="card-header">Potenziale idrico</div>
 				<div class="card-body">
-					<groundwaterpot-chart-smarter
-						style="height: 320px"
-						:config="baseConnectionParams"
-						:extraParams="JSON.stringify({
-							signalTypes: ['SOIL_WATER_CONTENT', 'SOIL_WATER_POTENTIAL'],
-							aggregationType: 'AVG'
-						})"
-					/>
+					<groundwaterpot-chart-smarter style="height: 320px" :config="baseConnectionParams" :extraParams="JSON.stringify({
+						signalTypes: ['SOIL_WATER_CONTENT', 'SOIL_WATER_POTENTIAL'],
+						aggregationType: 'AVG'
+					})" />
 				</div>
 			</div>
 		</div>
 
 		<!-- <div v-if="hasUserPermission('WA')" class="my-3 container col-md-12"> -->
-		<div v-if="true" class="my-3 container col-md-12">
+		<div v-if="selectedThesis.sectorId" class="my-3 container col-md-12">
 			<div class="card">
 				<div class="card-header d-flex justify-content-between align-items-center">
 					<span>Calendario Irrigazione</span>
@@ -313,7 +312,7 @@ function selectedTime(time) {
 			</div>
 		</div>
 
-		<div v-if="true" class="my-3 container col-md-12">
+		<div v-if="selectedThesis.thesisId" class="my-3 container col-md-12">
 			<div class="card">
 				<div class="card-header d-flex justify-content-between align-items-center">
 					<span>Consiglio Irriguo, Irrigazione e Precipitazioni</span>
@@ -321,17 +320,13 @@ function selectedTime(time) {
 						id="dynamic-heatmap-button">{{ detailedWateringButton }}</button>
 				</div>
 				<div v-if="!showDetailedWatering">
-					<water-aggregate-chart-smarter
-						:config="baseConnectionParams"
-					></water-aggregate-chart-smarter>
+					<water-aggregate-chart-smarter :config="baseConnectionParams"></water-aggregate-chart-smarter>
 				</div>
 				<div v-else>
-					<dripperandpluv-chart-smarter
-						:config="baseConnectionParams"
-						:extraParams="JSON.stringify({
-							signalTypes: ['DRIPPER', 'PLUV_CURR', 'SPRINKLER'],
-							aggregationType: 'SUM'
-						})">
+					<dripperandpluv-chart-smarter :config="baseConnectionParams" :extraParams="JSON.stringify({
+						signalTypes: ['DRIPPER', 'PLUV_CURR', 'SPRINKLER'],
+						aggregationType: 'SUM'
+					})">
 					</dripperandpluv-chart-smarter>
 				</div>
 			</div>
@@ -364,17 +359,14 @@ function selectedTime(time) {
 			</div>
 		</div>
 
-		<div v-if="true" class="my-3 container col-md-12">
+		<div v-if="selectedThesis.thesisId" class="my-3 container col-md-12">
 			<div class="card">
 				<div class="card-header">Temperatura dell'aria</div>
 				<div class="card-body">
-					<airtemperature-chart-smarter style="height: 300px"
-						:config="baseConnectionParams"
-						:extraParams="JSON.stringify({
-							signalTypes: ['AIR_TEMP'],
-							aggregationType: 'AVG'
-						})"
-						></airtemperature-chart-smarter>
+					<airtemperature-chart-smarter style="height: 300px" :config="baseConnectionParams" :extraParams="JSON.stringify({
+						signalTypes: ['AIR_TEMP'],
+						aggregationType: 'AVG'
+					})"></airtemperature-chart-smarter>
 				</div>
 			</div>
 		</div>
