@@ -10,6 +10,7 @@ import HumidityDynamicHeatmap from './components/dynamic-heatmap-animator.ce.vue
 import WaterAggregateChart from './components/water-aggregate-chart.ce.vue'
 import OptimalHumidityHeatmap from './components/optimal-humidity-heatmap-chart.ce.vue'
 import Calendar from './components/calendar.ce.vue'
+import { CalendarNewElement } from './components/calendar-new.ce'
 
 import {defineCustomElement} from "vue";
 
@@ -39,6 +40,7 @@ export function registerChartComponents(){
     customElements.define("optimal-humidity-heatmap-smarter", optimalHumidityHeatmap)
     customElements.define("calendar-smarter", calendar)
     customElements.define("water-aggregate-chart-smarter", waterAggregateChart)
+    customElements.define('calendar-new-smarter', CalendarNewElement)
 }
 
 export {CommunicationService} from "./services/CommunicationService.js";

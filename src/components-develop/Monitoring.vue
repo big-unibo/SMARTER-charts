@@ -6,11 +6,11 @@ import { computed, watch, onMounted, reactive, ref, watchEffect } from "vue";
 
 const props = defineProps(['token', 'user'])
 
-let selectedTimestampFrom = ref(getCurrentTimestampMinusDays(90))
-let selectedTimestampTo = ref(getCurrentTimestampMinusDays(85))
+let selectedTimestampFrom = ref(getCurrentTimestampMinusDays(130))
+let selectedTimestampTo = ref(getCurrentTimestampMinusDays(89))
 
-let customSelectedTimestampTo = ref(getCurrentTimestampMinusDays(10))
-let customSelectedTimestampFrom = ref(getCurrentTimestampMinusDays(90))
+let customSelectedTimestampTo = ref(getCurrentTimestampMinusDays(89))
+let customSelectedTimestampFrom = ref(getCurrentTimestampMinusDays(130))
 
 
 let selectedSectorName = ref("Seleziona un settore")
@@ -109,6 +109,7 @@ function selectThesis(thesis) {
 async function selectSector(sector) {
 	selectedSectorName.value = createSectorName(sector)
 	selectedThesis.value.sectorId = sector.id
+	updateConnectionParams()
 	const sectorInfo = await authService.getSectorInfo(token.value, sector.id)
 	theses.value = sectorInfo?.theses ?? []
 	if (theses.value.length > 0) {
@@ -232,7 +233,30 @@ function selectedTime(time) {
 			</div>
 		</div>
 
-		<div v-if="true" class="my-3 container col-md-12">
+
+		<div v-if="selectedThesis.sectorId" class="my-3 container col-md-12">
+			<div class="card">
+				<div class="card-header d-flex justify-content-between align-items-center">
+					<span>Calendario Irrigazione</span>
+				</div>
+				<div class="card-body p-1">
+					<calendar-smarter :config="baseConnectionParams"></calendar-smarter>
+				</div>
+			</div>
+		</div>
+
+		<div v-if="selectedThesis.sectorId" class="my-3 container col-md-12">
+			<div class="card">
+				<div class="card-header d-flex justify-content-between align-items-center">
+					<span>Calendario Irrigazione</span>
+				</div>
+				<div class="card-body p-1">
+					<calendar-new-smarter :config="baseConnectionParams"></calendar-new-smarter>
+				</div>
+			</div>
+		</div>
+
+		<div v-if="false" class="my-3 container col-md-12">
 			<div class="humidity-card card">
 				<div class="card-header d-flex justify-content-between align-items-center">
 					<span>Matrice dell'umidità</span>
@@ -268,17 +292,16 @@ function selectedTime(time) {
 			</div>
 		</div>
 
-		<div v-if="showDynamicHeatmap" class="my-3 container col-md-12">
+		<!-- <div v-if="showDynamicHeatmap" class="my-3 container col-md-12">
 			<div class="dynamicheatmap-card card">
 				<div class="card-header d-flex justify-content-between align-items-center">
 					<span>Evoluzione matrice dell'umidità</span>
 				</div>
 				<div class="card-body">
-					<!-- <heatmap-animation-smarter v-if="hasUserPermission('MO')" -->
 					<heatmap-animation-smarter v-if="true" :config="baseConnectionParams"></heatmap-animation-smarter>
 				</div>
 			</div>
-		</div>
+		</div> -->
 
 		<!-- <div v-if="hasUserPermission('MO')" class="my-3 container col-md-12">
 			<div class="groundwaterpot-card card">
@@ -288,7 +311,7 @@ function selectedTime(time) {
 				</div>
 			</div>
 		</div>	 -->
-		<div v-if="selectedThesis.thesisId" class="my-3 container col-md-12">
+		<!-- <div v-if="selectedThesis.thesisId" class="my-3 container col-md-12">
 			<div class="groundwaterpot-card card">
 				<div class="card-header">Potenziale idrico</div>
 				<div class="card-body">
@@ -298,10 +321,9 @@ function selectedTime(time) {
 					})" />
 				</div>
 			</div>
-		</div>
+		</div> -->
 
-		<!-- <div v-if="hasUserPermission('WA')" class="my-3 container col-md-12"> -->
-		<div v-if="selectedThesis.sectorId" class="my-3 container col-md-12">
+		<!-- <div v-if="selectedThesis.sectorId" class="my-3 container col-md-12">
 			<div class="card">
 				<div class="card-header d-flex justify-content-between align-items-center">
 					<span>Calendario Irrigazione</span>
@@ -310,9 +332,9 @@ function selectedTime(time) {
 					<calendar-smarter :config="baseConnectionParams"></calendar-smarter>
 				</div>
 			</div>
-		</div>
+		</div> -->
 
-		<div v-if="selectedThesis.thesisId" class="my-3 container col-md-12">
+		<!-- <div v-if="selectedThesis.thesisId" class="my-3 container col-md-12">
 			<div class="card">
 				<div class="card-header d-flex justify-content-between align-items-center">
 					<span>Consiglio Irriguo, Irrigazione e Precipitazioni</span>
@@ -330,9 +352,9 @@ function selectedTime(time) {
 					</dripperandpluv-chart-smarter>
 				</div>
 			</div>
-		</div>
+		</div> -->
 
-		<div v-if="hasUserPermission('WA')" class="my-3 container col-md-12">
+		<!-- <div v-if="hasUserPermission('WA')" class="my-3 container col-md-12">
 			<div class=" card">
 				<div class="card-header">Potenziale Idrico Ottimale e Potenziale Idrico Medio Giornaliero</div>
 				<div class="card-body">
@@ -340,9 +362,9 @@ function selectedTime(time) {
 						:config="JSON.stringify(connectionParams)"></delta-chart-smarter>
 				</div>
 			</div>
-		</div>
+		</div> -->
 
-		<div v-if="hasUserPermission('MO')" class="my-3 container">
+		<!-- <div v-if="hasUserPermission('MO')" class="my-3 container">
 			<div class="countors-card card">
 				<div class="card-header">Matrici di media e varianza</div>
 				<div class="card-body row">
@@ -357,9 +379,9 @@ function selectedTime(time) {
 					</div>
 				</div>
 			</div>
-		</div>
+		</div> -->
 
-		<div v-if="selectedThesis.thesisId" class="my-3 container col-md-12">
+		<!-- <div v-if="selectedThesis.thesisId" class="my-3 container col-md-12">
 			<div class="card">
 				<div class="card-header">Temperatura dell'aria</div>
 				<div class="card-body">
@@ -369,8 +391,8 @@ function selectedTime(time) {
 					})"></airtemperature-chart-smarter>
 				</div>
 			</div>
-		</div>
-	</div>
+		</div> -->
+	</div> 
 </template>
 
 <style scoped>
