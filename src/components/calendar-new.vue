@@ -10,6 +10,7 @@ import {
 } from '@schedule-x/calendar'
 import 'temporal-polyfill/global'
 import '@schedule-x/theme-default/dist/index.css'
+import { createEventModalPlugin } from '@schedule-x/event-modal'
 
 import { CommunicationService } from "../services/CommunicationService.js";
 
@@ -24,6 +25,12 @@ const events = ref([])
 
 let eventsData = []
 
+import CustomEventModal from './CustomEventModal.vue'
+const eventModalPlugin = createEventModalPlugin()
+
+const customComponents = {
+    eventModal: CustomEventModal
+}
 
 function unixToZonedDateTime(unixSeconds, timeZone = 'Europe/Rome') {
     return Temporal.Instant
@@ -86,7 +93,6 @@ async function mountChart(timeFilter) {
         return
     }
 
-    console.log(calendarResponse)
     if (calendarResponse) {
         eventsData = calendarResponse.events
         const eventsCalendar = []
@@ -99,15 +105,15 @@ async function mountChart(timeFilter) {
                 endDate = startDate
             }
 
-            //         const eventDescription = `<div><p><strong>Stato:</strong> ${e.enabled ? "Abilitata" : "Disabilitata"}</span></p>
-            //   <p><strong>Tesi Considerata:</strong> ${e.thesisName}</span></p>
-            //   ${e.adviceTimestamp ? "<p><strong>Profilo di suolo considerato:</strong> " + luxonDateTimeToString(e.adviceTimestamp) + "</p>" : ""}
-            //   <p class="mb-0"><strong>Acqua extra sistema:</strong> ${e.expectedWater ? e.expectedWater : 0} L</p>
-            //   <p class="form-text">Es.(fertirrigazione, pioggia prevista)</p>
-            //   <p><strong>Consiglio irriguo:</strong> ${e.advice !== null ? e.advice + " L" : "Non calcolato"} </p>
-            //   <p><strong>Durata:</strong> ${e.duration !== null ? e.duration + " minuti" : "Non calcolata"}</p>
-            //   ${e.note ? ("<p><strong>Note:</strong> " + e.note + "</p>") : ""}
-            //   ${e.wateringStart * 1000 > Date.now() + SCHEDULE_SAFE_PERIOD ? "<button type=\"button\" class=\"btn btn-primary update-event\" id=" + e.date + ">Modifica</button>" : ""}</div>`
+            const eventDescription = `<div><p><strong>Stato:</strong> ${e.enabled ? "Abilitata" : "Disabilitata"}</span></p>
+              <p><strong>Tesi Considerata:</strong> ${e.thesisName}</span></p>
+              ${e.adviceTimestamp ? "<p><strong>Profilo di suolo considerato:</strong> " + luxonDateTimeToString(e.adviceTimestamp) + "</p>" : ""}
+              <p class="mb-0"><strong>Acqua extra sistema:</strong> ${e.expectedWater ? e.expectedWater : 0} L</p>
+              <p class="form-text">Es.(fertirrigazione, pioggia prevista)</p>
+              <p><strong>Consiglio irriguo:</strong> ${e.advice !== null ? e.advice + " L" : "Non calcolato"} </p>
+              <p><strong>Durata:</strong> ${e.duration !== null ? e.duration + " minuti" : "Non calcolata"}</p>
+              ${e.note ? ("<p><strong>Note:</strong> " + e.note + "</p>") : ""}</div>`
+            //   ${e.wateringStart * 1000 > Date.now() + SCHEDULE_SAFE_PERIOD ? "<button type=\"button\" class=\"btn btn-primary update-event\" id=" + e.date + ">Modifica</button>" : ""}
 
             const event = {
                 id: e.date,
@@ -117,7 +123,7 @@ async function mountChart(timeFilter) {
                 with: e.updatedBy !== null ? "Modificato da: " + e.updatedBy : null,
                 calendarId: colorFunction(e),
                 isEditable: false,
-                //description: eventDescription
+                description: eventDescription
             }
             eventsCalendar.push(event)
         }
@@ -166,6 +172,7 @@ async function mountChart(timeFilter) {
                         },
                     },
                 },
+                plugins : [eventModalPlugin],
                 events: events.value,
             })
         )
@@ -177,7 +184,20 @@ async function mountChart(timeFilter) {
 
 <template>
     <div v-if="calendarApp">
-        <ScheduleXCalendar :calendar-app="calendarApp" />
+        <!-- <ScheduleXCalendar :customComponents="customComponents" :calendar-app="calendarApp" /> Modal custom -->
+         <!-- const event = {
+            id: "1",
+            title: "Irrigazione programmata",
+            start: Temporal.PlainDate.from("2024-11-07"),
+            end: Temporal.PlainDate.from("2024-11-07"),
+            calendarId: "planned",
+            description: "<p>Dettagli dell'evento</p>",
+            with: "Modificato da Mario",
+            isEditable: false,
+            note: "Controllare il sistema",
+            customData: { amountWater: 10, zone: "A" }
+        } -->
+        <ScheduleXCalendar  :calendar-app="calendarApp" /> <!-- Modal standard -->
     </div>
 </template>
 
