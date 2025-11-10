@@ -233,30 +233,7 @@ function selectedTime(time) {
 			</div>
 		</div>
 
-
-		<div v-if="selectedThesis.sectorId" class="my-3 container col-md-12">
-			<div class="card">
-				<div class="card-header d-flex justify-content-between align-items-center">
-					<span>Calendario Irrigazione</span>
-				</div>
-				<div class="card-body p-1">
-					<calendar-smarter :config="baseConnectionParams"></calendar-smarter>
-				</div>
-			</div>
-		</div>
-
-		<div v-if="selectedThesis.sectorId" class="my-3 container col-md-12">
-			<div class="card">
-				<div class="card-header d-flex justify-content-between align-items-center">
-					<span>Calendario Irrigazione</span>
-				</div>
-				<div class="card-body p-1">
-					<calendar-new-smarter :config="baseConnectionParams"></calendar-new-smarter>
-				</div>
-			</div>
-		</div>
-
-		<div v-if="false" class="my-3 container col-md-12">
+		<div v-if="selectedThesis.thesisId" class="my-3 container col-md-12">
 			<div class="humidity-card card">
 				<div class="card-header d-flex justify-content-between align-items-center">
 					<span>Matrice dell'umidità</span>
@@ -292,7 +269,7 @@ function selectedTime(time) {
 			</div>
 		</div>
 
-		<!-- <div v-if="showDynamicHeatmap" class="my-3 container col-md-12">
+		<div v-if="showDynamicHeatmap" class="my-3 container col-md-12">
 			<div class="dynamicheatmap-card card">
 				<div class="card-header d-flex justify-content-between align-items-center">
 					<span>Evoluzione matrice dell'umidità</span>
@@ -301,7 +278,7 @@ function selectedTime(time) {
 					<heatmap-animation-smarter v-if="true" :config="baseConnectionParams"></heatmap-animation-smarter>
 				</div>
 			</div>
-		</div> -->
+		</div>
 
 		<!-- <div v-if="hasUserPermission('MO')" class="my-3 container col-md-12">
 			<div class="groundwaterpot-card card">
@@ -311,7 +288,7 @@ function selectedTime(time) {
 				</div>
 			</div>
 		</div>	 -->
-		<!-- <div v-if="selectedThesis.thesisId" class="my-3 container col-md-12">
+		<div v-if="selectedThesis.thesisId" class="my-3 container col-md-12">
 			<div class="groundwaterpot-card card">
 				<div class="card-header">Potenziale idrico</div>
 				<div class="card-body">
@@ -321,20 +298,9 @@ function selectedTime(time) {
 					})" />
 				</div>
 			</div>
-		</div> -->
+		</div>
 
-		<!-- <div v-if="selectedThesis.sectorId" class="my-3 container col-md-12">
-			<div class="card">
-				<div class="card-header d-flex justify-content-between align-items-center">
-					<span>Calendario Irrigazione</span>
-				</div>
-				<div class="card-body p-1">
-					<calendar-smarter :config="baseConnectionParams"></calendar-smarter>
-				</div>
-			</div>
-		</div> -->
-
-		<!-- <div v-if="selectedThesis.thesisId" class="my-3 container col-md-12">
+		<div v-if="selectedThesis.thesisId" class="my-3 container col-md-12">
 			<div class="card">
 				<div class="card-header d-flex justify-content-between align-items-center">
 					<span>Consiglio Irriguo, Irrigazione e Precipitazioni</span>
@@ -352,7 +318,18 @@ function selectedTime(time) {
 					</dripperandpluv-chart-smarter>
 				</div>
 			</div>
-		</div> -->
+		</div>
+
+				<div v-if="selectedThesis.sectorId" class="my-3 container col-md-12">
+			<div class="card">
+				<div class="card-header d-flex justify-content-between align-items-center">
+					<span>Calendario Irrigazione</span>
+				</div>
+				<div class="card-body p-1">
+					<calendar-smarter :config="baseConnectionParams"></calendar-smarter>
+				</div>
+			</div>
+		</div>
 
 		<!-- <div v-if="hasUserPermission('WA')" class="my-3 container col-md-12">
 			<div class=" card">
@@ -381,7 +358,7 @@ function selectedTime(time) {
 			</div>
 		</div> -->
 
-		<!-- <div v-if="selectedThesis.thesisId" class="my-3 container col-md-12">
+		<div v-if="selectedThesis.thesisId" class="my-3 container col-md-12">
 			<div class="card">
 				<div class="card-header">Temperatura dell'aria</div>
 				<div class="card-body">
@@ -391,7 +368,7 @@ function selectedTime(time) {
 					})"></airtemperature-chart-smarter>
 				</div>
 			</div>
-		</div> -->
+		</div>
 	</div> 
 </template>
 

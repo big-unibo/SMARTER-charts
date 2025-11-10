@@ -24,7 +24,7 @@ const humidityHeatMap = defineCustomElement(HumidityHeatmap)
 const humidityMultiLineChart = defineCustomElement(HumidityMultiLineChart)
 const dynamicHeatmapAnimation = defineCustomElement(HumidityDynamicHeatmap)
 const optimalHumidityHeatmap = defineCustomElement(OptimalHumidityHeatmap)
-const calendar = defineCustomElement(Calendar);
+//const calendar = defineCustomElement(Calendar);
 const waterAggregateChart = defineCustomElement(WaterAggregateChart);
 
 export function registerChartComponents(){
@@ -38,9 +38,9 @@ export function registerChartComponents(){
     customElements.define("humiditymultiline-chart-smarter", humidityMultiLineChart)
     customElements.define("heatmap-animation-smarter", dynamicHeatmapAnimation)
     customElements.define("optimal-humidity-heatmap-smarter", optimalHumidityHeatmap)
-    customElements.define("calendar-smarter", calendar)
+    //customElements.define("calendar-smarter", calendar)
     customElements.define("water-aggregate-chart-smarter", waterAggregateChart)
-    customElements.define('calendar-new-smarter', CalendarNewElement)
+    customElements.define('calendar-smarter', CalendarNewElement)
 }
 
 export {CommunicationService} from "./services/CommunicationService.js";
