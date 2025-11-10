@@ -1,5 +1,5 @@
-<script setup>
-import { ref, shallowRef, onMounted, markRaw, watchEffect, nextTick } from 'vue'
+<script setup lang="ts">
+import { ref, shallowRef, markRaw, watchEffect, nextTick } from 'vue'
 import { ScheduleXCalendar } from '@schedule-x/vue'
 import {
     createCalendar,
@@ -11,7 +11,6 @@ import {
 import 'temporal-polyfill/global'
 import '@schedule-x/theme-default/dist/index.css'
 import { createEventModalPlugin } from '@schedule-x/event-modal'
-
 import { CommunicationService } from "../services/CommunicationService.js";
 
 const getEventsEndpoint = "calendar"
@@ -24,12 +23,10 @@ const selectedDate = ref(Temporal.Now.zonedDateTimeISO('Europe/Rome'))
 const events = ref([])
 
 let eventsData = []
-
-import CustomEventModal from './CustomEventModal.vue'
 const eventModalPlugin = createEventModalPlugin()
 
-const customComponents = {
-    eventModal: CustomEventModal
+const closeModal = () => {
+    eventModalPlugin.close()
 }
 
 function unixToZonedDateTime(unixSeconds, timeZone = 'Europe/Rome') {
@@ -67,6 +64,33 @@ function colorFunction(event) {
     return "planned"
 }
 
+function formatEventDate(startStr, endStr) {
+    const start = Temporal.ZonedDateTime.from(startStr)
+    const end = Temporal.ZonedDateTime.from(endStr)
+
+    const startDate = new Date(start.epochMilliseconds)
+    const endDate = new Date(end.epochMilliseconds)
+
+    const dateFormatter = new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })
+    const timeFormatter = new Intl.DateTimeFormat('it-IT', { hour: '2-digit', minute: '2-digit' })
+
+    const sameDay = start.toPlainDate().equals(end.toPlainDate())
+
+    if (sameDay) {
+        return `${dateFormatter.format(startDate)} ⋅ ${timeFormatter.format(startDate)} – ${timeFormatter.format(endDate)}`
+    } else {
+        return `${dateFormatter.format(startDate)} ${timeFormatter.format(startDate)} – ${dateFormatter.format(endDate)} ${dateFormatter.format(endDate)}`
+    }
+}
+
+function formatTimestamp(timestamp) {
+    if (!timestamp) return '—'
+    const ts = timestamp < 1e12 ? timestamp * 1000 : timestamp
+    const date = new Date(ts)
+    return new Intl.DateTimeFormat('it-IT', {
+        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+    }).format(date)
+}
 
 
 watchEffect(async () => {
@@ -105,25 +129,12 @@ async function mountChart(timeFilter) {
                 endDate = startDate
             }
 
-            const eventDescription = `<div><p><strong>Stato:</strong> ${e.enabled ? "Abilitata" : "Disabilitata"}</span></p>
-              <p><strong>Tesi Considerata:</strong> ${e.thesisName}</span></p>
-              ${e.adviceTimestamp ? "<p><strong>Profilo di suolo considerato:</strong> " + luxonDateTimeToString(e.adviceTimestamp) + "</p>" : ""}
-              <p class="mb-0"><strong>Acqua extra sistema:</strong> ${e.expectedWater ? e.expectedWater : 0} L</p>
-              <p class="form-text">Es.(fertirrigazione, pioggia prevista)</p>
-              <p><strong>Consiglio irriguo:</strong> ${e.advice !== null ? e.advice + " L" : "Non calcolato"} </p>
-              <p><strong>Durata:</strong> ${e.duration !== null ? e.duration + " minuti" : "Non calcolata"}</p>
-              ${e.note ? ("<p><strong>Note:</strong> " + e.note + "</p>") : ""}</div>`
-            //   ${e.wateringStart * 1000 > Date.now() + SCHEDULE_SAFE_PERIOD ? "<button type=\"button\" class=\"btn btn-primary update-event\" id=" + e.date + ">Modifica</button>" : ""}
+            const eventdata = {
+                enabled: e.enabled, duration: e.duration, advice: e.advice, expectedWater: e.expectedWater, note: e.note, updatedBy: e.updatedBy, theses: e.theses
+            }
 
             const event = {
-                id: e.date,
-                start: startDate,
-                end: endDate,
-                title: titleFunction(e),
-                with: e.updatedBy !== null ? "Modificato da: " + e.updatedBy : null,
-                calendarId: colorFunction(e),
-                isEditable: false,
-                description: eventDescription
+                id: e.date, start: startDate, end: endDate, title: titleFunction(e), calendarId: colorFunction(e), isEditable: false, customData: eventdata
             }
             eventsCalendar.push(event)
         }
@@ -139,40 +150,12 @@ async function mountChart(timeFilter) {
                 locale: 'it-IT',
                 views: [createViewMonthGrid()],
                 calendars: {
-                    sent: {
-                        colorName: 'sent',
-                        lightColors: {
-                            main: '#fff',
-                            container: '#a3c2c2',
-                            onContainer: '#fff',
-                        },
-                    },
-                    disabled: {
-                        colorName: 'disabled',
-                        lightColors: {
-                            main: 'fff',
-                            container: '#ff3336',
-                            onContainer: '#fff',
-                        },
-                    },
-                    updated: {
-                        colorName: 'updated',
-                        lightColors: {
-                            main: '#fff',
-                            container: '#9966ff',
-                            onContainer: '#fff',
-                        },
-                    },
-                    planned: {
-                        colorName: 'planned',
-                        lightColors: {
-                            main: '#fff',
-                            container: '#339CFF',
-                            onContainer: '#fff',
-                        },
-                    },
+                    sent: { colorName: 'sent', lightColors: { main: '#fff', container: '#a3c2c2', onContainer: '#fff', }, },
+                    disabled: { colorName: 'disabled', lightColors: { main: 'fff', container: '#ff3336', onContainer: '#fff', }, },
+                    updated: { colorName: 'updated', lightColors: { main: '#fff', container: '#9966ff', onContainer: '#fff', }, },
+                    planned: { colorName: 'planned', lightColors: { main: '#fff', container: '#339CFF', onContainer: '#fff', }, },
                 },
-                plugins : [eventModalPlugin],
+                plugins: [eventModalPlugin],
                 events: events.value,
             })
         )
@@ -184,28 +167,170 @@ async function mountChart(timeFilter) {
 
 <template>
     <div v-if="calendarApp">
-        <!-- <ScheduleXCalendar :customComponents="customComponents" :calendar-app="calendarApp" /> Modal custom -->
-         <!-- const event = {
-            id: "1",
-            title: "Irrigazione programmata",
-            start: Temporal.PlainDate.from("2024-11-07"),
-            end: Temporal.PlainDate.from("2024-11-07"),
-            calendarId: "planned",
-            description: "<p>Dettagli dell'evento</p>",
-            with: "Modificato da Mario",
-            isEditable: false,
-            note: "Controllare il sistema",
-            customData: { amountWater: 10, zone: "A" }
-        } -->
-        <ScheduleXCalendar  :calendar-app="calendarApp" /> <!-- Modal standard -->
+        <ScheduleXCalendar :calendar-app="calendarApp">
+
+            <template #eventModal="{ calendarEvent }">
+                <div class="custom-event-modal">
+                    <button class="close-btn" @click="closeModal">×</button>
+
+                    <div class="event-title">
+                        {{ calendarEvent.title }}
+                    </div>
+
+                    <div class="event-time">
+                        {{ formatEventDate(calendarEvent.start, calendarEvent.end) }}
+                    </div>
+
+                    <div class="event-updatedBy" v-if="calendarEvent.customData.updatedBy">
+                        <span class="label">Modificato da: </span>
+                        <span>{{ calendarEvent.customData.updatedBy }}</span>
+                    </div>
+
+                    <div class="event-data">
+                        <p>
+                            <span class="label">Stato: </span>
+                            <span>{{ calendarEvent.customData.enabled ? 'Abilitata' : 'Disabilitata' }}</span>
+                        </p>
+
+                        <p>
+                            <span class="label">Consiglio irriguo: </span>
+                            <span>{{ calendarEvent.customData.advice !== null ? calendarEvent.customData.advice + " L" :
+                                "Non calcolato" }}</span>
+                        </p>
+
+                        <p>
+                            <span class="label">Durata: </span>
+                            <span>{{ calendarEvent.customData.duration !== null ? calendarEvent.customData.duration +
+                                "minuti" : "Non calcolata" }}</span>
+                        </p>
+
+                        <p>
+                            <span class="label">Acqua extra sistema: </span>
+                            <span>{{ calendarEvent.customData.expectedWater ? calendarEvent.customData.expectedWater : 0
+                            }} L</span>
+                        </p>
+
+                        <p class="example">
+                            <em>Es. (fertirrigazione, pioggia prevista)</em>
+                        </p>
+
+                        <div v-if="calendarEvent.customData.theses && calendarEvent.customData.theses.length">
+                            <p><span class="label">Tesi Considerate:</span></p>
+                            <ul class="theses-list">
+                                <li v-for="thesis in calendarEvent.customData.theses" :key="thesis.thesisId">
+                                    <div class="thesis-item">
+                                        <span class="thesis-name">{{ thesis.thesisName }}</span>
+                                        <span class="thesis-weight">{{ (thesis.weight * 100).toFixed(0) }}%</span>
+                                    </div>
+                                    <div class="thesis-timestamp">
+                                        <small>{{ formatTimestamp(thesis.imageTimestamp) }}</small>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <p v-if="calendarEvent.customData.note">
+                            <span class="label">Note: </span>
+                            <span>{{ calendarEvent.customData.note }}</span>
+                        </p>
+
+                    </div>
+                </div>
+            </template>
+        </ScheduleXCalendar>
     </div>
 </template>
 
 <style scoped>
+
 .sx-vue-calendar-wrapper {
     width: 100%;
     max-width: 100vw;
     height: 500px;
     max-height: 90vh;
+}
+
+/* Modal styles */
+.custom-event-modal {
+    padding: 26px;
+    background: #fff;
+    color: black;
+    border: 1px solid rgb(224 224 224);
+    border-radius: 8px;
+    box-shadow: 0 12px 24px #00000017, 0 6px 12px #0000002e;
+    max-width: 420px;
+    z-index: 999;
+}
+
+.close-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: #555;
+    font-weight: bold;
+    z-index: 1000;
+}
+
+.close-btn:hover {
+    color: #000;
+}
+
+.event-title {
+    font-weight: 500;
+    font-size: 22px;
+    margin-bottom: 0.4em;
+}
+
+.event-time,
+.event-updatedBy {
+    font-size: 14px;
+    margin-bottom: 0.6em;
+}
+
+.event-data {
+    padding: 12px;
+}
+
+.event-data p {
+    margin: 0.4em 0;
+    font-size: 16px;
+}
+
+.label {
+    font-size: 16px;
+    font-weight: 700;
+    color: #222;
+    min-width: 150px;
+}
+
+.event-data .example {
+    margin-top: 0px;
+    font-size: 12px;
+    color: #555;
+    font-style: italic;
+}
+
+.theses-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0.4em 0;
+    font-size: 14px;
+}
+
+.thesis-item {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 500;
+    width: 70%;
+}
+
+.thesis-timestamp {
+    color: #555;
+    font-size: 13px;
+    margin-bottom: 4px;
 }
 </style>
