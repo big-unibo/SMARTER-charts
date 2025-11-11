@@ -1,8 +1,8 @@
-// src/components/calendar-new.ce.js
-import { createApp } from 'vue'
-import CalendarNew from './calendar-new.vue'
 
-export class CalendarNewElement extends HTMLElement {
+import { createApp } from 'vue'
+import Calendar from './calendar.vue'
+
+export class CalendarElement extends HTMLElement {
   connectedCallback() {
     const mountPoint = document.createElement('div')
     this.appendChild(mountPoint)
@@ -10,7 +10,7 @@ export class CalendarNewElement extends HTMLElement {
     const props = {}
     for (const attr of this.attributes) props[attr.name] = attr.value
 
-    this.app = createApp(CalendarNew, props)
+    this.app = createApp(Calendar, props)
     this.app.mount(mountPoint)
 
     this.observer = new MutationObserver((mutations) => {

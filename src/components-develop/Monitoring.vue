@@ -148,6 +148,7 @@ async function updateUserSectors() {
 
 	if (token.value) {
 		sectors.value = await authService.retrieveUserSectors(token.value, selectedTimestampFrom.value, selectedTimestampTo.value)
+		selectSector(sectors.value[0])
 	}
 }
 
@@ -280,14 +281,14 @@ function selectedTime(time) {
 			</div>
 		</div>
 
-		<!-- <div v-if="hasUserPermission('MO')" class="my-3 container col-md-12">
+		<div v-if="hasUserPermission('MO')" class="my-3 container col-md-12">
 			<div class="groundwaterpot-card card">
 				<div class="card-header">Potenziale idrico</div>
 				<div class="card-body">
 					<groundwaterpot-chart-smarter style="height: 320px" :config="JSON.stringify(connectionParams)"></groundwaterpot-chart-smarter>
 				</div>
 			</div>
-		</div>	 -->
+		</div>	
 		<div v-if="selectedThesis.thesisId" class="my-3 container col-md-12">
 			<div class="groundwaterpot-card card">
 				<div class="card-header">Potenziale idrico</div>
@@ -320,7 +321,7 @@ function selectedTime(time) {
 			</div>
 		</div>
 
-				<div v-if="selectedThesis.sectorId" class="my-3 container col-md-12">
+		<div v-if="selectedThesis.sectorId" class="my-3 container col-md-12">
 			<div class="card">
 				<div class="card-header d-flex justify-content-between align-items-center">
 					<span>Calendario Irrigazione</span>
@@ -373,6 +374,7 @@ function selectedTime(time) {
 </template>
 
 <style scoped>
+
 input[type=radio] {
 	position: absolute;
 	clip: rect(0, 0, 0, 0);

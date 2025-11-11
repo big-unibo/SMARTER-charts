@@ -9,9 +9,7 @@ import HumidityMultiLineChart from "./components/humiditymultilinear-chart.ce.vu
 import HumidityDynamicHeatmap from './components/dynamic-heatmap-animator.ce.vue'
 import WaterAggregateChart from './components/water-aggregate-chart.ce.vue'
 import OptimalHumidityHeatmap from './components/optimal-humidity-heatmap-chart.ce.vue'
-import Calendar from './components/calendar.ce.vue'
-import { CalendarNewElement } from './components/calendar-new.ce'
-
+import { CalendarElement } from './components/calendar.ce.js'
 import {defineCustomElement} from "vue";
 
 const deltaChart = defineCustomElement(DeltaChart);
@@ -24,7 +22,6 @@ const humidityHeatMap = defineCustomElement(HumidityHeatmap)
 const humidityMultiLineChart = defineCustomElement(HumidityMultiLineChart)
 const dynamicHeatmapAnimation = defineCustomElement(HumidityDynamicHeatmap)
 const optimalHumidityHeatmap = defineCustomElement(OptimalHumidityHeatmap)
-//const calendar = defineCustomElement(Calendar);
 const waterAggregateChart = defineCustomElement(WaterAggregateChart);
 
 export function registerChartComponents(){
@@ -38,9 +35,8 @@ export function registerChartComponents(){
     customElements.define("humiditymultiline-chart-smarter", humidityMultiLineChart)
     customElements.define("heatmap-animation-smarter", dynamicHeatmapAnimation)
     customElements.define("optimal-humidity-heatmap-smarter", optimalHumidityHeatmap)
-    //customElements.define("calendar-smarter", calendar)
     customElements.define("water-aggregate-chart-smarter", waterAggregateChart)
-    customElements.define('calendar-smarter', CalendarNewElement)
+    customElements.define('calendar-smarter', CalendarElement)
 }
 
 export {CommunicationService} from "./services/CommunicationService.js";
