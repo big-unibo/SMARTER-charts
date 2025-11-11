@@ -3,6 +3,7 @@ import {nextTick, ref, watch, watchEffect} from "vue";
 import {CommunicationService} from "../services/CommunicationService.js";
 import VueApexCharts  from "vue3-apexcharts"
 import DistanceChart from "../components/distance-heatmap-chart.ce.vue"
+import { binningColorConfig } from "@/common/colorsConfig.js";
 
 const communicationService = new CommunicationService();
 const heatmapSeries = ref([]);
@@ -10,14 +11,17 @@ const weightsSeries = ref([])
 const optValueChartOptions = ref({emitsOptions: false})
 const weightsChartOptions = ref({emitsOptions: false})
 const image = ref({})
-const matrixId = ref(null)
+const gridId = ref(null)
 
 const containerOptimal = ref(null)
 
 const props = defineProps(['config', 'selectedTimestamp', 'showDistance'])
 const showChart = ref(false)
 const loadingFlag = ref(false)
-const endpoint = 'getOptimalState'
+const endpoint = 'optimalState'
+const signalsEndpoint = 'signals'
+
+const binningInfo = ref([])
 
 watchEffect( async () => {
   let value = props.config;
@@ -29,9 +33,9 @@ watchEffect( async () => {
 const buildHeatmapSeries = (valueKey) => {
   let x = []
   const series = Array.from(image.value.reduce((accumulator, currentValue) => {
-    if (!accumulator.has(currentValue.yy))
-      accumulator.set(currentValue.yy, []);
-    accumulator.get(currentValue.yy).push({ x: currentValue.xx,
+    if (!accumulator.has(currentValue.y))
+      accumulator.set(currentValue.y, []);
+    accumulator.get(currentValue.y).push({ x: currentValue.x,
       value: currentValue[valueKey].toFixed(2)
     })
     return accumulator
@@ -43,7 +47,7 @@ const buildHeatmapSeries = (valueKey) => {
       name: key, 
       data: value.sort((a,b) => a.x - b.x).map(e => e.value)
     }
-  }).sort((a,b)=> b.name - a.name)
+  }).sort((a,b)=> a.name - b.name)
 
   return [x, series]
 }
@@ -54,20 +58,23 @@ async function drawValuesImage(){
   } 
  
   const parsed = JSON.parse(props.config);
-  const dripperPos = await communicationService.getFieldInfo(parsed.environment, parsed.paths, {timestamp: props.selectedTimestamp}, "dripperInfo")
+  const dripperData = await communicationService.getDripperInfo(parsed.environment, parsed.paths, {timestamp: props.selectedTimestamp}, signalsEndpoint )
+  const dripperX = dripperData?.x ?? 0;
+  const DRIPPER_VALUE = 1;
+  const EMPTY_VALUE = 0;
+
   if(JSON.stringify(parsed) !== props.config){
       return
   }
 
-  const [xValues, series] = buildHeatmapSeries("optValue")
+  const [xValues, series] = buildHeatmapSeries("value")
 
   const dripperSeries = {
     name: "0",
-    data: new Array(series[0].data.length).fill(1)
+    data: new Array(series[0].data.length).fill(EMPTY_VALUE)
   }
 
-  dripperSeries.data[xValues.indexOf(dripperPos.xx)] = 0
-
+  dripperSeries.data[xValues.indexOf(dripperX)] = DRIPPER_VALUE;
   series.push(dripperSeries)
 
   heatmapSeries.value = series
@@ -110,49 +117,19 @@ async function drawValuesImage(){
         enableShades: false,
         radius: 0,
         colorScale: {
-          ranges: [
+          ranges: [...binningInfo.value.map(bin => ({
+            from: Number(bin.lowerBound),
+            to: Number(bin.upperBound),
+            name: bin.humidityBinDescription,
+            color: binningColorConfig(bin.humidityBin)
+          })),
           {
-            from: 0.01,
-            to: 1000,
+            from: EMPTY_VALUE,
+            to: EMPTY_VALUE,
             name: " ",
-            color: '#ffffff'
-          },  
-          {
-            from: -29.99,
-            to: 0,
-            name: '(-30,0]',
-            color: '#053061'
-          },
-          {
-            from: -99.99,
-            to: -30,
-            name: '(-100,-30]',
-            color: '#337CB7'
-          },
-          {
-            from: -199.99,
-            to: -100,
-            name: '(-200,-100]',
-            color: '#8FC2DD'
-          },
-          {
-            from: -299.99,
-            to: -200,
-            name: '(-300,-200]',
-            color: '#F1A385'
-          },
-          {
-            from: -1499.99,
-            to: -300,
-            name: '(-1500,-300]',
-            color: '#C33D3D'
-          },
-          {
-            from: -2500,
-            to: -1500,
-            name: '(-∞,-1500]',
-            color: '#8C0D25'
-          }]
+            color: "#ffffff"
+          }
+          ]
         }
       },
     },
@@ -176,7 +153,7 @@ async function drawValuesImage(){
       width: 0
     },
     title: {
-      text: 'Matrice ottima (Id: ' + matrixId.value +')',
+      text: 'Matrice ottima (Id: ' + gridId.value +')',
       align: 'center',
       offsetY: 10,
     },
@@ -339,21 +316,28 @@ async function drawWeightsImage(){
 }
 
 async function mountChart() {
-  const parsed = JSON.parse(props.config);
-  const selectedTimestamp = props.selectedTimestamp
-  const params = {...parsed.params}
-  params["timestamp"] = selectedTimestamp
+  const configParsed = JSON.parse(props.config);
+
   showChart.value = false
   loadingFlag.value = true
-  const chartDataResponse = await communicationService.getChartData(parsed.environment, parsed.paths, params, endpoint, "")
-  if(JSON.stringify(parsed) !== props.config || selectedTimestamp !== props.selectedTimestamp){
+
+  const selectedTimestamp = props.selectedTimestamp
+  const params = {...configParsed.params}
+  params["timestamp"] = selectedTimestamp
+
+  const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, params, endpoint)
+  if(JSON.stringify(configParsed) !== props.config || selectedTimestamp !== props.selectedTimestamp){
       return
   }
-  if(chartDataResponse) {
-    showChart.value = chartDataResponse.optimalState.length > 0
+
+  const binningId = 1;
+
+  if (chartDataResponse && binningId) {
+    showChart.value = chartDataResponse.optimalProfile.length > 0
     if(showChart.value){
-        image.value = chartDataResponse.optimalState
-        matrixId.value = chartDataResponse.matrixId
+        image.value = chartDataResponse.optimalProfile
+        binningInfo.value = await communicationService.getBinningInfo(configParsed.environment, binningId, 'bins')
+        gridId.value = chartDataResponse.gridId
         await drawValuesImage()
         await drawWeightsImage()
     }

@@ -242,9 +242,9 @@ function selectedTime(time) {
 						<!-- <WateringAdviceSimulatorComponent v-if="true"
 							:config="JSON.stringify(connectionParams)" :selectedTimestamp="selectedTimestamp" />
 						<UpdateOptimalStateComponent v-if="true"
-							:config="JSON.stringify(connectionParams)" :selectedTimestamp="selectedTimestamp" />
+							:config="JSON.stringify(connectionParams)" :selectedTimestamp="selectedTimestamp" /> -->
 						<button class="btn btn-sm btn-secondary m-1" type="button" @click="enableOptimalMatrix"
-							id="optimal-heatmap-button">Mostra ottimo</button> -->
+							id="optimal-heatmap-button">Mostra ottimo</button> 
 						<button class="btn btn-sm btn-secondary m-1" type="button" @click="enableDynamicHeatmap"
 							id="dynamic-heatmap-button">Mostra evoluzione</button>
 					</div>
@@ -266,6 +266,9 @@ function selectedTime(time) {
 					<!-- <optimal-humidity-heatmap-smarter v-if="showOptimalMatrix"
 						:config="JSON.stringify(connectionParams)" :selectedTimestamp="selectedTimestamp"
 						:showDistance="hasUserPermission('*')"></optimal-humidity-heatmap-smarter> -->
+					<optimal-humidity-heatmap-smarter v-if="showOptimalMatrix"
+						:config="baseConnectionParams" :selectedTimestamp="selectedTimestamp"
+					></optimal-humidity-heatmap-smarter>
 				</div>
 			</div>
 		</div>
