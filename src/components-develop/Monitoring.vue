@@ -335,15 +335,15 @@ function selectedTime(time) {
 			</div>
 		</div>
 
-		<!-- <div v-if="hasUserPermission('WA')" class="my-3 container col-md-12">
+		<div v-if="true" class="my-3 container col-md-12">
 			<div class=" card">
 				<div class="card-header">Potenziale Idrico Ottimale e Potenziale Idrico Medio Giornaliero</div>
 				<div class="card-body">
 					<delta-chart-smarter style="height: 300px"
-						:config="JSON.stringify(connectionParams)"></delta-chart-smarter>
+						:config="baseConnectionParams"></delta-chart-smarter>
 				</div>
 			</div>
-		</div> -->
+		</div> 
 
 		<!-- <div v-if="hasUserPermission('MO')" class="my-3 container">
 			<div class="countors-card card">

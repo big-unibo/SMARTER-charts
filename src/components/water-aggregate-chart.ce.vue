@@ -56,8 +56,9 @@ const createDatasets = (data) => {
 
   data.forEach(signalType => {
     const type = signalType.signalTypeDescription;
-    const unit = signalType.signals?.[0]?.unit || '';
-    const label = unit ? `${type} (${unit})` : type;
+    const label = type;
+    // const unit = signalType.signals?.[0]?.unit || '';
+    // const label = unit ? `${type} (${unit})` : type;
 
     const dataPoints = signalType.signals
       .flatMap(signal =>

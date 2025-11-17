@@ -32,3 +32,14 @@ export const signalsColorFunction = (str) => {
   if (str === 'Air Temperature')
     return '#339CFF'
 }
+
+export const deltaColorFunction = (str) => {
+  if (str === 'Media ottimale')
+    return '#6064C8'
+  if (str === 'Media giornaliera')
+    return '#339CFF'
+  if (str === 'Asciutto')
+    return '#fa5f43'
+  if (str === 'Capacità di campo')
+    return '#2cb8b8'
+}

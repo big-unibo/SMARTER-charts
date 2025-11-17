@@ -1,10 +1,10 @@
 <script setup>
 
-import {Line} from "vue-chartjs";
-import {ref, watchEffect} from "vue";
+import { Line } from "vue-chartjs";
+import { ref, watchEffect } from "vue";
 import 'chartjs-adapter-luxon';
-import {luxonDateTime} from '../common/dateUtils.js'
-import {CommunicationService} from "../services/CommunicationService.js";
+import { luxonDateTime } from '../common/dateUtils.js'
+import { CommunicationService } from "../services/CommunicationService.js";
 
 import {
   Chart as ChartJS,
@@ -18,14 +18,15 @@ import {
   Filler,
   TimeScale
 } from 'chart.js'
-import {LineDatasetData} from "../common/LineDatasetData.js";
+import { LineDatasetData } from "../common/LineDatasetData.js";
+import { deltaColorFunction } from '@/common/colorsConfig.js';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler, TimeScale)
 
 const communicationService = new CommunicationService();
 
-const chartData = ref({datasets: [], labels: []})
-const options = ref({responsive: true, maintainAspectRatio: false})
+const chartData = ref({ datasets: [], labels: [] })
+const options = ref({ responsive: true, maintainAspectRatio: false })
 const showChart = ref(false)
 const loadingFlag = ref(false)
 
@@ -33,58 +34,70 @@ const props = defineProps(['config'])
 
 const endpoint = 'delta'
 
-const groupByType = (measures) => {
-  return measures.reduce((accumulator, currentValue) => {
-    const key = currentValue.detectedValueTypeDescription
-    if(!accumulator.has(key))
-      accumulator.set(key, []);
-    accumulator.get(key).push(JSON.stringify({x: luxonDateTime(currentValue.timestamp), y: Number(currentValue.value).toFixed(2)}));
-    return accumulator;
-  }, new Map());
-}
+// const groupByType = (measures) => {
+//   return measures.reduce((accumulator, currentValue) => {
+//     const key = currentValue.detectedValueTypeDescription
+//     if(!accumulator.has(key))
+//       accumulator.set(key, []);
+//     accumulator.get(key).push(JSON.stringify({x: luxonDateTime(currentValue.timestamp), y: Number(currentValue.value).toFixed(2)}));
+//     return accumulator;
+//   }, new Map());
+// }
 
-const createDatasets = (groupedMeasures) => {
-  return Array.from(groupedMeasures, ([key, jsonValues]) => {
-    return new LineDatasetData(key, jsonValues, false, 2, 0.2, colorFunction);
+// const createDatasets = (groupedMeasures) => {
+//   return Array.from(groupedMeasures, ([key, jsonValues]) => {
+//     return new LineDatasetData(key, jsonValues, false, 2, 0.2, colorFunction);
+//   });
+// };
+
+const createDatasets = (data) => {
+  const datasets = [];
+
+  data.forEach(signalType => {
+    const type = signalType.detectedValueTypeDescription;
+    const unit = signalType.signals?.[0]?.unit || '';
+    const label = unit ? `${type} (${unit})` : type;
+
+    const dataPoints = signalType.values
+      .map(m =>
+        JSON.stringify({
+          x: luxonDateTime(m.timestamp),
+          y: Number(m.value).toFixed(2)
+        })
+      );
+
+    datasets.push(new LineDatasetData(label, dataPoints, 'false', 2, 0.2, deltaColorFunction, type));
   });
-};
 
-const colorFunction = (str) => {
-  if(str === 'Media Pot. Idr. Ottimale')
-    return '#6064C8'
-  if(str === 'Media Pot. Idr. Giornaliera')
-    return '#339CFF'
-  if(str === 'Pot. Idr. Asciutto (-300 cbar)')
-    return '#fa5f43'
-  if(str === 'Pot. Idr. Capacità di campo (-20 cbar)')
-    return '#2cb8b8'
-}
+  return datasets;
+};
 
 watchEffect(async () => {
   let value = props.config;
-  if(value) {
+  if (value) {
     await mountChart()
   }
 });
 
 async function mountChart() {
-  const parsed = JSON.parse(props.config);
+  const configParsed = JSON.parse(props.config);
   let data = []
 
   showChart.value = false
   loadingFlag.value = true
-  const chartDataResponse = await communicationService.getChartData(parsed.environment, parsed.paths, parsed.params, endpoint, 'values.0.measures')
-  if(JSON.stringify(parsed) !== props.config){
-      return
+  const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, configParsed.params, endpoint)
+  if (JSON.stringify(configParsed) !== props.config) {
+    return
   }
-  if(chartDataResponse) {
+  if (chartDataResponse) {
     data = chartDataResponse
     showChart.value = data.length > 0
   } else data = []
+  console.log(data)
 
-  const groupByData = groupByType(data);
+  //const groupByData = groupByType(data);
 
-  const datasets = createDatasets(groupByData).map(bin => bin.getDataSet())
+  const datasets = createDatasets(data).map(bin => bin.getDataSet())
 
   chartData.value = {
     datasets: datasets
@@ -131,7 +144,7 @@ async function mountChart() {
 
 <template>
   <div v-if="showChart">
-    <Line :data="chartData" :options="options"/>
+    <Line :data="chartData" :options="options" />
   </div>
   <div v-else-if="loadingFlag" class="d-flex justify-content-center align-items-center">
     <div class="spinner-border" role="status">
