@@ -13,7 +13,7 @@ const rDistance = ref(null)
 const props = defineProps(['config', 'selectedTimestamp'])
 const showChart = ref(false)
 const loadingFlag = ref(false)
-const endpoint = 'getDistanceFromOptimalState'
+const endpoint = 'distanceProfileToOptimal'
 
 watchEffect( async () => {
   let value = props.config;
@@ -25,9 +25,9 @@ watchEffect( async () => {
 const buildHeatmapSeries = (valueKey) => {
   let x = []
   const series = Array.from(image.value.reduce((accumulator, currentValue) => {
-    if (!accumulator.has(currentValue.yy))
-      accumulator.set(currentValue.yy, []);
-    accumulator.get(currentValue.yy).push({ x: currentValue.xx,
+    if (!accumulator.has(currentValue.y))
+      accumulator.set(currentValue.y, []);
+    accumulator.get(currentValue.y).push({ x: currentValue.x,
       value: currentValue[valueKey].toFixed(2)
     })
     return accumulator
@@ -39,7 +39,7 @@ const buildHeatmapSeries = (valueKey) => {
       name: key, 
       data: value.sort((a,b) => a.x - b.x).map(e => e.value)
     }
-  }).sort((a,b)=> b.name - a.name)
+  }).sort((a,b)=> a.name - b.name)
 
   return [x, series]
 }
@@ -49,12 +49,13 @@ async function drawImage(){
     return
   } 
 
+
   const [xValues, series] = buildHeatmapSeries("value")
 
-  const dripperSeries = {
-    name: "0",
-    data: new Array(series[0].data.length).fill(0)
-  }
+  // const dripperSeries = {
+  //   name: "0",
+  //   data: new Array(series[0].data.length).fill(0)
+  // }
 
   //series.push(dripperSeries)
 
@@ -189,21 +190,23 @@ async function drawImage(){
 }
 
 async function mountChart() {
-  const parsed = JSON.parse(props.config);
+  const configParsed = JSON.parse(props.config);
   const selectedTimestamp = props.selectedTimestamp
-  const params = {...parsed.params}
+  const params = {...configParsed.params}
   params["timestamp"] = props.selectedTimestamp
   showChart.value = false
   loadingFlag.value = true
-  const chartDataResponse = await communicationService.getChartData(parsed.environment, parsed.paths, params, endpoint, 'measures')
-  if(JSON.stringify(parsed) !== props.config || selectedTimestamp !== props.selectedTimestamp){
+  const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, { timestamp: props.selectedTimestamp }, endpoint, 'image')
+  if(JSON.stringify(configParsed) !== props.config || selectedTimestamp !== props.selectedTimestamp){
       return
   }
-  if(chartDataResponse) {
-    showChart.value = chartDataResponse.length > 0
+
+  const data = chartDataResponse.data
+  if(data) {
+    showChart.value = data.length > 0
     if(showChart.value){
-        image.value = chartDataResponse
-        rDistance.value = (chartDataResponse.map(item => item.value).reduce((a,b) => a + b, 0)/chartDataResponse.map(item => item.weight).reduce((a,b) => a + b, 0)).toFixed(2)
+        image.value = data
+        rDistance.value = (data.map(item => item.value).reduce((a,b) => a + b, 0)/data.map(item => item.weight).reduce((a,b) => a + b, 0)).toFixed(2)
         await drawImage()
     }
   } else {

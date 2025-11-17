@@ -263,12 +263,9 @@ function selectedTime(time) {
 								:selectedTimestamp="selectedTimestamp"></humiditymap-smarter>
 						</div>
 					</div>
-					<!-- <optimal-humidity-heatmap-smarter v-if="showOptimalMatrix"
-						:config="JSON.stringify(connectionParams)" :selectedTimestamp="selectedTimestamp"
-						:showDistance="hasUserPermission('*')"></optimal-humidity-heatmap-smarter> -->
 					<optimal-humidity-heatmap-smarter v-if="showOptimalMatrix"
 						:config="baseConnectionParams" :selectedTimestamp="selectedTimestamp"
-					></optimal-humidity-heatmap-smarter>
+						:showDistance="true"></optimal-humidity-heatmap-smarter>
 				</div>
 			</div>
 		</div>
