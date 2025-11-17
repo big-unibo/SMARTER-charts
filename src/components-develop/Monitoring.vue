@@ -342,22 +342,22 @@ function selectedTime(time) {
 			</div>
 		</div> 
 
-		<!-- <div v-if="hasUserPermission('MO')" class="my-3 container">
+		<div v-if="true" class="my-3 container">
 			<div class="countors-card card">
 				<div class="card-header">Matrici di media e varianza</div>
 				<div class="card-body row">
 					<div class="col-lg-6">
 						<p>Matrice dell'umidità <strong>media</strong> lungo il periodo:</p>
 						<meancountor-chart-smarter
-							:config="JSON.stringify(connectionParams)"></meancountor-chart-smarter>
+							:config="baseConnectionParams"></meancountor-chart-smarter>
 					</div>
 					<div class="col-lg-6">
 						<p>Matrice di <strong>varianza</strong> dell'umidità lungo il periodo:</p>
-						<stdcountor-chart-smarter :config="JSON.stringify(connectionParams)"></stdcountor-chart-smarter>
+						<stdcountor-chart-smarter :config="baseConnectionParams"></stdcountor-chart-smarter>
 					</div>
 				</div>
 			</div>
-		</div> -->
+		</div>
 
 		<div v-if="selectedThesis.thesisId" class="my-3 container col-md-12">
 			<div class="card">
