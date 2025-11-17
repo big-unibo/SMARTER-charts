@@ -93,7 +93,7 @@ async function mountChart() {
     data = chartDataResponse
     showChart.value = data.length > 0
   } else data = []
-  console.log(data)
+  const unit = data[0]?.unit ?? "N/A";
 
   //const groupByData = groupByType(data);
 
@@ -132,7 +132,7 @@ async function mountChart() {
         position: 'left',
         title: {
           display: true,
-          text: 'log(|cbar|)'
+          text: unit
         },
       }
     }
