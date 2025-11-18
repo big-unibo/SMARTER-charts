@@ -87,8 +87,9 @@ async function mountChart() {
   loadingFlag.value = true
 
   try {
-    const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, configParsed.params, endpoint, 'measures');
+    const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, configParsed.params, endpoint);
 
+    console.log(chartDataResponse)
     if (JSON.stringify(configParsed) !== props.config) {
       return
     }
