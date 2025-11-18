@@ -13,7 +13,7 @@ const checkInterval = 36000000;
 async function loginDemoAccount() {
 	await authService.login({
 	    authEmail: import.meta.env.VITE_DEMO_EMAIL,
-    	authPass: import.meta.env.VITE_DEMO_PSW  
+    	authPass: import.meta.env.VITE_DEMO_USER_PSW  
 	})
 }; 
 

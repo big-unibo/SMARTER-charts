@@ -5,4 +5,3 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
 
 createApp(AppTest).mount("#app");
-console.log("a")

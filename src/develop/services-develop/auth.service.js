@@ -16,7 +16,7 @@ class AuthService {
         try {
             const response = await axiosInstance.post('/login', {
                 email: user.authEmail,
-                password: user.authPass,
+                password: hashPassword(user.authPass),
             });
             if (response.data.token) {
                 localStorage.setItem('appToken', JSON.stringify(response.data.token));
