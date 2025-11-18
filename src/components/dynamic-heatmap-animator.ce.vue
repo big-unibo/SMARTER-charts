@@ -31,6 +31,8 @@ const isPlaying = ref(false);
 const buttonText = ref(buttonTexts.start);
 const currentDate = ref('');
 
+const loadingFlag = ref(false)
+
 function updateConfig(currentTimestamp, lastTimestamp) {
   const parsedConfigProp = JSON.parse(props.config);
   animatorConfig.value = JSON.stringify({
@@ -44,6 +46,7 @@ function updateConfig(currentTimestamp, lastTimestamp) {
 }
 
 async function calculateTimestampLength() {
+  loadingFlag.value = true; 
   const configParsed = JSON.parse(props.config);
   const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, configParsed.params, endpoint, "measures");
 
@@ -60,6 +63,7 @@ async function calculateTimestampLength() {
   });
 
   timestampsArray.value = Array.from(timestamps.value).sort((a, b) => a - b);
+  loadingFlag.value = false; 
 }
 
 function startLoop() {
@@ -178,9 +182,12 @@ watchEffect(async () => {
       </div>
     </div>
   </div>
-  <div v-else>
-    Nessun dato disponibile.
+    <div v-else-if="loadingFlag" class="d-flex justify-content-center align-items-center">
+    <div class="spinner-border" role="status">
+      <span class="sr-only"></span>
+    </div>
   </div>
+  <div v-else>Nessun dato disponibile.</div>
 </template>
 
 <style>
