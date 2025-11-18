@@ -30,20 +30,11 @@ watch(token, () => {
 	updateConnectionParams();
 });
 
-//const user = reactive(props.user)
 const userPermissions = reactive({})
 
 const sectors = reactive([])
 const theses = reactive([])
 let activeThesis
-
-// watchEffect(async () => {
-// 	if (token.value) {
-// 		if (!selectedThesis.value && fields.value[0]) {
-// 			selectField(fields.value[0])
-// 		}
-// 	}
-// })
 
 function updateConnectionParams() {
 	if (selectedThesis.value) {
@@ -128,24 +119,6 @@ function createThesisName(item) {
 }
 
 async function updateUserSectors() {
-	// if (token.value) {
-	// 	userPermissions.value = await authService.retrieveUserFieldPermissions(token.value, selectedTimestampFrom.value, selectedTimestampTo.value)
-	// 	activeThesis = userPermissions.value.permissions.reduce((accumulator, currentValue) => {
-	// 		const field = JSON.stringify({
-	// 			refStructureName: currentValue.refStructureName,
-	// 			companyName: currentValue.companyName,
-	// 			fieldName: currentValue.fieldName
-	// 		})
-	// 		if (!accumulator.has(field)) {
-	// 			accumulator.set(field, [])
-	// 		}
-	// 		accumulator.get(field).push(currentValue)
-	// 		return accumulator
-	// 	}, new Map())
-
-	// 	fields.value = Array(...activeThesis.keys()).map(f => JSON.parse(f))
-	// }
-
 	if (token.value) {
 		sectors.value = await authService.retrieveUserSectors(token.value, selectedTimestampFrom.value, selectedTimestampTo.value)
 		selectSector(sectors.value[0])

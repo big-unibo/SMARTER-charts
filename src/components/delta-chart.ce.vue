@@ -85,14 +85,34 @@ async function mountChart() {
 
   showChart.value = false
   loadingFlag.value = true
-  const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, configParsed.params, endpoint)
-  if (JSON.stringify(configParsed) !== props.config) {
-    return
+
+  try {
+    const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, configParsed.params, endpoint, 'measures');
+
+    if (JSON.stringify(configParsed) !== props.config) {
+      return
+    }
+
+    if (chartDataResponse) {
+      data = chartDataResponse
+      showChart.value = data.length > 0
+      loadingFlag.value = !(data.length > 0)
+    } else {
+      showChart.value = false;
+      data = []
+    }
+
+  } catch (error) {
+    console.error("Errore nel recupero dati:", error);
+    showChart.value = false;
+  } finally {
+    loadingFlag.value = false;
   }
-  if (chartDataResponse) {
-    data = chartDataResponse
-    showChart.value = data.length > 0
-  } else data = []
+
+  if (!showChart.value) {
+    return;
+  }
+
   const unit = data[0]?.unit ?? "N/A";
 
   //const groupByData = groupByType(data);
