@@ -1,8 +1,9 @@
 <script setup>
 import * as d3 from "d3";
-import {ref, watchEffect, nextTick} from "vue";
-import {average, groupBy} from "../common/utils.js";
-import {CommunicationService} from "../services/CommunicationService.js";
+import { ref, watchEffect, nextTick } from "vue";
+import { average, groupBy } from "../common/utils.js";
+import { CommunicationService } from "../services/CommunicationService.js";
+import { binningColorConfig } from "@/common/colorsConfig.js";
 
 const communicationService = new CommunicationService();
 const chartRef = ref(null);
@@ -12,32 +13,48 @@ const endpoint = 'profileStatistics'
 const showChart = ref(false)
 const loadingFlag = ref(false)
 const container = ref(null)
-const imageStyle = ref({width:"", height:""})
+const binningInfo = ref([])
+const imageStyle = ref({ width: "", height: "" })
 
 watchEffect(async () => {
   let value = props.config;
-  if(value) {
+  if (value) {
     await mountChart()
   }
 });
 
 async function mountChart() {
-  const parsed = JSON.parse(props.config);
+  const configParsed = JSON.parse(props.config);
   let data = []
   showChart.value = false
   loadingFlag.value = true
-  const chartDataResponse = await communicationService.getChartData(parsed.environment, parsed.paths, parsed.params, endpoint, 'values.0.measures')
-  if(JSON.stringify(parsed) !== props.config){
-      return
+
+  const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, configParsed.params, endpoint, 'measures')
+  if (JSON.stringify(configParsed) !== props.config) {
+    return
   }
-  if(chartDataResponse) {
-    data = chartDataResponse
+  if (chartDataResponse) {
+    data = chartDataResponse.data
+    const binningId = chartDataResponse.binningId
+
+    binningInfo.value = await communicationService.getBinningInfo(configParsed.environment, binningId, 'bins')
+    if (JSON.stringify(configParsed) !== props.config) {
+      return
+    }
+
+
+    data.sort((a, b) => {
+      if (a.z !== b.z) return a.z - b.z;
+      if (a.y !== b.y) return b.y - a.y;
+      return a.x - b.x;
+    });
+
     showChart.value = data.length > 0
   } else {
     showChart.value = false
   }
   loadingFlag.value = false
-  if(!showChart.value){
+  if (!showChart.value) {
     return
   }
 
@@ -45,46 +62,46 @@ async function mountChart() {
   let axisY = [];
   let mean = [];
 
-  const Z = data.map(d => d.zz);
+  const Z = data.map(d => d.z);
   const z_unique = [...new Set(Z)];
 
   if (z_unique.length <= 2) {
     data.forEach(d => {
-      axisY.push(d.yy * -1)
-      axisX.push(d.xx)
+      axisY.push(d.y)
+      axisX.push(d.x)
       mean.push(d.mean)
     });
   } else {
-    const dataTemp = groupBy(data, t => t.yy);
+    const dataTemp = groupBy(data, t => t.y);
     for (const [key, value] of Object.entries(dataTemp)) {
-      let dataTemp2 = groupBy(value, e => e.xx)
+      let dataTemp2 = groupBy(value, e => e.x)
       for (const [key2, value2] of Object.entries(dataTemp2)) {
         let means_to_mean = []
         let temp_y, temp_x
         value2.forEach(d => {
           means_to_mean.push(parseFloat(d.mean))
-          temp_x = d.xx;
-          temp_y = d.yy;
+          temp_x = d.x;
+          temp_y = d.y;
         });
-        axisY.push(temp_y * -1)
+        axisY.push(temp_y)
         axisX.push(temp_x)
         mean.push(average(means_to_mean))
       }
     }
   }
 
-  let margin = {top: 10, bottom: 35, left: 47, right: 85}
+  let margin = { top: 10, bottom: 35, left: 47, right: 100 }
 
   const numCellInWidth = ((Math.max(...axisX) - Math.min(...axisX)) / 5) + 1
   const numCellInHeight = (((Math.min(...axisY) * -1) - (Math.max(...axisY) * -1)) / 5) + 1
 
-  if(!container.value){
+  if (!container.value) {
     await nextTick()
   }
 
   const containerWidth = container.value.offsetWidth
   let cellSize
-  if(numCellInWidth > numCellInHeight){
+  if (numCellInWidth > numCellInHeight) {
     cellSize = (containerWidth - margin.left - margin.right) / numCellInWidth
   } else {
     cellSize = (containerWidth - margin.left - margin.right) / numCellInHeight
@@ -97,104 +114,109 @@ async function mountChart() {
   imageStyle.value.height = height + "px"
 
   let svg = d3.create("svg")
-      .attr("width", width)
-      .attr("height", height)
-      .append("g")
-      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    .attr("width", width)
+    .attr("height", height)
+    .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
   width -= margin.left + margin.right
   height -= margin.top + margin.bottom
 
   let x = d3.scaleLinear()
-      .domain([Math.min(...axisX), Math.max(...axisX)])
-      .range([ 0, width]);
+    .domain([Math.min(...axisX), Math.max(...axisX)])
+    .range([0, width]);
   svg.append("g").attr("transform", "translate(0," + height + ")").call(d3.axisBottom(x));
 
   let y = d3.scaleLinear()
-      .domain([Math.max(...axisY), Math.min(...axisY)])
-      .range([0, height]);
+    .domain([Math.max(...axisY), Math.min(...axisY)])
+    .range([0, height]);
   svg.append("g").call(d3.axisLeft(y));
 
-  const contours = d3.contours().size([numCellInWidth, numCellInHeight]).thresholds(d3.range(-200, 10000));
+  const contours = d3.contours().size([numCellInWidth, numCellInHeight]).thresholds(d3.range(
+    Math.min(...binningInfo.value.map(b => Number(b.lowerBound))),
+    Math.max(...binningInfo.value.map(b => Number(b.upperBound)))
+  ));
+
+  const colorRanges = [
+    ...binningInfo.value.map(bin => ({
+      from: Number(bin.lowerBound),
+      to: Number(bin.upperBound),
+      color: binningColorConfig(bin.humidityBin)
+    }))
+  ];
+
 
   const mycolor = function (d) {
-    if (d <= 30) {
-      return d3.interpolateRdBu(1);
-    } else if (d <= 100) {
-      return d3.interpolateRdBu(0.80);
-    } else if (d <= 200) {
-      return d3.interpolateRdBu(0.70);
-    } else if (d <= 300) {
-      return d3.interpolateRdBu(0.30);
-    } else if (d <= 1500) {
-      return d3.interpolateRdBu(0.15);
-    } else if (d <= 10000) {
-      return d3.interpolateRdBu(0.05);
-    } else return d3.interpolateRdBu(0)
+    for (const r of colorRanges) {
+      if (d >= r.from && d < r.to) return r.color;
+    }
   };
 
   // Function to scale contours coordinates
   const scaleCoordinates = (geometry) => {
-      geometry.coordinates = geometry.coordinates.map(polygon =>
-          polygon.map(ring =>
-              ring.map(([x, y]) => [x * (width / numCellInWidth), y * (height / numCellInHeight)])
-          )
-      );
-      return geometry;
+    geometry.coordinates = geometry.coordinates.map(polygon =>
+      polygon.map(ring =>
+        ring.map(([x, y]) => [x * (width / numCellInWidth), y * (height / numCellInHeight)])
+      )
+    );
+    return geometry;
   };
 
   svg.selectAll("path")
-      .data(contours(mean).map(feature => scaleCoordinates(feature)))
-      .enter().append("path")
-      .attr("d", d3.geoPath(d3.geoIdentity())) // la scala è ora già applicata
-      .attr("fill", function (d) { return mycolor(d.value); });
+    .data(contours(mean).map(feature => scaleCoordinates(feature)))
+    .enter().append("path")
+    .attr("d", d3.geoPath(d3.geoIdentity()))
+    .attr("fill", function (d) { return mycolor(d.value); });
 
-  const ticks2 = [30, 100, 200, 300, 1500, 10000];
-  const ticksLabels2 = ["[0, -30)", "[-30, -100)", "[-100, -200)", "[-200, -300)", "[-300, -1500)", "[-1500, -∞)"];
+  const ticks2 = [...binningInfo.value.map(bin => bin.lowerBound),
+    ];
+  const ticksLabels2 = [
+    ...binningInfo.value.map(bin => bin.humidityBinDescription),
+  ];
 
   var size = 15
 
   svg.selectAll("mydots")
-      .data(ticks2)
-      .enter()
-      .append("rect")
-      .attr("x", width + size/2)
-      .attr("y", function (d, i) {
-        return i * (size + 5)
-      }) // 100 is where the first dot appears. 25 is the distance between dots
-      .attr("width", size)
-      .attr("height", size)
-      .style("fill", function (d) {return mycolor(d)})
+    .data(ticks2)
+    .enter()
+    .append("rect")
+    .attr("x", width + size / 2)
+    .attr("y", function (d, i) {
+      return i * (size + 5)
+    }) // 100 is where the first dot appears. 25 is the distance between dots
+    .attr("width", size)
+    .attr("height", size)
+    .style("fill", function (d) { return mycolor(d) })
 
   svg.selectAll("mylabels")
-      .data(ticksLabels2)
-      .enter()
-      .append("text")
-      .attr("x", width + size * 2 -2)
-      .attr("y", function (d, i) { return i * (size + 5) + (size / 2)}) // 100 is where the first dot appears. 25 is the distance between dots
-      .style("fill", function (d, i) {return mycolor(ticks2[i])})
-      .text(function (d) {return d})
-      .attr("text-anchor", "left")
-      .attr("font-size", 10)
-      .style("alignment-baseline", "middle")
+    .data(ticksLabels2)
+    .enter()
+    .append("text")
+    .attr("x", width + size * 2 - 2)
+    .attr("y", function (d, i) { return i * (size + 5) + (size / 2) }) // 100 is where the first dot appears. 25 is the distance between dots
+    .style("fill", function (d, i) { return mycolor(ticks2[i]) })
+    .text(function (d) { return d })
+    .attr("text-anchor", "left")
+    .attr("font-size", 10)
+    .style("alignment-baseline", "middle")
 
   svg.append("text")
-      .attr("transform", "translate(" + (width / 2) + " ," + (height + margin.bottom) + ")")
-      .style("text-anchor", "middle")
-      .attr("font-size", 14)
-      .text("Distanza dalla fila");
+    .attr("transform", "translate(" + (width / 2) + " ," + (height + margin.bottom) + ")")
+    .style("text-anchor", "middle")
+    .attr("font-size", 14)
+    .text("Distanza dalla fila");
 
   svg.append("text")
-      .attr("transform", "rotate(-90)")
-      .attr("y", 0 - margin.left)
-      .attr("x", 0 - (height / 2))
-      .attr("dy", "1em")
-      .style("text-anchor", "middle")
-      .attr("font-size", 14)
-      .text("Profondità");
+    .attr("transform", "rotate(-90)")
+    .attr("y", 0 - margin.left)
+    .attr("x", 0 - (height / 2))
+    .attr("dy", "1em")
+    .style("text-anchor", "middle")
+    .attr("font-size", 14)
+    .text("Profondità");
 
   nextTick(() => {
-    if(chartRef.value) {
+    if (chartRef.value) {
       chartRef.value.replaceChildren(svg.node());
     }
   })
