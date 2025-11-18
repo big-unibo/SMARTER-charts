@@ -1,6 +1,6 @@
 <script setup>
-import MonitoringPage from "./components-develop/MonitoringPage.vue";
-import { registerChartComponents } from "./main";
+import MonitoringPage from "@/develop/components-develop/MonitoringPage.vue";
+import { registerChartComponents } from "@/main.js";
 
 registerChartComponents();
 

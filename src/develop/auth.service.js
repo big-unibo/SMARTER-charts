@@ -1,5 +1,5 @@
 import axios from 'axios'
-import hashPassword from '@/utils-develop/hashPassword';
+import hashPassword from '@/develop/utils-develop/hashPassword';
 
 const axiosInstance = axios.create({
     baseURL: import.meta.env.VITE_BACKEND_ADDRESS

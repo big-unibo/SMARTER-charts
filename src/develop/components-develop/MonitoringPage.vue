@@ -1,7 +1,7 @@
 <script setup>
 import AppNavBar from "./AppNavBar.vue";
-import Monitoring from "@/components-develop/Monitoring.vue";
-import authService from "@/services-develop/auth.service.js";
+import Monitoring from "@/develop/components-develop/Monitoring.vue";
+import authService from "@/develop/services-develop/auth.service.js";
 import {ref, onMounted, onUnmounted, reactive} from "vue";
 
 

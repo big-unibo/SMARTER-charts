@@ -1,7 +1,7 @@
 <script setup>
 
 import '@/assets/basebase.css';
-import authService from '@/services-develop/auth.service.js';
+import authService from '@/develop/services-develop/auth.service.js';
 import { computed, watch, onMounted, reactive, ref, watchEffect } from "vue";
 
 const props = defineProps(['token', 'user'])
