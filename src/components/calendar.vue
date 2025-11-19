@@ -3,18 +3,14 @@ import { ref, shallowRef, markRaw, watchEffect, nextTick } from 'vue'
 import { ScheduleXCalendar } from '@schedule-x/vue'
 import {
     createCalendar,
-    createViewMonthGrid,
-    createViewWeek,
-    createViewDay,
-    createViewMonthAgenda,
+    createViewMonthGrid
 } from '@schedule-x/calendar'
 import 'temporal-polyfill/global'
 import '@schedule-x/theme-default/dist/index.css'
 import { createEventModalPlugin } from '@schedule-x/event-modal'
 import { CommunicationService } from "../services/CommunicationService.js";
-import { Modal} from 'bootstrap'
 
-const getEventsEndpoint = "calendar"
+const getEventsEndpoint = "wateringCalendar"
 
 const props = defineProps(['config'])
 const communicationService = new CommunicationService();

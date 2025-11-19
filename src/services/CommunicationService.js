@@ -94,7 +94,7 @@ export class CommunicationService {
     }
 
     async getWateringSchedule(environment, pathsParams, queryParams, endpoint) {
-        return await axios.get(this.buildURL(environment.host, "/wateringSchedule", pathsParams.sectorId, endpoint), {
+        return await axios.get(this.buildURL(environment.host, "/sectors", pathsParams.sectorId, endpoint), {
             params: queryParams,
             headers: {
                 Authorization: 'Bearer ' + environment.token
