@@ -46,7 +46,7 @@ config: {
 
 | Component Tag| Description| Props/Events|
 |----------------------------------------------|-------------------------------------------------------------------------|---|
-| `<delta-chart-smarter>`                      | Line chart showing humidity level in relation to optimal state ||
+| `<optimal-distance-chart-smarter>`           | Line chart showing humidity level in relation to optimal state ||
 | `<airtemperature-chart-smarter>`             | Line chart for air temperature trends |
 | `<meancountor-chart-smarter>`                | Heatmap of monitored soil portion for **mean** of matric potential in a given period|
 | `<stdcountor-chart-smarter>`                 | Heatmap of monitored soil portion for **standard deviation** of matric potential in a given period |

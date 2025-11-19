@@ -35,23 +35,6 @@ const props = defineProps(['config','extraParams'])
 const endpoint = 'signals'
 
 
-// const groupByType = (measures) => {
-//   return measures.reduce((accumulator, currentValue) => {
-//     const key = currentValue.detectedValueTypeDescription
-//     if(!accumulator.has(key))
-//       accumulator.set(key, []);
-//     accumulator.get(key).push(JSON.stringify({x: luxonDateTime(currentValue.timestamp), y: Number(currentValue.value).toFixed(2)}));
-//     return accumulator;
-//   }, new Map());
-// }
-
-
-// const createDatasets = (groupedMeasures) => {
-//   return Array.from(groupedMeasures, ([key, jsonValues]) => {
-//     return new LineDatasetData(key, jsonValues, false, 3, 0.3, colorFunction);
-//   });
-// };
-
 const createDatasets = (data) => {
   const datasets = [];
   data.forEach(signalType => {

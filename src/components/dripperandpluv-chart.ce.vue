@@ -40,36 +40,6 @@ const props = defineProps(['config', 'extraParams'])
 
 const endpoint = 'signals'
 
-// const groupByType = (measures) => {
-//   return measures.reduce((accumulator, currentValue) => {
-//     const key = currentValue.detectedValueTypeDescription
-//     if (!accumulator.has(key))
-//       accumulator.set(key, []);
-//     accumulator.get(key).push(JSON.stringify({
-//       x: luxonDateTime(currentValue.timestamp),
-//       y: Number(currentValue.value).toFixed(2)
-//     }));
-//     return accumulator;
-//   }, new Map());
-// }
-
-// function addUnitMeasure(key) {
-//   if (key === 'Dripper')
-//     return 'Dripper (L)'
-//   if (key === 'Pluv Curr')
-//     return 'Pluv Curr (mm)'
-//   if (key === 'Sprinkler')
-//     return 'Sprinkler (L)'
-//   return key
-// }
-
-// const createDatasets = (groupedMeasures) => {
-//   // return Array.from(groupedMeasures, ([key, jsonValues]) => {
-//   //   key = addUnitMeasure(key)
-//   //   return new MultiAxisLineDatasetData(key, jsonValues, key.includes("(mm)") ? 'y1' : 'y', colorFunction);
-//   // });
-// };
-
 const createDatasets = (data) => {
   const datasets = [];
 

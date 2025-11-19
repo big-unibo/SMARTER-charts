@@ -19,7 +19,7 @@ import {
   TimeScale
 } from 'chart.js'
 import { LineDatasetData } from "../common/LineDatasetData.js";
-import { deltaColorFunction } from '@/common/colorsConfig.js';
+import { optimalDistanceColorFunction } from '@/common/colorsConfig.js';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler, TimeScale)
 
@@ -32,29 +32,13 @@ const loadingFlag = ref(false)
 
 const props = defineProps(['config'])
 
-const endpoint = 'delta'
-
-// const groupByType = (measures) => {
-//   return measures.reduce((accumulator, currentValue) => {
-//     const key = currentValue.detectedValueTypeDescription
-//     if(!accumulator.has(key))
-//       accumulator.set(key, []);
-//     accumulator.get(key).push(JSON.stringify({x: luxonDateTime(currentValue.timestamp), y: Number(currentValue.value).toFixed(2)}));
-//     return accumulator;
-//   }, new Map());
-// }
-
-// const createDatasets = (groupedMeasures) => {
-//   return Array.from(groupedMeasures, ([key, jsonValues]) => {
-//     return new LineDatasetData(key, jsonValues, false, 2, 0.2, colorFunction);
-//   });
-// };
+const endpoint = 'optimalDistance'
 
 const createDatasets = (data) => {
   const datasets = [];
 
   data.forEach(signalType => {
-    const type = signalType.detectedValueTypeDescription;
+    const type = signalType.valueType;
     const unit = signalType.signals?.[0]?.unit || '';
     const label = unit ? `${type} (${unit})` : type;
 
@@ -66,7 +50,7 @@ const createDatasets = (data) => {
         })
       );
 
-    datasets.push(new LineDatasetData(label, dataPoints, 'false', 2, 0.2, deltaColorFunction, type));
+    datasets.push(new LineDatasetData(label, dataPoints, 'false', 2, 0.2, optimalDistanceColorFunction, type));
   });
 
   return datasets;

@@ -33,7 +33,7 @@ export const signalsColorFunction = (str) => {
     return '#339CFF'
 }
 
-export const deltaColorFunction = (str) => {
+export const optimalDistanceColorFunction = (str) => {
   if (str === 'Media ottimale')
     return '#6064C8'
   if (str === 'Media giornaliera')
