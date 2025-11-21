@@ -327,15 +327,13 @@ async function mountChart() {
   loadingFlag.value = true
 
   const selectedTimestamp = props.selectedTimestamp
-  const params = { ...configParsed.params }
-  params["timestamp"] = selectedTimestamp
 
-  const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, params, endpoint)
+  const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, { timestamp: selectedTimestamp } , endpoint)
   if (JSON.stringify(configParsed) !== props.config || selectedTimestamp !== props.selectedTimestamp) {
     return
   }
 
-  if (chartDataResponse) {
+  if (chartDataResponse && chartDataResponse.optimalProfile) {
     showChart.value = chartDataResponse.optimalProfile.length > 0
     if (showChart.value) {
       image.value = chartDataResponse.optimalProfile

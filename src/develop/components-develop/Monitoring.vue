@@ -155,7 +155,13 @@ function enableDetailedAggregate() {
 
 const selectedTimestamp = ref(Math.floor(Date.now() / 1000))
 function selectedTime(time) {
-	selectedTimestamp.value = time.detail
+	let timeDetail = time.detail;
+
+    if (Array.isArray(timeDetail) && timeDetail.length > 0) {
+        timeDetail = timeDetail[0];
+    } 
+	
+    selectedTimestamp.value = timeDetail;
 }
 
 </script>
