@@ -10,6 +10,7 @@ import '@schedule-x/theme-default/dist/index.css'
 import { createEventModalPlugin } from '@schedule-x/event-modal'
 import { CommunicationService } from "../services/CommunicationService.js";
 
+const SCHEDULE_SAFE_PERIOD = 36000
 const getEventsEndpoint = "wateringCalendar"
 
 const props = defineProps(['config'])
@@ -113,6 +114,11 @@ watchEffect(async () => {
   }
 });
 
+async function openEditEventModal(event) {
+  this.selectedEvent = event;
+  this.showEditModal = true;
+}
+
 async function mountChart(timeFilter = null) {
   const configParsed = JSON.parse(props.config);
 
@@ -209,6 +215,12 @@ async function mountChart(timeFilter = null) {
             {{ formatEventDate(calendarEvent.start, calendarEvent.end) }}
           </div>
 
+          <div class="actions" v-if="calendarEvent.start.epochMilliseconds > Date.now() + SCHEDULE_SAFE_PERIOD*1000" >
+            <button class="btn btn-primary update-event">
+              Modifica evento
+            </button>
+          </div>
+
           <div class="event-updatedBy" v-if="calendarEvent.customData.updatedBy">
             <span class="label">Modificato da: </span>
             <span>{{ calendarEvent.customData.updatedBy }}</span>
@@ -257,10 +269,10 @@ async function mountChart(timeFilter = null) {
               </ul>
             </div>
 
-            <p v-if="calendarEvent.customData.note">
+            <div v-if="calendarEvent.customData.note">
               <span class="label">Note: </span>
               <span>{{ calendarEvent.customData.note }}</span>
-            </p>
+            </div>
 
           </div>
         </div>
@@ -270,12 +282,22 @@ async function mountChart(timeFilter = null) {
 </template>
 
 <style scoped>
-.sx-vue-calendar-wrapper {
-  width: 100%;
-  max-width: 100vw;
-  height: 500px;
-  max-height: 90vh;
+.actions {
+  margin-top: 16px;
+  text-align: left;
 }
+
+.update-event {
+  opacity: 1 !important;
+  visibility: visible !important;
+  color: white !important;
+  background-color: #0d6efd !important;
+}
+
+.update-event:hover {
+  background-color: #0b5ed7 !important;
+}
+
 
 /* Modal styles */
 .custom-event-modal {
