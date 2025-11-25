@@ -6,8 +6,8 @@ import { computed, watch, onMounted, reactive, ref, watchEffect } from "vue";
 
 const props = defineProps(['token', 'user'])
 
-let selectedTimestampFrom = ref(getCurrentTimestampMinusDays(130))
-let selectedTimestampTo = ref(getCurrentTimestampMinusDays(89))
+let selectedTimestampFrom = ref(getCurrentTimestampMinusDays(10))
+let selectedTimestampTo = ref(getCurrentTimestampMinusDays(0))
 
 let customSelectedTimestampTo = ref(getCurrentTimestampMinusDays(89))
 let customSelectedTimestampFrom = ref(getCurrentTimestampMinusDays(130))
@@ -15,7 +15,11 @@ let customSelectedTimestampFrom = ref(getCurrentTimestampMinusDays(130))
 
 let selectedSectorName = ref("Seleziona un settore")
 let selectedThesisName = ref("Seleziona una tesi")
-let selectedThesis = ref({})
+// let selectedThesis = ref({})
+let selectedThesis = ref({
+	sectorId: 123,
+	thesisId: 200
+})
 let selectedTimeLabel = ref("")
 let showDynamicHeatmap = ref(false)
 let showOptimalMatrix = ref(false)
@@ -52,7 +56,6 @@ function updateConnectionParams() {
 		baseConnectionParams.value = JSON.stringify(params)
 	}
 }
-updateConnectionParams()
 
 const selectedDateFrom = computed({
 	get: () => {
@@ -121,7 +124,7 @@ function createThesisName(item) {
 async function updateUserSectors() {
 	if (token.value) {
 		sectors.value = await authService.retrieveUserSectors(token.value, selectedTimestampFrom.value, selectedTimestampTo.value)
-		selectSector(sectors.value[0])
+		//selectSector(sectors.value[0])
 	}
 }
 

@@ -120,31 +120,24 @@ export class CommunicationService {
     //     return response;
     // }
 
-    // async updateEvent(environment, endpoint, thesisIdentifier, newEvent) {
-    //     return axios.put(this.buildURL(environment.host, "/wateringSchedule", undefined, endpoint), {
-    //         source: thesisIdentifier.source,
-    //         refStructureName: thesisIdentifier.refStructureName,
-    //         companyName: thesisIdentifier.companyName,
-    //         fieldName: thesisIdentifier.fieldName,
-    //         sectorName: thesisIdentifier.sectorName,
-    //         thesisName: thesisIdentifier.thesisName,
-    //         ...newEvent
-    //     }, {
-    //         headers: {
-    //             Authorization: 'Bearer ' + environment.token
-    //         }
-    //     }
-    //     ).then(response => {
-    //         console.log(`Success response: ${response.data}`)
-    //         if (response.data)
-    //             return response.data;
-    //         return null;
-    //     }).catch(error => {
-    //         console.error(`Error response: ${error}`)
-    //         console.error(`Error on communication service: ${error.message}`)
-    //         throw new Error(error.message);
-    //     })
-    // }
+    async updateEvent(environment, eventId, endpoint, updatedEvent) {
+        return axios.put(this.buildURL(environment.host, "/wateringSchedule", eventId, endpoint), {
+            ...updatedEvent
+        }, {
+            headers: {
+                Authorization: 'Bearer ' + environment.token
+            }
+        }
+        ).then(response => {
+            if (response.data)
+                return response.data;
+            return null;
+        }).catch(error => {
+            console.error(`Error response: ${error}`)
+            console.error(`Error on communication service: ${error.message}`)
+            throw new Error(error.message);
+        })
+    }
 
     // async setOptimalStateByTimestamp(environment, endpoint, thesisIdentifier, timestamp){
     //     return axios.put(this.buildURL(environment.host, "/fields",thesisIdentifier,endpoint),{},{

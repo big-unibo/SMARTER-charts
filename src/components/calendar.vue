@@ -9,9 +9,11 @@ import 'temporal-polyfill/global'
 import '@schedule-x/theme-default/dist/index.css'
 import { createEventModalPlugin } from '@schedule-x/event-modal'
 import { CommunicationService } from "../services/CommunicationService.js";
+import { Modal } from 'bootstrap'
 
-const SCHEDULE_SAFE_PERIOD = 36000
+const SCHEDULE_SAFE_PERIOD = 3600
 const getEventsEndpoint = "wateringCalendar"
+const updateEventEndpoint = "update"
 
 const props = defineProps(['config'])
 const communicationService = new CommunicationService();
@@ -20,12 +22,86 @@ const calendarApp = shallowRef(null)
 const selectedDate = ref(Temporal.Now.zonedDateTimeISO('Europe/Rome'))
 const events = ref([])
 
+const isEditing = ref(false)
+const selectedEvent = ref(null);
+const updateForm = ref({
+  enabled: false,
+  wateringStart: "",
+  expectedWater: 0,
+  note: ""
+})
+const updateModal = ref(null)
+
 let eventsData = []
 const eventModalPlugin = createEventModalPlugin()
 
 const closeModal = () => {
   eventModalPlugin.close()
 }
+
+
+let activeModal
+async function openEventModal(eventData) {
+  // const target=eventDate.target;
+  // if(Array.from(target.classList).filter(c=>c==="update-event").length>0){
+  //   selectedEvent.value = eventsData.filter(e=>e.date===target.id)[0]
+  //   updateForm.value = {
+  //     enabled: selectedEvent.value.enabled,
+  //     wateringStartTime: new Date(selectedEvent.value.wateringStart * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+  //     expectedWater: selectedEvent.value.expectedWater,
+  //     note: selectedEvent.value.note
+  //   }
+  //   await nextTick()
+  //   if (updateModal.value) {
+  //     activeModal = new Modal(updateModal.value)
+  //     activeModal.show()
+  //   } else {
+  //     console.warn('Modal element not found')
+  //   }
+  // }
+
+
+  selectedEvent.value = eventsData.filter(e=>e.eventId===eventData.id)[0]
+    updateForm.value = {
+      enabled: selectedEvent.value.enabled,
+      wateringStart: new Date(selectedEvent.value.wateringStart * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      expectedWater: selectedEvent.value.expectedWater,
+      note: selectedEvent.value.note
+    }
+
+    await nextTick()
+    if (updateModal.value) {
+      activeModal = new Modal(updateModal.value)
+      activeModal.show()
+    } else {
+      console.warn('Modal element not found')
+    }
+}
+
+function isValidTime(time){
+  // const wateringStart = new Date(selectedEvent.value.date +" "+ time)
+  // return wateringStart > Date.now() + SCHEDULE_SAFE_PERIOD
+  return true
+}
+
+async function submitForm(){
+  const wateringStart =  new Date(selectedEvent.value.date +" "+ updateForm.value.wateringStart).getTime()/1000
+  const updatedEvent = {
+    wateringStart : wateringStart,
+    enabled: updateForm.value.enabled,
+    expectedWater: updateForm.value.expectedWater,
+    note: updateForm.value.note
+  }
+  
+  const eventId = selectedEvent.value.eventId
+
+  const configParsed = JSON.parse(props.config);
+  await communicationService.updateEvent(configParsed.environment, eventId, updateEventEndpoint, updatedEvent)
+
+  await mountChart()
+  activeModal.hide()
+}
+
 
 function unixToZonedDateTime(unixSeconds, timeZone = 'Europe/Rome') {
   return Temporal.Instant
@@ -36,6 +112,15 @@ function unixToZonedDateTime(unixSeconds, timeZone = 'Europe/Rome') {
 function zonedDateTimeToUnixSeconds(zonedDateTime) {
   const epochMilliseconds = zonedDateTime.epochMilliseconds;
   return Math.floor(epochMilliseconds / 1000);
+}
+
+function isEventEditable(event) {
+  if (!event || !event.start) return false;
+  const eventTime = Number(event.start.epochMilliseconds);
+  const now = Date.now();
+  const safeBuffer = Number(SCHEDULE_SAFE_PERIOD) * 1000;
+
+  return eventTime > (now + safeBuffer);
 }
 
 function titleFunction(event) {
@@ -114,9 +199,8 @@ watchEffect(async () => {
   }
 });
 
-async function openEditEventModal(event) {
-  this.selectedEvent = event;
-  this.showEditModal = true;
+async function switchToEditModal(calendarEvent) {
+  isEditing.value = true
 }
 
 async function mountChart(timeFilter = null) {
@@ -165,7 +249,7 @@ async function mountChart(timeFilter = null) {
       }
 
       const event = {
-        id: e.date, start: startDate, end: endDate, title: titleFunction(e), calendarId: colorFunction(e), isEditable: false, customData: eventdata
+        id: e.eventId, start: startDate, end: endDate, title: titleFunction(e), calendarId: colorFunction(e), isEditable: false, customData: eventdata
       }
       eventsCalendar.push(event)
     }
@@ -204,7 +288,7 @@ async function mountChart(timeFilter = null) {
     <ScheduleXCalendar :calendar-app="calendarApp">
 
       <template #eventModal="{ calendarEvent }">
-        <div class="custom-event-modal">
+        <div class="custom-event-modal" @vue:unmounted="isEditing = false">
           <button class="close-btn" @click="closeModal">×</button>
 
           <div class="event-title">
@@ -215,69 +299,128 @@ async function mountChart(timeFilter = null) {
             {{ formatEventDate(calendarEvent.start, calendarEvent.end) }}
           </div>
 
-          <div class="actions" v-if="calendarEvent.start.epochMilliseconds > Date.now() + SCHEDULE_SAFE_PERIOD*1000" >
-            <button class="btn btn-primary update-event">
-              Modifica evento
-            </button>
+          <div v-if="isEditing">
+              
           </div>
-
-          <div class="event-updatedBy" v-if="calendarEvent.customData.updatedBy">
-            <span class="label">Modificato da: </span>
-            <span>{{ calendarEvent.customData.updatedBy }}</span>
-          </div>
-
-          <div class="event-data">
-            <p>
-              <span class="label">Stato: </span>
-              <span>{{ calendarEvent.customData.enabled ? 'Abilitata' : 'Disabilitata' }}</span>
-            </p>
-
-            <p>
-              <span class="label">Consiglio irriguo: </span>
-              <span>{{ calendarEvent.customData.advice !== null ? calendarEvent.customData.advice + " L" :
-                "Non calcolato" }}</span>
-            </p>
-
-            <p>
-              <span class="label">Durata: </span>
-              <span>{{ calendarEvent.customData.duration !== null ? calendarEvent.customData.duration +
-                " minuti" : "Non calcolata" }}</span>
-            </p>
-
-            <p>
-              <span class="label">Acqua extra sistema: </span>
-              <span>{{ calendarEvent.customData.expectedWater ? calendarEvent.customData.expectedWater : 0
-              }} L</span>
-            </p>
-
-            <p class="example">
-              <em>Es. (fertirrigazione, pioggia prevista)</em>
-            </p>
-
-            <div v-if="calendarEvent.customData.theses && calendarEvent.customData.theses.length">
-              <p><span class="label">Tesi Considerate:</span></p>
-              <ul class="theses-list">
-                <li v-for="thesis in calendarEvent.customData.theses" :key="thesis.thesisId">
-                  <div class="thesis-item">
-                    <span class="thesis-name">{{ thesis.thesisName }}</span>
-                    <span class="thesis-weight">{{ (thesis.weight * 100).toFixed(0) }}%</span>
-                  </div>
-                  <div class="thesis-timestamp">
-                    <small>{{ formatTimestamp(thesis.imageTimestamp) }}</small>
-                  </div>
-                </li>
-              </ul>
+          <div v-else>
+            <div class="actions" v-if="isEventEditable(calendarEvent)">
+              <button class="btn btn-primary update-event" @click.stop.prevent="openEventModal(calendarEvent)">
+                Modifica evento
+              </button>
             </div>
 
-            <div v-if="calendarEvent.customData.note">
-              <span class="label">Note: </span>
-              <span>{{ calendarEvent.customData.note }}</span>
+            <div class="event-updatedBy" v-if="calendarEvent.customData.updatedBy">
+              <span class="label">Modificato da: </span>
+              <span>{{ calendarEvent.customData.updatedBy }}</span>
             </div>
 
+            <div class="event-data">
+              <p>
+                <span class="label">Stato: </span>
+                <span>{{ calendarEvent.customData.enabled ? 'Abilitata' : 'Disabilitata' }}</span>
+              </p>
+
+              <p>
+                <span class="label">Consiglio irriguo: </span>
+                <span>{{ calendarEvent.customData.advice !== null ? calendarEvent.customData.advice + " L" :
+                  "Non calcolato" }}</span>
+              </p>
+
+              <p>
+                <span class="label">Durata: </span>
+                <span>{{ calendarEvent.customData.duration !== null ? calendarEvent.customData.duration +
+                  " minuti" : "Non calcolata" }}</span>
+              </p>
+
+              <p>
+                <span class="label">Acqua extra sistema: </span>
+                <span>{{ calendarEvent.customData.expectedWater ? calendarEvent.customData.expectedWater : 0
+                }} L</span>
+              </p>
+
+              <p class="example">
+                <em>Es. (fertirrigazione, pioggia prevista)</em>
+              </p>
+
+              <div v-if="calendarEvent.customData.theses && calendarEvent.customData.theses.length">
+                <p><span class="label">Tesi Considerate:</span></p>
+                <ul class="theses-list">
+                  <li v-for="thesis in calendarEvent.customData.theses" :key="thesis.thesisId">
+                    <div class="thesis-item">
+                      <span class="thesis-name">{{ thesis.thesisName }}</span>
+                      <span class="thesis-weight">{{ (thesis.weight * 100).toFixed(0) }}%</span>
+                    </div>
+                    <div class="thesis-timestamp">
+                      <small>{{ formatTimestamp(thesis.imageTimestamp) }}</small>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+
+              <div v-if="calendarEvent.customData.note">
+                <span class="label">Note: </span>
+                <span>{{ calendarEvent.customData.note }}</span>
+              </div>
+
+            </div>
           </div>
         </div>
       </template>
     </ScheduleXCalendar>
+    <div v-if="selectedEvent" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+      aria-hidden="true" ref="updateModal">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-3"> Modifica Evento</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+
+          <form @submit.prevent="submitForm">
+            <div class="modal-body">
+              <div class="row text-center fs-5 p-2">
+                <div class="col">{{ titleFunction(selectedEvent) }} - {{ new
+                  Date(selectedEvent.date).toLocaleDateString("it-IT") }}</div>
+              </div>
+              <div class="form-group row align-items-center p-2 px-4">
+                <div class="col-auto form-check form-switch">
+                  <input type="checkbox" role="switch" class="form-check-input" id="enableEvent" name="enableEvent"
+                    v-model="updateForm.enabled">
+                </div>
+
+                <div class="col-auto"><label class="form-check-label" for="enableEvent">Abilita evento</label></div>
+              </div>
+              <div class="form-group row align-items-center p-2">
+                <div class="col-auto"><label for="startTime">Ora di Inizio:</label></div>
+                <div class="col-auto">
+                  <input type="time" class="form-control" id="startTime" name="startTime"
+                    v-model="updateForm.wateringStart"
+                    :class="{ 'is-invalid': !isValidTime(updateForm.wateringStart) }" required>
+                  <span v-if="!isValidTime(updateForm.wateringStart)" class="text-danger">Ora di inizio non
+                    valida</span>
+                </div>
+
+              </div>
+              <div class="form-group row align-items-center p-2">
+                <div class="col-auto"><label for="waterAmount">Acqua extra sistema (L):</label></div>
+                <div class="col-auto"><input type="number" class="form-control" id="waterAmount" name="waterAmount"
+                    min="0" step="0.01" v-model="updateForm.expectedWater"></div>
+              </div>
+              <div class="form-group row align-items-center p-2">
+                <div><label for="note">Note:</label></div>
+                <div class="my-2"><textarea class="form-control" id="note" name="note" rows="2"
+                    v-model="updateForm.note"></textarea></div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+              <button type="submit" class="btn btn-primary"
+                :disabled="!isValidTime(updateForm.wateringStart)">Salva</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
