@@ -215,16 +215,27 @@ async function mountChart() {
   showChart.value = false
   loadingFlag.value = true
 
-  let response = await communicationService.getChartData(configParsed.environment, configParsed.paths, configParsed.params, endpoint, 'images')
+  let data = null
+  let binningId = null
+
+  let chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, configParsed.params, endpoint, 'images')
   if (JSON.stringify(configParsed) !== props.config) {
     return
   }
 
-  const binningId = response.binningId
-  const chartDataResponse = response.data
 
-  if (chartDataResponse && binningId) {
-    images.value = new Map(chartDataResponse.map(obj => [obj.timestamp, obj.image]))
+  if(chartDataResponse) {
+    data = chartDataResponse.data
+    binningId = chartDataResponse.binningId
+    showChart.value = data.length > 0
+  } else {
+    showChart.value = false
+    loadingFlag.value = false
+    return 
+  }
+
+  if (data && binningId) {
+    images.value = new Map(data.map(obj => [obj.timestamp, obj.image]))
     binningInfo.value = await communicationService.getBinningInfo(configParsed.environment, binningId, 'bins')
     if (JSON.stringify(configParsed) !== props.config) {
       return

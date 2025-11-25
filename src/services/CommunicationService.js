@@ -110,16 +110,6 @@ export class CommunicationService {
         })
     }
 
-    // async getFieldInfo(environment, pathsParams, params, endpoint) {
-    //     const response = await this.getAPI(environment, "/fields", pathsParams, params, endpoint)
-    //     return response;
-    // }
-
-    // async getWateringSchedule(environment, pathsParams, params, endpoint) {
-    //     const response = await this.getAPI(environment, "/wateringSchedule", pathsParams, params, endpoint)
-    //     return response;
-    // }
-
     async updateEvent(environment, eventId, endpoint, updatedEvent) {
         return axios.put(this.buildURL(environment.host, "/wateringSchedule", eventId, endpoint), {
             ...updatedEvent
