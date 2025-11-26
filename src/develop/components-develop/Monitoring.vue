@@ -1,25 +1,20 @@
 <script setup>
-
 import '@/assets/basebase.css';
 import authService from '@/develop/services-develop/auth.service.js';
 import { computed, watch, onMounted, reactive, ref, watchEffect } from "vue";
 
 const props = defineProps(['token', 'user'])
 
-let selectedTimestampFrom = ref(getCurrentTimestampMinusDays(10))
+let selectedTimestampFrom = ref(getCurrentTimestampMinusDays(30))
 let selectedTimestampTo = ref(getCurrentTimestampMinusDays(0))
 
-let customSelectedTimestampTo = ref(getCurrentTimestampMinusDays(89))
-let customSelectedTimestampFrom = ref(getCurrentTimestampMinusDays(130))
+let customSelectedTimestampTo = ref(getCurrentTimestampMinusDays(0))
+let customSelectedTimestampFrom = ref(getCurrentTimestampMinusDays(30))
 
 
 let selectedSectorName = ref("Seleziona un settore")
 let selectedThesisName = ref("Seleziona una tesi")
-// let selectedThesis = ref({})
-let selectedThesis = ref({
-	sectorId: 123,
-	thesisId: 200
-})
+let selectedThesis = ref({})
 let selectedTimeLabel = ref("")
 let showDynamicHeatmap = ref(false)
 let showOptimalMatrix = ref(false)
@@ -36,8 +31,8 @@ watch(token, () => {
 
 const userPermissions = reactive({})
 
-const sectors = reactive([])
-const theses = reactive([])
+const sectors = ref([])
+const theses = ref([])
 let activeThesis
 
 function updateConnectionParams() {
@@ -95,7 +90,7 @@ function updateCustomTimestamps() {
 }
 
 function selectThesis(thesis) {
-	selectedThesisName = createThesisName(thesis)
+	selectedThesisName.value = createThesisName(thesis)
 	selectedThesis.value.thesisId = thesis.id
 	updateConnectionParams()
 }
@@ -123,8 +118,15 @@ function createThesisName(item) {
 
 async function updateUserSectors() {
 	if (token.value) {
-		sectors.value = await authService.retrieveUserSectors(token.value, selectedTimestampFrom.value, selectedTimestampTo.value)
-		//selectSector(sectors.value[0])
+		try {
+			sectors.value = await authService.retrieveUserSectors(token.value, selectedTimestampFrom.value, selectedTimestampTo.value)
+			if (sectors.value && sectors.value.length > 0) {
+				selectSector(sectors.value[0])
+			}
+		}
+		catch {
+			console.log("Errore recuperando i settori")
+		}
 	}
 }
 
@@ -160,11 +162,11 @@ const selectedTimestamp = ref(Math.floor(Date.now() / 1000))
 function selectedTime(time) {
 	let timeDetail = time.detail;
 
-    if (Array.isArray(timeDetail) && timeDetail.length > 0) {
-        timeDetail = timeDetail[0];
-    } 
-	
-    selectedTimestamp.value = timeDetail;
+	if (Array.isArray(timeDetail) && timeDetail.length > 0) {
+		timeDetail = timeDetail[0];
+	}
+
+	selectedTimestamp.value = timeDetail;
 }
 
 </script>
@@ -185,29 +187,30 @@ function selectedTime(time) {
 			</div>
 		</div>
 		<div class="m-2 col-md-12 d-flex flex-row justify-content-center flex-wrap">
-			<div v-if="sectors" class="d-flex align-items-center flex-wrap">
+			<div v-if="sectors.length > 0" class="d-flex align-items-center flex-wrap">
 				<p class="px-2 m-0">Settore:</p>
-				<button class="btn btn-secondary dropdown-toggle my-1 px-2" type="button" id="dropdownMenuButton"
+				<button class="btn btn-secondary dropdown-toggle my-1 px-2" type="button" id="dropdownMenuSector"
 					data-bs-toggle="dropdown" aria-expanded="false">
 					{{ selectedSectorName }}
 				</button>
-				<ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-					<li v-for="(item, index) in sectors.value" :key="index">
+				<ul class="dropdown-menu" aria-labelledby="dropdownMenuSector">
+					<li v-for="(item, index) in sectors" :key="index">
 						<a class="dropdown-item" href="#" @click.prevent="selectSector(item)">
 							{{ createSectorName(item) }}
 						</a>
 					</li>
 				</ul>
 			</div>
-			<div v-if="theses" class="d-flex align-items-center flex-wrap">
+
+			<div v-if="theses.length > 0" class="d-flex align-items-center flex-wrap">
 				<p class="px-2 mb-0">Tesi: </p>
-				<button class="btn btn-secondary dropdown-toggle my-1 px-2" type="button" id="dropdownMenuButton"
+				<button class="btn btn-secondary dropdown-toggle my-1 px-2" type="button" id="dropdownMenuThesis"
 					data-bs-toggle="dropdown" aria-expanded="false">
 					{{ selectedThesisName }}
 				</button>
 
-				<ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-					<li v-for="(item, index) in theses.value" :key="index">
+				<ul class="dropdown-menu" aria-labelledby="dropdownMenuThesis">
+					<li v-for="(item, index) in theses" :key="index">
 						<a class="dropdown-item" href="#" @click.prevent="selectThesis(item)">
 							{{ createThesisName(item) }}
 						</a>
@@ -226,7 +229,7 @@ function selectedTime(time) {
 						<UpdateOptimalStateComponent v-if="true"
 							:config="JSON.stringify(connectionParams)" :selectedTimestamp="selectedTimestamp" /> -->
 						<button class="btn btn-sm btn-secondary m-1" type="button" @click="enableOptimalMatrix"
-							id="optimal-heatmap-button">Mostra ottimo</button> 
+							id="optimal-heatmap-button">Mostra ottimo</button>
 						<button class="btn btn-sm btn-secondary m-1" type="button" @click="enableDynamicHeatmap"
 							id="dynamic-heatmap-button">Mostra evoluzione</button>
 					</div>
@@ -245,9 +248,8 @@ function selectedTime(time) {
 								:selectedTimestamp="selectedTimestamp"></humiditymap-smarter>
 						</div>
 					</div>
-					<optimal-humidity-heatmap-smarter v-if="showOptimalMatrix"
-						:config="baseConnectionParams" :selectedTimestamp="selectedTimestamp"
-						:showDistance="true"></optimal-humidity-heatmap-smarter>
+					<optimal-humidity-heatmap-smarter v-if="showOptimalMatrix" :config="baseConnectionParams"
+						:selectedTimestamp="selectedTimestamp" :showDistance="true"></optimal-humidity-heatmap-smarter>
 				</div>
 			</div>
 		</div>
@@ -267,10 +269,11 @@ function selectedTime(time) {
 			<div class="groundwaterpot-card card">
 				<div class="card-header">Potenziale idrico</div>
 				<div class="card-body">
-					<groundwaterpot-chart-smarter style="height: 320px" :config="JSON.stringify(connectionParams)"></groundwaterpot-chart-smarter>
+					<groundwaterpot-chart-smarter style="height: 320px"
+						:config="JSON.stringify(connectionParams)"></groundwaterpot-chart-smarter>
 				</div>
 			</div>
-		</div>	
+		</div>
 		<div v-if="selectedThesis.thesisId" class="my-3 container col-md-12">
 			<div class="groundwaterpot-card card">
 				<div class="card-header">Potenziale idrico</div>
@@ -322,7 +325,7 @@ function selectedTime(time) {
 						:config="baseConnectionParams"></optimal-distance-chart-smarter>
 				</div>
 			</div>
-		</div> 
+		</div>
 
 		<div v-if="true" class="my-3 container">
 			<div class="countors-card card">
@@ -330,8 +333,7 @@ function selectedTime(time) {
 				<div class="card-body row">
 					<div class="col-lg-6">
 						<p>Matrice dell'umidità <strong>media</strong> lungo il periodo:</p>
-						<meancountor-chart-smarter
-							:config="baseConnectionParams"></meancountor-chart-smarter>
+						<meancountor-chart-smarter :config="baseConnectionParams"></meancountor-chart-smarter>
 					</div>
 					<div class="col-lg-6">
 						<p>Matrice di <strong>varianza</strong> dell'umidità lungo il periodo:</p>
@@ -352,11 +354,10 @@ function selectedTime(time) {
 				</div>
 			</div>
 		</div>
-	</div> 
+	</div>
 </template>
 
 <style scoped>
-
 input[type=radio] {
 	position: absolute;
 	clip: rect(0, 0, 0, 0);

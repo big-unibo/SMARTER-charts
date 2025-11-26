@@ -9,12 +9,14 @@ import 'temporal-polyfill/global'
 import '@schedule-x/theme-default/dist/index.css'
 import { createEventModalPlugin } from '@schedule-x/event-modal'
 import { CommunicationService } from "../services/CommunicationService.js";
-import { Modal } from 'bootstrap'
 import { luxonZoneDateTimeToStringCalendar } from '@/common/dateUtils.js'
 
 const SCHEDULE_SAFE_PERIOD = 3600
-const getEventsEndpoint = "wateringCalendar"
+const getEventsEndpoint = "calendar"
 const updateEventEndpoint = "update"
+
+const updateFailedMessage = ref(null)
+const updateFailed = ref(false)
 
 const props = defineProps(['config'])
 const communicationService = new CommunicationService();
@@ -43,64 +45,61 @@ const closeModal = () => {
 
 let activeModal
 async function openEventModal(eventData) {
-  // const target=eventDate.target;
-  // if(Array.from(target.classList).filter(c=>c==="update-event").length>0){
-  //   selectedEvent.value = eventsData.filter(e=>e.date===target.id)[0]
-  //   updateForm.value = {
-  //     enabled: selectedEvent.value.enabled,
-  //     wateringStartTime: new Date(selectedEvent.value.wateringStart * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-  //     expectedWater: selectedEvent.value.expectedWater,
-  //     note: selectedEvent.value.note
-  //   }
-  //   await nextTick()
-  //   if (updateModal.value) {
-  //     activeModal = new Modal(updateModal.value)
-  //     activeModal.show()
-  //   } else {
-  //     console.warn('Modal element not found')
-  //   }
-  // }
+  selectedEvent.value = eventsData.filter(e => e.eventId === eventData.id)[0]
+  updateForm.value = {
+    enabled: selectedEvent.value.enabled,
+    wateringStart: luxonZoneDateTimeToStringCalendar(selectedEvent.value.wateringStart),
+    expectedWater: selectedEvent.value.expectedWater,
+    note: selectedEvent.value.note
+  }
 
-
-  selectedEvent.value = eventsData.filter(e=>e.eventId===eventData.id)[0]
-    updateForm.value = {
-      enabled: selectedEvent.value.enabled,
-      wateringStart: luxonZoneDateTimeToStringCalendar(selectedEvent.value.wateringStart),
-      expectedWater: selectedEvent.value.expectedWater,
-      note: selectedEvent.value.note
-    }
-
-    await nextTick()
-    if (updateModal.value) {
-      activeModal = new Modal(updateModal.value)
-      activeModal.show()
-    } else {
-      console.warn('Modal element not found')
-    }
+  await nextTick()
+  if (updateModal.value) {
+    activeModal = new Modal(updateModal.value)
+    updateFailed.value = false;
+    updateFailedMessage.value = "";
+    activeModal.show()
+  } else {
+    console.warn('Modal element not found')
+  }
 }
 
-function isValidTime(time){
-  const newWateringStart = new Date(time).getTime()/1000
-  return newWateringStart > Date.now()/1000 + SCHEDULE_SAFE_PERIOD
+function isValidTime(time) {
+  const newWateringStart = new Date(time).getTime() / 1000
+  return newWateringStart > Date.now() / 1000 + SCHEDULE_SAFE_PERIOD
 }
 
-async function submitForm(){
-  
-  const wateringStart =  new Date(updateForm.value.wateringStart).getTime()/1000
+async function submitForm() {
+  updateFailed.value = false;
+  updateFailedMessage.value  = "";
+
+  const wateringStart = new Date(updateForm.value.wateringStart).getTime() / 1000
   const updatedEvent = {
-    wateringStart : wateringStart,
+    wateringStart: wateringStart,
     enabled: updateForm.value.enabled,
     expectedWater: updateForm.value.expectedWater,
     note: updateForm.value.note
   }
-  
+
   const eventId = selectedEvent.value.eventId
 
   const configParsed = JSON.parse(props.config);
-  await communicationService.updateEvent(configParsed.environment, eventId, updateEventEndpoint, updatedEvent)
 
-  await mountChart()
-  activeModal.hide()
+  try {
+    const saveStatus = await communicationService.updateEvent(configParsed.environment, eventId, updateEventEndpoint, updatedEvent)
+
+    await mountChart()
+    activeModal.hide()
+  }
+
+  catch (error) {
+    if (error.status === 400) {
+      updateFailedMessage.value = "Dati inseriti non validi.";
+    } else {
+      updateFailedMessage.value = "Errore durante il salvataggio, riprova più tardi..";
+    }
+    updateFailed.value = true;
+  }
 }
 
 
@@ -200,10 +199,6 @@ watchEffect(async () => {
   }
 });
 
-async function switchToEditModal(calendarEvent) {
-  isEditing.value = true
-}
-
 async function mountChart(timeFilter = null) {
   const configParsed = JSON.parse(props.config);
 
@@ -301,7 +296,7 @@ async function mountChart(timeFilter = null) {
           </div>
 
           <div v-if="isEditing">
-              
+
           </div>
           <div v-else>
             <div class="actions" v-if="isEventEditable(calendarEvent)">
@@ -379,6 +374,14 @@ async function mountChart(timeFilter = null) {
 
           <form @submit.prevent="submitForm">
             <div class="modal-body">
+              <div v-if="updateFailed" class="alert alert-danger d-flex align-items-center" role="alert">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                  class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2" viewBox="0 0 16 16">
+                  <path
+                    d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" />
+                </svg>
+                <div>{{ updateFailedMessage }}</div>
+              </div>
               <div class="row text-center fs-5 p-2">
                 <div class="col">{{ titleFunction(selectedEvent) }} - {{ new
                   Date(selectedEvent.date).toLocaleDateString("it-IT") }}</div>
@@ -395,8 +398,8 @@ async function mountChart(timeFilter = null) {
                 <div class="col-auto"><label for="startTime">Ora di Inizio:</label></div>
                 <div class="col-auto">
                   <input type="datetime-local" class="form-control" id="startTime" name="startTime"
-                    v-model=" updateForm.wateringStart"
-                    :class="{ 'is-invalid': !isValidTime(updateForm.wateringStart) }" required>
+                    v-model="updateForm.wateringStart" :class="{ 'is-invalid': !isValidTime(updateForm.wateringStart) }"
+                    required>
                   <span v-if="!isValidTime(updateForm.wateringStart)" class="text-danger">Ora di inizio non
                     valida</span>
                 </div>
