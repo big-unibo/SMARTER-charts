@@ -10,6 +10,7 @@ import '@schedule-x/theme-default/dist/index.css'
 import { createEventModalPlugin } from '@schedule-x/event-modal'
 import { CommunicationService } from "../services/CommunicationService.js";
 import { Modal } from 'bootstrap'
+import { luxonZoneDateTimeToStringCalendar } from '@/common/dateUtils.js'
 
 const SCHEDULE_SAFE_PERIOD = 3600
 const getEventsEndpoint = "wateringCalendar"
@@ -64,7 +65,7 @@ async function openEventModal(eventData) {
   selectedEvent.value = eventsData.filter(e=>e.eventId===eventData.id)[0]
     updateForm.value = {
       enabled: selectedEvent.value.enabled,
-      wateringStart: new Date(selectedEvent.value.wateringStart * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      wateringStart: luxonZoneDateTimeToStringCalendar(selectedEvent.value.wateringStart),
       expectedWater: selectedEvent.value.expectedWater,
       note: selectedEvent.value.note
     }
@@ -79,13 +80,13 @@ async function openEventModal(eventData) {
 }
 
 function isValidTime(time){
-  // const wateringStart = new Date(selectedEvent.value.date +" "+ time)
-  // return wateringStart > Date.now() + SCHEDULE_SAFE_PERIOD
-  return true
+  const newWateringStart = new Date(time).getTime()/1000
+  return newWateringStart > Date.now()/1000 + SCHEDULE_SAFE_PERIOD
 }
 
 async function submitForm(){
-  const wateringStart =  new Date(selectedEvent.value.date +" "+ updateForm.value.wateringStart).getTime()/1000
+  
+  const wateringStart =  new Date(updateForm.value.wateringStart).getTime()/1000
   const updatedEvent = {
     wateringStart : wateringStart,
     enabled: updateForm.value.enabled,
@@ -393,8 +394,8 @@ async function mountChart(timeFilter = null) {
               <div class="form-group row align-items-center p-2">
                 <div class="col-auto"><label for="startTime">Ora di Inizio:</label></div>
                 <div class="col-auto">
-                  <input type="time" class="form-control" id="startTime" name="startTime"
-                    v-model="updateForm.wateringStart"
+                  <input type="datetime-local" class="form-control" id="startTime" name="startTime"
+                    v-model=" updateForm.wateringStart"
                     :class="{ 'is-invalid': !isValidTime(updateForm.wateringStart) }" required>
                   <span v-if="!isValidTime(updateForm.wateringStart)" class="text-danger">Ora di inizio non
                     valida</span>

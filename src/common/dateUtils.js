@@ -11,3 +11,9 @@ export const luxonDateTimeToString = (seconds) => {
 export const luxonDateTimeToStringCalendar = (seconds) => {
     return DateTime.fromSeconds(Number(seconds), { zone: 'utc+2' }).toFormat("yyyy-MM-dd HH:mm")
 }
+
+export const luxonZoneDateTimeToStringCalendar = (seconds) => {
+    return DateTime.fromSeconds(Number(seconds))
+        .setZone('Europe/Rome')
+        .toFormat("yyyy-MM-dd'T'HH:mm"); 
+}
