@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const Modal = window.bootstrap.Modal; //Avoiding double bootstrap import problem
+
 import { ref, shallowRef, markRaw, watchEffect, nextTick } from 'vue'
 import { ScheduleXCalendar } from '@schedule-x/vue'
 import {
