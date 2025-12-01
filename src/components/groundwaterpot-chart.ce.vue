@@ -1,10 +1,10 @@
 <script setup>
 
-import {Line} from "vue-chartjs";
-import { ref, watchEffect} from "vue";
+import { Line } from "vue-chartjs";
+import { ref, watchEffect } from "vue";
 import 'chartjs-adapter-luxon';
-import {luxonDateTime} from '../common/dateUtils.js'
-import {CommunicationService} from "../services/CommunicationService.js";
+import { luxonDateTime } from '../common/dateUtils.js'
+import { CommunicationService } from "../services/CommunicationService.js";
 import { Colors } from 'chart.js';
 
 const communicationService = new CommunicationService();
@@ -21,16 +21,17 @@ import {
   Filler,
   TimeScale
 } from 'chart.js'
-import {LineDatasetData} from "../common/LineDatasetData.js";
+import { LineDatasetData } from "../common/LineDatasetData.js";
+import { groundWaterPotentialColorFunction } from "@/common/colorsConfig.js";
 
-const chartData = ref({datasets: [], labels: []})
-const options = ref({responsive: true, maintainAspectRatio: false})
+const chartData = ref({ datasets: [], labels: [] })
+const options = ref({ responsive: true, maintainAspectRatio: false })
 const showChart = ref(false)
 const loadingFlag = ref(false)
 
 const unitLabel = ref(null);
 
-const props = defineProps(['config','extraParams'])
+const props = defineProps(['config', 'extraParams'])
 
 const endpoint = 'signals'
 
@@ -38,38 +39,35 @@ const endpoint = 'signals'
 const createDatasets = (data) => {
   const datasets = [];
   data.forEach(signalType => {
-    signalType.signals.forEach(signal => {
+    signalType.signals.sort((a, b) => {
+        if (a.x === b.x) {
+            return b.y - a.y; 
+        }
+        return a.x - b.x; 
+    });
+    signalType.signals.forEach((signal, index) => {
       const label = `${signalType.signalTypeDescription} (${signal.x}, ${signal.y})`;
+
 
       if (unitLabel.value === null && signal?.unit != null) {
         unitLabel.value = signal.unit;
       }
 
-      const dataPoints = signal.measurements.map(m => 
+      const dataPoints = signal.measurements.map(m =>
         JSON.stringify({
           x: luxonDateTime(m.timestamp),
           y: Number(m.value).toFixed(2)
         })
       );
-      datasets.push(new LineDatasetData(label, dataPoints, false, 3, 0.3, colorFunction));
+
+      const sortingKey = {
+        x: signal.x,
+        y: signal.y
+      }
+      datasets.push(new LineDatasetData(label, dataPoints, false, 3, 0.3, groundWaterPotentialColorFunction, index, sortingKey));
     });
   });
   return datasets
-}
-
-const colorFunction = (str) => {
-  let hash = 200;
-  if (str.length === 0) return hash;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    hash = hash & hash;
-  }
-  let rgb = [0, 0, 0];
-  for (let i = 0; i < 3; i++) {
-    let value = (hash >> (i * 8)) & 255;
-    rgb[i] = value;
-  }
-  return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
 }
 
 ChartJS.register(Colors);
@@ -77,7 +75,7 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 
 watchEffect(async () => {
   let value = props.config;
-  if(value) {
+  if (value) {
     await mountChart()
   }
 });
@@ -87,7 +85,7 @@ async function mountChart() {
   const extraParamsParsed = JSON.parse(props.extraParams)
   const mergedParams = {
     ...configParsed.params,
-    ...extraParamsParsed 
+    ...extraParamsParsed
   };
 
   let data = [];
@@ -102,19 +100,20 @@ async function mountChart() {
     mergedParams,
     endpoint
   );
-  if(JSON.stringify(configParsed ) !== props.config){
-      return
+  if (JSON.stringify(configParsed) !== props.config) {
+    return
   }
 
-  if(chartDataResponse) {
+  if (chartDataResponse) {
     data = chartDataResponse
     showChart.value = data.length > 0
   } else data = []
 
-  const datasets = createDatasets(data).map(bin => bin.getDataSet(colorFunction)).sort( (a,b) => {
-    if (a.label < b.label) return -1;
-    if (a.label > b.label) return 1;
-    return 0;
+  const datasets = createDatasets(data).map(bin => bin.getDataSet()).sort((a, b) => {
+    if (a.sortingKey.x === b.sortingKey.x) {
+            return b.sortingKey.y - a.sortingKey.y; 
+        }
+        return a.sortingKey.x - b.sortingKey.x;
   })
 
   chartData.value = {

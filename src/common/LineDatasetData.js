@@ -2,7 +2,7 @@ import * as d3 from "d3";
 
 export class LineDatasetData {
 
-    constructor(label, data, fill, pointRadius, tension, colorFunction, colorKey = null) {
+    constructor(label, data, fill, pointRadius, tension, colorFunction, colorKey = null, sortingKey = null) {
         this.label = label;
         this.data = data;
         this.fill = fill;
@@ -10,6 +10,7 @@ export class LineDatasetData {
         this.tension = tension;
         this.colorFunction = colorFunction;
         this.colorKey = colorKey;
+        this.sortingKey = sortingKey;
     }
 
     getDataSet() {
@@ -21,7 +22,8 @@ export class LineDatasetData {
             borderColor: this.colorFunction(keyForColor),
             backgroundColor: this.colorFunction(keyForColor),
             tension: this.tension,
-            pointRadius: this.pointRadius
+            pointRadius: this.pointRadius,
+            sortingKey: this.sortingKey
         };
     }
 }

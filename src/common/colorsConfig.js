@@ -45,17 +45,41 @@ export const optimalDistanceColorFunction = (str) => {
 }
 
 export const devColorFunction = (d) => {
-    if (d <= 5) {
-      return "rgba(49, 102, 140, 1)";
-    } else if (d <= 10) {
-      return "rgba(35, 130, 140, 1)";
-    } else if (d <= 20) {
-      return "rgba(28, 156, 135, 1)";
-    } else if (d <= 30) {
-      return "rgba(51, 181, 120, 1)";
-    } else if (d <= 50) {
-      return "rgba(110, 204, 87, 1)";
-    } else if (d <= 70) {
-      return "rgba(179, 220, 41, 1)";
-    } else return "rgba(253, 230, 36, 1)";
-  };
+  if (d <= 5) {
+    return "rgba(49, 102, 140, 1)";
+  } else if (d <= 10) {
+    return "rgba(35, 130, 140, 1)";
+  } else if (d <= 20) {
+    return "rgba(28, 156, 135, 1)";
+  } else if (d <= 30) {
+    return "rgba(51, 181, 120, 1)";
+  } else if (d <= 50) {
+    return "rgba(110, 204, 87, 1)";
+  } else if (d <= 70) {
+    return "rgba(179, 220, 41, 1)";
+  } else return "rgba(253, 230, 36, 1)";
+};
+
+const tableau20Colors = [
+  "#4E79A7", "#A0CBE8",
+  "#F28E2B", "#FFBE7D",
+  "#59A14F", "#8CD17D",
+  "#B6992D", "#F1CE63",
+  "#499894", "#86BCB6",
+  "#E15759", "#FF9D9A",
+  "#79706E", "#BAB0AC",
+  "#D47295", "#FABFD2",
+  "#B07AA1", "#D4A6C8",
+  "#9D7660", "#D7B5A6"
+];
+
+
+export const groundWaterPotentialColorFunction = (index) => {
+  const pairIndex = index % 10;
+  const isSecondRound = Math.floor(index / 10) % 2 === 1;
+
+  const baseIndex = pairIndex * 2;
+  const finalIndex = isSecondRound ? baseIndex + 1 : baseIndex;
+
+  return tableau20Colors[finalIndex];
+}
