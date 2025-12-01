@@ -25,10 +25,11 @@ export default defineConfig({
       fileName: (format) => `smarter-charts.${format}.js`
     },
     rollupOptions: {
-      external: ['vue'], // Exclude vue from the bundle
+      external: ['vue', 'bootstrap'], // Exclude vue from the bundle
       output: {
         globals: {
-          vue: 'Vue'
+          vue: 'Vue',
+          bootstrap: 'bootstrap'
         }
       }
     }

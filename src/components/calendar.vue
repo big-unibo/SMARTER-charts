@@ -1,6 +1,4 @@
-<script setup lang="ts">
-const Modal = window.bootstrap.Modal; //Avoiding double bootstrap import problem
-
+<script setup>
 import { ref, shallowRef, markRaw, watchEffect, nextTick } from 'vue'
 import { ScheduleXCalendar } from '@schedule-x/vue'
 import {
@@ -40,12 +38,23 @@ const updateModal = ref(null)
 let eventsData = []
 const eventModalPlugin = createEventModalPlugin()
 
+//Using the external bootstrap instance
+const getBootstrap = () => {
+  if (window.bootstrap) {
+    return window.bootstrap;
+  }
+  
+  console.error("Bootstrap JS not found.");
+  return null;
+}
+
+
 const closeModal = () => {
   eventModalPlugin.close()
 }
 
 
-let activeModal
+let activeModal = null;
 async function openEventModal(eventData) {
   selectedEvent.value = eventsData.filter(e => e.eventId === eventData.id)[0]
   updateForm.value = {
@@ -57,12 +66,16 @@ async function openEventModal(eventData) {
 
   await nextTick()
   if (updateModal.value) {
-    activeModal = new Modal(updateModal.value)
-    updateFailed.value = false;
-    updateFailedMessage.value = "";
-    activeModal.show()
+    const bs = getBootstrap();
+    
+    if (bs) {
+      activeModal = new bs.Modal(updateModal.value);
+      updateFailed.value = false;
+      updateFailedMessage.value = "";
+      activeModal.show();
+    }
   } else {
-    console.warn('Modal element not found')
+    console.warn('Modal element not found in DOM')
   }
 }
 
