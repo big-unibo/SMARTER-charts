@@ -2,9 +2,9 @@
 
 import '../assets/animator.css'
 
-import {ref, watchEffect} from 'vue';
+import { ref, watchEffect } from 'vue';
 import GenericLinearChart from "./generic-linechart.ce.vue";
-import {CommunicationService} from "../services/CommunicationService.js";
+import { CommunicationService } from "../services/CommunicationService.js";
 import DynamicHeatmap from "../components/dynamic-heatmap.ce.vue";
 
 const buttonTexts = {
@@ -15,7 +15,8 @@ const buttonTexts = {
 
 const props = defineProps(['config'])
 
-const animatorConfig = ref(null)
+const heatmapAnimatorConfig = ref(null)
+const linechartAnimatorConfig = ref(null)
 
 const communicationService = new CommunicationService();
 const endpoint = 'humidityBins'
@@ -33,20 +34,32 @@ const currentDate = ref('');
 
 const loadingFlag = ref(false)
 
-function updateConfig(currentTimestamp, lastTimestamp) {
+function updateHeatmapConfig(firstTimestamp, lastTimestamp) {
   const parsedConfigProp = JSON.parse(props.config);
-  animatorConfig.value = JSON.stringify({
+  heatmapAnimatorConfig.value = JSON.stringify({
     environment: parsedConfigProp.environment,
     paths: parsedConfigProp.paths,
     params: {
-      timeFilterFrom: (Number(lastTimestamp)+1).toString(),
-      timeFilterTo: currentTimestamp.toString()
+      timeFilterFrom: firstTimestamp,
+      timeFilterTo: lastTimestamp
+    }
+  })
+}
+
+function updateLinechartConfig(currentTimestamp, lastTimestamp) {
+  const parsedConfigProp = JSON.parse(props.config);
+  linechartAnimatorConfig.value = JSON.stringify({
+    environment: parsedConfigProp.environment,
+    paths: parsedConfigProp.paths,
+    params: {
+      timeFilterFrom: (Number(lastTimestamp) + 1),
+      timeFilterTo: currentTimestamp
     }
   })
 }
 
 async function calculateTimestampLength() {
-  loadingFlag.value = true; 
+  loadingFlag.value = true;
   const configParsed = JSON.parse(props.config);
   const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, configParsed.params, endpoint, "measures");
 
@@ -63,7 +76,7 @@ async function calculateTimestampLength() {
   });
 
   timestampsArray.value = Array.from(timestamps.value).sort((a, b) => a - b);
-  loadingFlag.value = false; 
+  loadingFlag.value = false;
 }
 
 function startLoop() {
@@ -74,7 +87,7 @@ function startLoop() {
     currentDate.value = new Date(currentTimestamp.value * 1000).toLocaleDateString('it-IT');
 
     const prevIndex = currentIndex.value > 0 ? currentIndex.value - 1 : 0;
-    updateConfig(arr[currentIndex.value], arr[prevIndex]);
+    updateLinechartConfig(arr[currentIndex.value], arr[prevIndex]);
     currentIndex.value++;
 
     if (currentIndex.value >= arr.length) {
@@ -102,7 +115,7 @@ function reset() {
 
 function onClickPlayButton() {
   isPlaying.value = !isPlaying.value;
-  buttonText.value = isPlaying.value ? buttonTexts.stop : currentIndex.value > 0 ? buttonTexts.resume : buttonTexts.start ;
+  buttonText.value = isPlaying.value ? buttonTexts.stop : currentIndex.value > 0 ? buttonTexts.resume : buttonTexts.start;
   isPlaying.value ? startLoop() : stopLoop();
 }
 
@@ -120,10 +133,9 @@ function selectTimestamp(index) {
   currentIndex.value = index;
   const arr = timestampsArray.value;
   const prevIndex = index > 0 ? index - 1 : 0;
-
   currentTimestamp.value = arr[index];
   currentDate.value = new Date(arr[index] * 1000).toLocaleDateString('it-IT');
-  updateConfig(arr[index], arr[prevIndex]);
+  updateLinechartConfig(arr[index], arr[prevIndex]);
   buttonText.value = buttonTexts.resume
   stopLoop();
 }
@@ -133,9 +145,11 @@ function getLeftOffset(dataLen, index) {
 }
 
 watchEffect(async () => {
-  var parsedConfig = JSON.parse(props.config)
   await calculateTimestampLength();
-  updateConfig(Math.min(...timestamps.value.values()), Math.min(...timestamps.value.values())-1)
+  if (timestampsArray.value.length > 0) {
+    updateHeatmapConfig(timestampsArray.value[0], timestampsArray.value[timestampsArray.value.length - 1])
+    updateLinechartConfig(timestampsArray.value[0], timestampsArray.value[0] - 1 )
+  }
 });
 
 </script>
@@ -147,13 +161,9 @@ watchEffect(async () => {
         <div class="timeline-wrapper">
           <button id="dynamic-heatmap-play-button" @click="onClickPlayButton">{{ buttonText }}</button>
           <div class="heatmap-timeline">
-            <div v-for="(timestamp, index) in Array.from(timestamps)"
-                 :key="timestamp"
-                 class="time-point"
-                 :class="{ 'active': currentIndex === index }"
-                 @click="selectTimestamp(index)"
-                 :style="{ left: getLeftOffset(timestamps.size, index) + '%' }"
-            ></div>
+            <div v-for="(timestamp, index) in Array.from(timestamps)" :key="timestamp" class="time-point"
+              :class="{ 'active': currentIndex === index }" @click="selectTimestamp(index)"
+              :style="{ left: getLeftOffset(timestamps.size, index) + '%' }"></div>
           </div>
         </div>
       </div>
@@ -166,23 +176,30 @@ watchEffect(async () => {
           <button type="button" class="btn btn-secondary" @click="changeAnimationSpeed(300)">Media</button>
         </div>
         <div class="col-auto">
-          <button type="button" class="btn btn-secondary" @click="changeAnimationSpeed(100)">Veloce</button>
+          <button type="button" class="btn btn-secondary" @click="changeAnimationSpeed(200)">Veloce</button>
         </div>
       </div>
 
       <div class="charts-wrapper row">
         <div class="heatmap-dataviz col-6">
-          <DynamicHeatmap style="margin-left: -10px" :config="animatorConfig" :selectTimestamp="currentTimestamp"></DynamicHeatmap>
+          <DynamicHeatmap style="margin-left: -10px" :config="heatmapAnimatorConfig"
+            :selectedTimestamp="currentTimestamp"></DynamicHeatmap>
         </div>
-        <div class="col-1"><p></p></div>
+        <div class="col-1">
+          <p></p>
+        </div>
         <div class="line_charts col-5">
-          <generic-linear-chart style="height: 200px" :config="animatorConfig" :extraParams="JSON.stringify({signalTypes: ['DRIPPER']})" :endpoint="'signals'" :label="'Dripper'" :color="'rgb(31, 119, 180)'"></generic-linear-chart>
-          <generic-linear-chart style="height: 200px" :config="animatorConfig" :extraParams="JSON.stringify({signalTypes: ['PLUV_CURR']})" :endpoint="'signals'"  :label="'Pluv'" :color="'rgb(31, 119, 180)'"></generic-linear-chart>
+          <generic-linear-chart style="height: 200px" :config="linechartAnimatorConfig"
+            :extraParams="JSON.stringify({ signalTypes: ['DRIPPER'] })" :endpoint="'signals'" :label="'Dripper'"
+            :color="'rgb(31, 119, 180)'"></generic-linear-chart>
+          <generic-linear-chart style="height: 200px" :config="linechartAnimatorConfig"
+            :extraParams="JSON.stringify({ signalTypes: ['PLUV_CURR'] })" :endpoint="'signals'" :label="'Pluv'"
+            :color="'rgb(31, 119, 180)'"></generic-linear-chart>
         </div>
       </div>
     </div>
   </div>
-    <div v-else-if="loadingFlag" class="d-flex justify-content-center align-items-center">
+  <div v-else-if="loadingFlag" class="d-flex justify-content-center align-items-center">
     <div class="spinner-border" role="status">
       <span class="sr-only"></span>
     </div>

@@ -161,6 +161,7 @@ async function drawImage(timestamp) {
 }
 
 async function mountChart() {
+  loadingFlag.value = true;
   const configParsed = JSON.parse(props.config);
   const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, configParsed.params, endpoint, 'images')
 
@@ -173,6 +174,7 @@ async function mountChart() {
     await nextTick()
     if (showChart.value) {
       const timestamps = Array.from(images.value.keys()).sort()
+      loadingFlag.value = false
       await drawImage(timestamps[timestamps.length - 1])
     }
   } else {
@@ -185,6 +187,12 @@ async function mountChart() {
   <div v-if="showChart" ref="container">
     <VueApexCharts type="heatmap" :options="chartOptions" :series="heatmapSeries"></VueApexCharts>
   </div>
+  <div v-else-if="loadingFlag" class="d-flex justify-content-center align-items-center">
+    <div class="spinner-border" role="status">
+      <span class="sr-only"></span>
+    </div>
+  </div>
+  <div v-else>Nessun dato disponibile.</div>
 </template>
 
 <style>
