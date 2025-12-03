@@ -149,6 +149,6 @@ async function mountChart() {
 </template>
 
 <style>
-@import '../assets/main.css'
+@import '../assets/main.css';
 
 </style>

@@ -1,14 +1,14 @@
 <script setup>
-import '@/assets/basebase.css';
+import '@/assets/basebase-develop.css';
 import authService from '@/develop/services-develop/auth.service.js';
 import { computed, watch, onMounted, reactive, ref, watchEffect } from "vue";
 
 const props = defineProps(['token', 'user'])
 
 let selectedTimestampFrom = ref(getCurrentTimestampMinusDays(30))
-let selectedTimestampTo = ref(getCurrentTimestampMinusDays(0))
+let selectedTimestampTo = ref(getCurrentTimestampMinusDays(20))
 
-let customSelectedTimestampTo = ref(getCurrentTimestampMinusDays(0))
+let customSelectedTimestampTo = ref(getCurrentTimestampMinusDays(20))
 let customSelectedTimestampFrom = ref(getCurrentTimestampMinusDays(30))
 
 

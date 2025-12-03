@@ -3,13 +3,15 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
+import cssInjectedByJsPlugin from 'vite-plugin-css-injected-by-js'
 
 // https://vitejs.dev/config/
 export default defineConfig({
   root: path.resolve(__dirname, 'src/develop'),
 
   plugins: [
-    vue()
+    vue(),
+    cssInjectedByJsPlugin()
   ],
   resolve: {
     alias: {

@@ -31,7 +31,8 @@
     "@vitejs/plugin-vue": "^5.0.3",
     "bootstrap": "^5.3.3",
     "crypto-js": "^4.2.0",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "vite-plugin-css-injected-by-js": "^3.5.2"
   },
   "files": [
     "dist"
@@ -43,7 +44,7 @@
     "require": "./dist/smarter-charts.umd.js"
   },
   "peerDependencies": {
-    "vue": "^3.4.15",
-    "bootstrap": "^5.3.3"
+    "bootstrap": "^5.3.3",
+    "vue": "^3.4.15"
   }
 }

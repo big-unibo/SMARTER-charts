@@ -1,10 +1,15 @@
 
 import { createApp } from 'vue'
 import Calendar from './calendar.vue'
+import scheduleXStyles from '@schedule-x/theme-default/dist/index.css?inline'
 
 export class CalendarElement extends HTMLElement {
   connectedCallback() {
     const mountPoint = document.createElement('div')
+
+    const styleTag = document.createElement('style')
+    styleTag.textContent = scheduleXStyles ;
+    this.appendChild(styleTag)
     this.appendChild(mountPoint)
 
     const props = {}

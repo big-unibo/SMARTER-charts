@@ -14,7 +14,7 @@ class AuthService {
 
     async login(user) {
         try {
-            const response = await axiosInstance.post('/login', {
+            const response = await axiosInstance.post('/users/login', {
                 email: user.authEmail,
                 password: hashPassword(user.authPass),
             });
