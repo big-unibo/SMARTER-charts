@@ -1,10 +1,10 @@
 <script setup>
 
-import {Line} from "vue-chartjs";
-import { ref, watchEffect} from "vue";
+import { Line } from "vue-chartjs";
+import { ref, watchEffect } from "vue";
 import 'chartjs-adapter-luxon';
-import {luxonDateTime} from '../common/dateUtils.js'
-import {CommunicationService} from "../services/CommunicationService.js";
+import { luxonDateTime } from '../common/dateUtils.js'
+import { CommunicationService } from "../services/CommunicationService.js";
 
 const communicationService = new CommunicationService();
 
@@ -20,12 +20,12 @@ import {
   Filler,
   TimeScale
 } from 'chart.js'
-import {LineDatasetData} from "../common/LineDatasetData.js";
+import { LineDatasetData } from "../common/LineDatasetData.js";
 import * as d3 from "d3";
 import { binningColorConfig } from "@/common/colorsConfig.js";
 
-let chartData = ref({datasets: [], labels: []})
-let options = ref({responsive: true, maintainAspectRatio: false})
+let chartData = ref({ datasets: [], labels: [] })
+let options = ref({ responsive: true, maintainAspectRatio: false })
 let showChart = ref(false)
 const loadingFlag = ref(false)
 
@@ -43,9 +43,9 @@ const colorFunction = (value) => {
 // }
 
 const groupByHumidityBin = (bins) => {
-  const totalBinTimestamp = bins.reduce((accumulator,currentValue)=>{
+  const totalBinTimestamp = bins.reduce((accumulator, currentValue) => {
     const key = currentValue.timestamp
-    if(!accumulator.has(key))
+    if (!accumulator.has(key))
       accumulator.set(key, 0);
     accumulator.set(key, accumulator.get(key) + parseInt(currentValue.count))
     return accumulator;
@@ -54,9 +54,9 @@ const groupByHumidityBin = (bins) => {
   return bins.reduce((accumulator, currentValue) => {
     const key = {
       label: currentValue.humidityBinDescription,
-      colorKey: currentValue.humidityBin 
+      colorKey: currentValue.humidityBin
     };
-    const mapKey = JSON.stringify(key); 
+    const mapKey = JSON.stringify(key);
 
     if (!accumulator.has(mapKey)) accumulator.set(mapKey, []);
     accumulator.get(mapKey).push(JSON.stringify({
@@ -64,7 +64,7 @@ const groupByHumidityBin = (bins) => {
       y: currentValue.count / totalBinTimestamp.get(currentValue.timestamp) * 100
     }));
     return accumulator;
-    }, new Map());
+  }, new Map());
 }
 
 const createDatasets = (entriesArray) => {
@@ -74,11 +74,23 @@ const createDatasets = (entriesArray) => {
   });
 };
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler, TimeScale)
+const legendMargin = {
+  id: 'legendMargin',
+  beforeInit(chart) {
+    const originalFit = chart.legend.fit;
+    chart.legend.fit = function () {
+      originalFit.bind(chart.legend)();
+      this.height += 20;
+    };
+  }
+};
+
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler, TimeScale, legendMargin)
 
 watchEffect(async () => {
   let value = props.config;
-  if(value) {
+  if (value) {
     await mountChart()
   }
 });
@@ -91,10 +103,10 @@ async function mountChart() {
   loadingFlag.value = true
 
   const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, configParsed.params, endpoint, 'measures')
-  if(JSON.stringify(configParsed ) !== props.config){
-      return
+  if (JSON.stringify(configParsed) !== props.config) {
+    return
   }
-  if(chartDataResponse) {
+  if (chartDataResponse) {
     data = chartDataResponse.data
     showChart.value = data.length > 0
   } else {
@@ -103,12 +115,12 @@ async function mountChart() {
 
   const groupByData = groupByHumidityBin(data);
   const sortedEntries = Array.from(groupByData.entries())
-  .sort(([aKeyStr], [bKeyStr]) => {
-    const aKey = JSON.parse(aKeyStr);
-    const bKey = JSON.parse(bKeyStr);
-    return aKey.colorKey - bKey.colorKey;
-  });
-  emit('selectTimestamp',Math.max(...data.map(e=>e.timestamp),0))
+    .sort(([aKeyStr], [bKeyStr]) => {
+      const aKey = JSON.parse(aKeyStr);
+      const bKey = JSON.parse(bKeyStr);
+      return aKey.colorKey - bKey.colorKey;
+    });
+  emit('selectTimestamp', Math.max(...data.map(e => e.timestamp), 0))
 
   chartData.value = {
     datasets: createDatasets(sortedEntries).map(bin => bin.getDataSet())
@@ -132,17 +144,17 @@ async function mountChart() {
       },
       tooltip: {
         callbacks: {
-              label: function(context) {
-                let label = context.dataset.label || '';
-                if (label) {
-                  label += ': ';
-                }
-                if (context.parsed.y !== null) {
-                  label += context.parsed.y.toFixed(2) + '%'; // Format y-value as percentage
-                }
-                return label;
-              }
+          label: function (context) {
+            let label = context.dataset.label || '';
+            if (label) {
+              label += ': ';
             }
+            if (context.parsed.y !== null) {
+              label += context.parsed.y.toFixed(2) + '%'; // Format y-value as percentage
+            }
+            return label;
+          }
+        }
       }
     },
     tooltips: {
@@ -182,10 +194,10 @@ async function mountChart() {
       y: {
         type: 'linear',
         ticks: {
-            callback: function(value, index, values) {
-                return value + '%'; // Add percentage sign to y-axis labels
-            },
-            stepSize: 20,
+          callback: function (value, index, values) {
+            return value + '%'; // Add percentage sign to y-axis labels
+          },
+          stepSize: 20,
         },
         stacked: true,
         title: {
@@ -199,7 +211,7 @@ async function mountChart() {
     onClick: function handleClick(event, array) {
       if (array.length > 0) {
         const timestamp = array[0].element.$context.parsed.x / 1000
-        emit('selectTimestamp',timestamp)
+        emit('selectTimestamp', timestamp)
       }
     }
   }
@@ -210,7 +222,7 @@ async function mountChart() {
 
 <template>
   <div v-if="showChart">
-    <Line style="height: 300px" :data="chartData" :options="options" ref="myChart"/>
+    <Line style="height: 300px" :data="chartData" :options="options" ref="myChart" />
   </div>
   <div v-else-if="loadingFlag" class="d-flex justify-content-center align-items-center">
     <div class="spinner-border" role="status">
