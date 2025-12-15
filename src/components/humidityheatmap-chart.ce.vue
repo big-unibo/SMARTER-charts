@@ -69,17 +69,13 @@ async function drawImage(timestamp) {
   }
 
   const parsed = JSON.parse(props.config);
-  // const dripperPos = await communicationService.getFieldInfo(parsed.environment, parsed.paths, {timestamp: timestamp}, "dripperInfo")
-  // if(JSON.stringify(parsed) !== props.config){
-  //     return
-  // }
-  // const dripperPos = await communicationService.getFieldInfo(parsed.environment, parsed.paths, {timestamp: timestamp}, "dripperInfo")
-  // dripperSeries.data[xValues.indexOf(dripperPos.x)] = 0
   const dripperData = await communicationService.getDripperInfo(parsed.environment, parsed.paths, {timestamp: timestamp}, signalsEndpoint )
-  const dripperX = dripperData?.x ?? 0;
-  dripperSeries.data[xValues.indexOf(dripperX)] = DRIPPER_VALUE;
+  if(dripperData?.x !== undefined){
+    const dripperX = dripperData.x ?? 0;
+    dripperSeries.data[xValues.indexOf(dripperX)] = DRIPPER_VALUE;
+  }
 
-  //series.push(dripperSeries)
+  series.push(dripperSeries)
   
   heatmapSeries.value = series
   if (!container.value) {
