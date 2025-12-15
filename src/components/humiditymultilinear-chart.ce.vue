@@ -38,10 +38,6 @@ const colorFunction = (value) => {
   return binningColorConfig(value)
 };
 
-// const cleanHumidityBin = (bin) => {
-//   return bin.split('*')[1].trim();
-// }
-
 const groupByHumidityBin = (bins) => {
   const totalBinTimestamp = bins.reduce((accumulator, currentValue) => {
     const key = currentValue.timestamp

@@ -31,10 +31,6 @@ const options = ref({responsive: true, maintainAspectRatio: false})
 const showChart = ref(false)
 const loadingFlag = ref(false)
 
-// const getData = (measures) => {
-//   return measures.map(measure => ({ x: luxonDateTime(measure.timestamp), y: measure.value }));
-// };
-
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler, TimeScale)
 
 watchEffect(async () => {

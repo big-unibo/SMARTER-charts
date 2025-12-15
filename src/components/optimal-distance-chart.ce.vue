@@ -99,8 +99,6 @@ async function mountChart() {
 
   const unit = data[0]?.unit ?? "N/A";
 
-  //const groupByData = groupByType(data);
-
   const datasets = createDatasets(data).map(bin => bin.getDataSet())
 
   chartData.value = {

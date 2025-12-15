@@ -52,13 +52,6 @@ async function drawImage(){
 
   const [xValues, series] = buildHeatmapSeries("value")
 
-  // const dripperSeries = {
-  //   name: "0",
-  //   data: new Array(series[0].data.length).fill(0)
-  // }
-
-  //series.push(dripperSeries)
-
   heatmapSeries.value = series
   if(!container.value){
     await nextTick()

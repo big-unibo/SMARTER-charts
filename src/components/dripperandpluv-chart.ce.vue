@@ -105,12 +105,6 @@ async function mountChart() {
     showChart.value = data.length > 0
   } else data = []
 
-  // const values = data.map(item => item.value);
-
-  // const minValue = Math.min(...values);
-
-  // const groupByData = groupByType(data);
-
   const datasets = createDatasets(data).map(bin => bin.getDataSet())
 
   const yLabel = dripperUnit.value || "L";

@@ -34,31 +34,12 @@ const endpoint = 'waterAggregate'
 const totalGroups = ref(null)
 const unitGroups = ref(null)
 
-// const groupByType = (data) => {
-//   return data.reduce((accumulator, currentValue) => {
-//     const key = currentValue.signalTypeDescription
-//     if(!accumulator.has(key))
-//       accumulator.set(key, []);
-
-//     accumulator.get(key).push(JSON.stringify({ x: luxonDateTime(currentValue.timestamp), y: Number(currentValue.value).toFixed(2) }));
-//     return accumulator;
-//   }, new Map());
-// }
-
-// const createDatasets = (groupedMeasures) => {
-//   return Array.from(groupedMeasures, ([key, jsonValues]) => {
-//     return new BarDatasetData(key, jsonValues, 'y', colorFunction);
-//   });
-// };
-
 const createDatasets = (data) => {
   const datasets = [];
 
   data.forEach(signalType => {
     const type = signalType.signalTypeDescription;
     const label = type;
-    // const unit = signalType.signals?.[0]?.unit || '';
-    // const label = unit ? `${type} (${unit})` : type;
 
     const dataPoints = signalType.signals
       .flatMap(signal =>

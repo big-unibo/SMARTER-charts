@@ -48,7 +48,6 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <!-- <AppNavBar :user="user"/>  -->
   <Monitoring :token="token" class="justify-content-md-center col-12"></Monitoring>
 </template>
 
