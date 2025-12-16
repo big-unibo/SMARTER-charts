@@ -1,11 +1,11 @@
 <script setup>
-import {nextTick, ref, watch, watchEffect} from "vue";
-import {CommunicationService} from "../services/CommunicationService.js";
-import VueApexCharts  from "vue3-apexcharts"
+import { nextTick, ref, watch, watchEffect } from "vue";
+import { CommunicationService } from "../services/CommunicationService.js";
+import VueApexCharts from "vue3-apexcharts"
 
 const communicationService = new CommunicationService();
 const heatmapSeries = ref([]);
-const chartOptions = ref({emitsOptions: false})
+const chartOptions = ref({ emitsOptions: false })
 const image = ref(null)
 const container = ref(null)
 const rDistance = ref(null)
@@ -15,9 +15,9 @@ const showChart = ref(false)
 const loadingFlag = ref(false)
 const endpoint = 'distanceProfileToOptimal'
 
-watchEffect( async () => {
+watchEffect(async () => {
   let value = props.config;
-  if(value) {
+  if (value) {
     await mountChart()
   }
 });
@@ -27,40 +27,41 @@ const buildHeatmapSeries = (valueKey) => {
   const series = Array.from(image.value.reduce((accumulator, currentValue) => {
     if (!accumulator.has(currentValue.y))
       accumulator.set(currentValue.y, []);
-    accumulator.get(currentValue.y).push({ x: currentValue.x,
+    accumulator.get(currentValue.y).push({
+      x: currentValue.x,
       value: currentValue[valueKey].toFixed(2)
     })
     return accumulator
-  }, new Map()), ([key, value])=> {
-    if(x.length === 0){
-      x = value.map(e => e.x).sort((a,b)=>parseInt(a)-parseInt(b))
+  }, new Map()), ([key, value]) => {
+    if (x.length === 0) {
+      x = value.map(e => e.x).sort((a, b) => parseInt(a) - parseInt(b))
     }
     return {
-      name: key, 
-      data: value.sort((a,b) => a.x - b.x).map(e => e.value)
+      name: key,
+      data: value.sort((a, b) => a.x - b.x).map(e => e.value)
     }
-  }).sort((a,b)=> a.name - b.name)
+  }).sort((a, b) => a.name - b.name)
 
   return [x, series]
 }
 
-async function drawImage(){
-  if (!image.value){
+async function drawImage() {
+  if (!image.value) {
     return
-  } 
+  }
 
 
   const [xValues, series] = buildHeatmapSeries("value")
 
   heatmapSeries.value = series
-  if(!container.value){
+  if (!container.value) {
     await nextTick()
   }
 
   const containerWidth = container.value.offsetWidth
 
   let cellSize
-  if(heatmapSeries.value[0].data.length > heatmapSeries.value.length){
+  if (heatmapSeries.value[0].data.length > heatmapSeries.value.length) {
     cellSize = containerWidth / heatmapSeries.value[0].data.length
   } else {
     cellSize = containerWidth / heatmapSeries.value.length * 0.9
@@ -70,12 +71,12 @@ async function drawImage(){
 
   const verticalOffset = 25
   const horizontalOffset = 10
-  const chartHeight = (cellSize * heatmapSeries.value.length + verticalOffset) 
+  const chartHeight = (cellSize * heatmapSeries.value.length + verticalOffset)
   const chartWidth = (cellSize * heatmapSeries.value[0].data.length + horizontalOffset)
 
   chartOptions.value = {
     chart: {
-      offsetX: (containerWidth - chartWidth)/2,
+      offsetX: (containerWidth - chartWidth) / 2,
       type: 'heatmap',
       height: (chartHeight + "px"),
       width: (chartWidth + "px"),
@@ -119,11 +120,11 @@ async function drawImage(){
       },
     },
     legend: {
-        show: false,
+      show: false,
     },
     dataLabels: {
-      formatter: function(value, { seriesIndex, dataPointIndex, w }) { 
-        if (value == 0){
+      formatter: function (value, { seriesIndex, dataPointIndex, w }) {
+        if (value == 0) {
           return ""
         } else {
           return value
@@ -148,7 +149,7 @@ async function drawImage(){
       type: 'category',
       categories: xValues,
       tooltip: {
-          enabled: false,
+        enabled: false,
       },
       tickPlacement: 'on',
       labels: {
@@ -165,8 +166,8 @@ async function drawImage(){
         }
       }
     },
-    tooltip:{
-      custom: function({series, seriesIndex, dataPointIndex, w}) {
+    tooltip: {
+      custom: function ({ series, seriesIndex, dataPointIndex, w }) {
         let value = series[seriesIndex][dataPointIndex]
         if (value !== 0) {
           return ('<div class="arrow_box m-1">' +
@@ -174,7 +175,7 @@ async function drawImage(){
             '<div> <strong>x</strong>: ' + xValues[dataPointIndex] + '</div>' +
             '<div> <strong>y</strong>: ' + heatmapSeries.value[seriesIndex].name + '</div>' +
             '</div>')
-        } else 
+        } else
           return ""
 
       }
@@ -184,31 +185,59 @@ async function drawImage(){
 
 async function mountChart() {
   const configParsed = JSON.parse(props.config);
-  const selectedTimestamp = props.selectedTimestamp
-  const params = {...configParsed.params}
-  params["timestamp"] = props.selectedTimestamp
-  showChart.value = false
-  loadingFlag.value = true
-  const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, { timestamp: props.selectedTimestamp }, endpoint, 'image')
-  if(JSON.stringify(configParsed) !== props.config || selectedTimestamp !== props.selectedTimestamp){
-      return
+  
+  const currentTimestamp = props.selectedTimestamp;
+  const currentConfigStr = props.config; 
+
+  showChart.value = false;
+  loadingFlag.value = true;
+
+  let chartDataResponse;
+
+  try {
+    chartDataResponse = await communicationService.getChartData(
+      configParsed.environment, 
+      configParsed.paths, 
+      { timestamp: currentTimestamp }, 
+      endpoint, 
+      'image'
+    );
+  } catch (error) {
+    console.error("Errore recupero dati grafico:", error);
+    loadingFlag.value = false;
+    return;
   }
 
-  const data = chartDataResponse.data
-  if(data) {
-    showChart.value = data.length > 0
-    if(showChart.value){
-        image.value = data
-        rDistance.value = (data.map(item => item.value).reduce((a,b) => a + b, 0)/data.map(item => item.weight).reduce((a,b) => a + b, 0)).toFixed(2)
-        await drawImage()
-    }
-  } else {
-    showChart.value = false
+  if (props.selectedTimestamp !== currentTimestamp || props.config !== currentConfigStr) {
+    return;
   }
-  loadingFlag.value = false
+
+  const data = chartDataResponse?.data; 
+  if (!data || data.length === 0) {
+    showChart.value = false;
+    loadingFlag.value = false;
+    return;
+  }
+  image.value = data;
+  showChart.value = true;
+
+  const totals = data.reduce((acc, item) => {
+    acc.valSum += item.value;
+    acc.weightSum += item.weight;
+    return acc;
+  }, { valSum: 0, weightSum: 0 });
+
+  if (totals.weightSum !== 0) {
+      rDistance.value = (totals.valSum / totals.weightSum).toFixed(2);
+  } else {
+      rDistance.value = "0.00";
+  }
+
+  await drawImage();
+  loadingFlag.value = false;
 }
 
-watch( () => props.selectedTimestamp, async () => {
+watch(() => props.selectedTimestamp, async () => {
   await mountChart()
 }) 
 </script>
@@ -216,7 +245,7 @@ watch( () => props.selectedTimestamp, async () => {
 <template>
   <div class="text-center px-2 p-1 m-1 mx-auto">
     <div>Distanza dall'ottimo (r): {{ rDistance }}</div>
-  </div> 
+  </div>
   <div v-if="showChart" ref="container">
     <VueApexCharts type="heatmap" :options="chartOptions" :series="heatmapSeries"></VueApexCharts>
   </div>
@@ -224,6 +253,9 @@ watch( () => props.selectedTimestamp, async () => {
     <div class="spinner-border" role="status">
       <span class="sr-only"></span>
     </div>
+  </div>
+  <div class="text-center p-3" v-else>
+    Distanza non calcolabile.
   </div>
 </template>
 

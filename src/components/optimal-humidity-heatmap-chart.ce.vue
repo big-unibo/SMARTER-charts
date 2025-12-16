@@ -330,6 +330,7 @@ async function mountChart() {
 
   const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, { timestamp: selectedTimestamp } , endpoint)
   if (JSON.stringify(configParsed) !== props.config || selectedTimestamp !== props.selectedTimestamp) {
+    loadingFlag.value = false
     return
   }
 

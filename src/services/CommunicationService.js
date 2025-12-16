@@ -18,7 +18,6 @@ export class CommunicationService {
                     Authorization: token ? `Bearer ${token}` : undefined
                 }
             });
-
             return response.data; 
 
         } catch (error) {
