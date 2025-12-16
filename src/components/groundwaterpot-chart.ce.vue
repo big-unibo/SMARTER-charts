@@ -81,100 +81,110 @@ watchEffect(async () => {
 });
 
 async function mountChart() {
-  const configParsed = JSON.parse(props.config);
-  const extraParamsParsed = JSON.parse(props.extraParams)
-  const mergedParams = {
-    ...configParsed.params,
-    ...extraParamsParsed
-  };
+  const currentConfigStr = props.config
+  showChart.value = false
+  loadingFlag.value = true
+  unitLabel.value = null
 
-  let data = [];
+  try {
+    const configParsed = JSON.parse(props.config)
+    const extraParamsParsed = JSON.parse(props.extraParams)
+    const mergedParams = {
+      ...configParsed.params,
+      ...extraParamsParsed
+    }
 
-  showChart.value = false;
-  loadingFlag.value = true;
-  unitLabel.value = null;
+    const chartDataResponse = await communicationService.getChartData(
+      configParsed.environment,
+      configParsed.paths,
+      mergedParams,
+      endpoint
+    )
 
-  const chartDataResponse = await communicationService.getChartData(
-    configParsed.environment,
-    configParsed.paths,
-    mergedParams,
-    endpoint
-  );
-  if (JSON.stringify(configParsed) !== props.config) {
-    return
-  }
+    if (currentConfigStr !== props.config) {
+      return
+    }
 
-  if (chartDataResponse) {
-    data = chartDataResponse
-    showChart.value = data.length > 0
-  } else data = []
+    let data = []
+    if (chartDataResponse) {
+      data = chartDataResponse
+      showChart.value = data.length > 0
+    }
 
-  const datasets = createDatasets(data).map(bin => bin.getDataSet()).sort((a, b) => {
-    if (a.sortingKey.x === b.sortingKey.x) {
-            return b.sortingKey.y - a.sortingKey.y; 
-        }
-        return a.sortingKey.x - b.sortingKey.x;
-  })
-
-  chartData.value = {
-    datasets: datasets
-  }
-
-  const yLabel = unitLabel.value || "sconosciuto";
-
-  options.value = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        labels: {
-          boxWidth: 2,
-        }
+    const datasets = createDatasets(data).map(bin => bin.getDataSet()).sort((a, b) => {
+      if (a.sortingKey.x === b.sortingKey.x) {
+        return b.sortingKey.y - a.sortingKey.y
       }
-    },
-    parsing: {
-      xAxisKey: 'x',
-      yAxisKey: 'y'
-    },
-    interaction: {
-      mode: 'nearest',
-      axis: 'x',
-      intersect: false
-    },
-    scales: {
-      x: {
-        type: 'time',
-        time: {
-          unit: 'day',
-          tooltipFormat: 'yyyy-MM-dd HH:mm:ss',
-          displayFormats: {
-            minute: 'yyyy-MM-dd HH:mm', // Customize the display format for minutes
-            second: 'yyyy-MM-dd HH:mm', // Customize the display format for seconds,
-            hour: 'yyyy-MM-dd HH:mm:ss',
-            day: 'yyyy-MM-dd',
-            month: 'yyyy-MM-dd HH:mm:ss'
-          },
-        },
-        ticks: {
-          source: 'data'
-        },
-        title: {
-          display: true,
-          text: 'Tempo'
+      return a.sortingKey.x - b.sortingKey.x
+    })
+
+    chartData.value = {
+      datasets: datasets
+    }
+
+    const yLabel = unitLabel.value || "sconosciuto"
+
+    options.value = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: {
+            boxWidth: 2,
+          }
         }
       },
-      y: {
-        title: {
-          display: true,
-          text: yLabel
+      parsing: {
+        xAxisKey: 'x',
+        yAxisKey: 'y'
+      },
+      interaction: {
+        mode: 'nearest',
+        axis: 'x',
+        intersect: false
+      },
+      scales: {
+        x: {
+          type: 'time',
+          time: {
+            unit: 'day',
+            tooltipFormat: 'yyyy-MM-dd HH:mm:ss',
+            displayFormats: {
+              minute: 'yyyy-MM-dd HH:mm',
+              second: 'yyyy-MM-dd HH:mm',
+              hour: 'yyyy-MM-dd HH:mm:ss',
+              day: 'yyyy-MM-dd',
+              month: 'yyyy-MM-dd HH:mm:ss'
+            },
+          },
+          ticks: {
+            source: 'data'
+          },
+          title: {
+            display: true,
+            text: 'Tempo'
+          }
         },
-        ticks: {
-          stepSize: 20
-        },
+        y: {
+          title: {
+            display: true,
+            text: yLabel
+          },
+          ticks: {
+            stepSize: 20
+          },
+        }
       }
     }
+
+  } catch (error) {
+    console.error(error)
+    showChart.value = false
+  } finally {
+    if (currentConfigStr === props.config) {
+      loadingFlag.value = false
+    }
   }
-  loadingFlag.value = false
 }
 
 </script>

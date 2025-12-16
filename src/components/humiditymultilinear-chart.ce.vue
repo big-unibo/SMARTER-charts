@@ -92,126 +92,145 @@ watchEffect(async () => {
 });
 
 async function mountChart() {
-  const configParsed = JSON.parse(props.config);
-
-  let data = []
+  const currentConfigStr = props.config
   showChart.value = false
   loadingFlag.value = true
 
-  const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, configParsed.params, endpoint, 'measures')
-  if (JSON.stringify(configParsed) !== props.config) {
-    return
-  }
-  if (chartDataResponse) {
-    data = chartDataResponse.data
-    showChart.value = data.length > 0
-  } else {
-    showChart.value = false
-  }
+  try {
+    const configParsed = JSON.parse(props.config)
+    const chartDataResponse = await communicationService.getChartData(
+      configParsed.environment,
+      configParsed.paths,
+      configParsed.params,
+      endpoint,
+      'measures'
+    )
 
-  const groupByData = groupByHumidityBin(data);
-  const sortedEntries = Array.from(groupByData.entries())
-    .sort(([aKeyStr], [bKeyStr]) => {
-      const aKey = JSON.parse(aKeyStr);
-      const bKey = JSON.parse(bKeyStr);
-      return aKey.colorKey - bKey.colorKey;
-    });
-  emit('selectTimestamp', Math.max(...data.map(e => e.timestamp), 0))
+    if (currentConfigStr !== props.config) {
+      return
+    }
 
-  chartData.value = {
-    datasets: createDatasets(sortedEntries).map(bin => bin.getDataSet())
-  }
+    let data = []
+    if (chartDataResponse) {
+      data = chartDataResponse.data
+      showChart.value = data.length > 0
+    } else {
+      showChart.value = false
+      return
+    }
 
-  options.value = {
-    responsive: true,
-    maintainAspectRatio: false,
-    parsing: {
-      xAxisKey: 'x',
-      yAxisKey: 'y'
-    },
-    plugins: {
-      filler: {
-        propagate: false
+    const groupByData = groupByHumidityBin(data)
+    const sortedEntries = Array.from(groupByData.entries())
+      .sort(([aKeyStr], [bKeyStr]) => {
+        const aKey = JSON.parse(aKeyStr)
+        const bKey = JSON.parse(bKeyStr)
+        return aKey.colorKey - bKey.colorKey
+      })
+
+    emit('selectTimestamp', Math.max(...data.map(e => e.timestamp), 0))
+
+    chartData.value = {
+      datasets: createDatasets(sortedEntries).map(bin => bin.getDataSet())
+    }
+
+    options.value = {
+      responsive: true,
+      maintainAspectRatio: false,
+      parsing: {
+        xAxisKey: 'x',
+        yAxisKey: 'y'
       },
-      legend: {
-        labels: {
-          boxWidth: 2
-        }
-      },
-      tooltip: {
-        callbacks: {
-          label: function (context) {
-            let label = context.dataset.label || '';
-            if (label) {
-              label += ': ';
+      plugins: {
+        filler: {
+          propagate: false
+        },
+        legend: {
+          labels: {
+            boxWidth: 2
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              let label = context.dataset.label || ''
+              if (label) {
+                label += ': '
+              }
+              if (context.parsed.y !== null) {
+                label += context.parsed.y.toFixed(2) + '%'
+              }
+              return label
             }
-            if (context.parsed.y !== null) {
-              label += context.parsed.y.toFixed(2) + '%'; // Format y-value as percentage
-            }
-            return label;
           }
         }
-      }
-    },
-    tooltips: {
-      mode: 'index',
-      intersect: true
-    },
-    interaction: {
-      mode: 'nearest',
-      axis: 'x',
-      intersect: false
-    },
-    layout: {
-      padding: 20
-    },
-    scales: {
-      x: {
-        type: 'time',
-        time: {
-          unit: 'day',
-          tooltipFormat: 'yyyy-MM-dd HH:mm:ss',
-          displayFormats: {
-            minute: 'yyyy-MM-dd HH:mm', // Customize the display format for minutes
-            second: 'yyyy-MM-dd HH:mm', // Customize the display format for seconds,
-            hour: 'yyyy-MM-dd HH:mm:ss',
-            day: 'yyyy-MM-dd',
-            month: 'yyyy-MM-dd HH:mm:ss'
+      },
+      tooltips: {
+        mode: 'index',
+        intersect: true
+      },
+      interaction: {
+        mode: 'nearest',
+        axis: 'x',
+        intersect: false
+      },
+      layout: {
+        padding: 20
+      },
+      scales: {
+        x: {
+          type: 'time',
+          time: {
+            unit: 'day',
+            tooltipFormat: 'yyyy-MM-dd HH:mm:ss',
+            displayFormats: {
+              minute: 'yyyy-MM-dd HH:mm',
+              second: 'yyyy-MM-dd HH:mm',
+              hour: 'yyyy-MM-dd HH:mm:ss',
+              day: 'yyyy-MM-dd',
+              month: 'yyyy-MM-dd HH:mm:ss'
+            },
           },
+          ticks: {
+            source: 'auto'
+          },
+          title: {
+            display: true,
+            text: 'Tempo'
+          }
         },
-        ticks: {
-          source: 'auto'
-        },
-        title: {
-          display: true,
-          text: 'Tempo'
+        y: {
+          type: 'linear',
+          ticks: {
+            callback: function (value, index, values) {
+              return value + '%'
+            },
+            stepSize: 20,
+          },
+          stacked: true,
+          title: {
+            display: true,
+            text: '% Celle'
+          },
+          min: 0,
+          max: 100
         }
       },
-      y: {
-        type: 'linear',
-        ticks: {
-          callback: function (value, index, values) {
-            return value + '%'; // Add percentage sign to y-axis labels
-          },
-          stepSize: 20,
-        },
-        stacked: true,
-        title: {
-          display: true,
-          text: '% Celle'
-        },
-        min: 0,
-        max: 100
-      }
-    },
-    onClick: function handleClick(event, array) {
-      if (array.length > 0) {
-        const timestamp = array[0].element.$context.parsed.x / 1000
-        emit('selectTimestamp', timestamp)
+      onClick: function handleClick(event, array) {
+        if (array.length > 0) {
+          const timestamp = array[0].element.$context.parsed.x / 1000
+          emit('selectTimestamp', timestamp)
+        }
       }
     }
+
+  } catch (error) {
+    console.error(error)
+    showChart.value = false
+  } finally {
+    if (currentConfigStr === props.config) {
+      loadingFlag.value = false
+    }
   }
-  loadingFlag.value = false
 }
 
 </script>

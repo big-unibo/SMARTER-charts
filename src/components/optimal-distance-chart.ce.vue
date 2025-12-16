@@ -64,82 +64,85 @@ watchEffect(async () => {
 });
 
 async function mountChart() {
-  const configParsed = JSON.parse(props.config);
-  let data = []
-
+  const currentConfigStr = props.config
   showChart.value = false
   loadingFlag.value = true
 
   try {
-    const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, configParsed.params, endpoint);
+    const configParsed = JSON.parse(props.config)
+    const chartDataResponse = await communicationService.getChartData(
+      configParsed.environment,
+      configParsed.paths,
+      configParsed.params,
+      endpoint
+    )
 
-    if (JSON.stringify(configParsed) !== props.config) {
+    if (currentConfigStr !== props.config) {
       return
     }
 
+    let data = []
     if (chartDataResponse) {
       data = chartDataResponse
-      showChart.value = data.length > 0
-      loadingFlag.value = !(data.length > 0)
-    } else {
-      showChart.value = false;
-      data = []
+    }
+
+    if (!data || data.length === 0) {
+      showChart.value = false
+      return
+    }
+
+    showChart.value = true
+
+    const unit = data[0]?.unit ?? "N/A"
+    const datasets = createDatasets(data).map(bin => bin.getDataSet())
+
+    chartData.value = {
+      datasets: datasets
+    }
+
+    options.value = {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          type: 'time',
+          time: {
+            unit: 'day',
+            tooltipFormat: 'yyyy-MM-dd HH:mm:ss',
+            displayFormats: {
+              minute: 'yyyy-MM-dd HH:mm',
+              second: 'yyyy-MM-dd HH:mm',
+              hour: 'yyyy-MM-dd HH:mm:ss',
+              day: 'yyyy-MM-dd',
+              month: 'yyyy-MM-dd HH:mm:ss'
+            },
+          },
+          ticks: {
+            source: 'data'
+          },
+          title: {
+            display: true,
+            text: 'Tempo'
+          }
+        },
+        y: {
+          position: 'left',
+          title: {
+            display: true,
+            text: unit
+          },
+        }
+      }
     }
 
   } catch (error) {
-    console.error("Errore nel recupero dati:", error);
-    showChart.value = false;
+    console.error(error)
+    showChart.value = false
   } finally {
-    loadingFlag.value = false;
-  }
-
-  if (!showChart.value) {
-    return;
-  }
-
-  const unit = data[0]?.unit ?? "N/A";
-
-  const datasets = createDatasets(data).map(bin => bin.getDataSet())
-
-  chartData.value = {
-    datasets: datasets
-  }
-
-  options.value = {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      x: {
-        type: 'time',
-        time: {
-          unit: 'day',
-          tooltipFormat: 'yyyy-MM-dd HH:mm:ss',
-          displayFormats: {
-            minute: 'yyyy-MM-dd HH:mm', // Customize the display format for minutes
-            second: 'yyyy-MM-dd HH:mm', // Customize the display format for seconds,
-            hour: 'yyyy-MM-dd HH:mm:ss',
-            day: 'yyyy-MM-dd',
-            month: 'yyyy-MM-dd HH:mm:ss'
-          },
-        },
-        ticks: {
-          source: 'data'
-        },
-        title: {
-          display: true,
-          text: 'Tempo'
-        }
-      },
-      y: {
-        position: 'left',
-        title: {
-          display: true,
-          text: unit
-        },
-      }
+    if (currentConfigStr === props.config) {
+      loadingFlag.value = false
     }
   }
-  loadingFlag.value = false
 }
 
 </script>

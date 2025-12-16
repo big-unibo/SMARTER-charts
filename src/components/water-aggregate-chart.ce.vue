@@ -90,78 +90,93 @@ watchEffect(async () => {
 });
 
 async function mountChart() {
-  const configParsed = JSON.parse(props.config);
-
-  let data = []
+  const currentConfigStr = props.config
   showChart.value = false
   loadingFlag.value = true
-  
-  const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, configParsed.params, endpoint)
-  if (JSON.stringify(configParsed) !== props.config) {
-    return
-  }
-  if (chartDataResponse) {
-    data = chartDataResponse
-    showChart.value = data.length > 0
-  } else data = []
 
-  totalGroups.value = getTotalGroups(data)
-  unitGroups.value = getUnitGroups(totalGroups.value);
+  try {
+    const configParsed = JSON.parse(props.config)
 
-  const datasets = createDatasets(data).map(bin => bin.getDataSet())
+    const chartDataResponse = await communicationService.getChartData(
+      configParsed.environment,
+      configParsed.paths,
+      configParsed.params,
+      endpoint
+    )
 
-  chartData.value = {
-    datasets: datasets
-  }
+    if (currentConfigStr !== props.config) {
+      return
+    }
 
-  options.value = {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      x: {
-        type: 'time',
-        time: {
-          unit: 'day',
-          tooltipFormat: 'yyyy-MM-dd HH:mm:ss',
-          displayFormats: {
-            minute: 'yyyy-MM-dd HH:mm', // Customize the display format for minutes
-            second: 'yyyy-MM-dd HH:mm', // Customize the display format for seconds,
-            hour: 'yyyy-MM-dd HH:mm:ss',
-            day: 'yyyy-MM-dd',
-            month: 'yyyy-MM-dd HH:mm:ss'
+    let data = []
+    if (chartDataResponse) {
+      data = chartDataResponse
+      showChart.value = data.length > 0
+    }
+
+    totalGroups.value = getTotalGroups(data)
+    unitGroups.value = getUnitGroups(totalGroups.value)
+
+    const datasets = createDatasets(data).map(bin => bin.getDataSet())
+
+    chartData.value = {
+      datasets: datasets
+    }
+
+    options.value = {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          type: 'time',
+          time: {
+            unit: 'day',
+            tooltipFormat: 'yyyy-MM-dd HH:mm:ss',
+            displayFormats: {
+              minute: 'yyyy-MM-dd HH:mm',
+              second: 'yyyy-MM-dd HH:mm',
+              hour: 'yyyy-MM-dd HH:mm:ss',
+              day: 'yyyy-MM-dd',
+              month: 'yyyy-MM-dd HH:mm:ss'
+            },
           },
+          ticks: {
+            source: 'data'
+          },
+          title: {
+            display: true,
+            text: 'Tempo'
+          }
         },
-        ticks: {
-          source: 'data'
-        },
-        title: {
-          display: true,
-          text: 'Tempo'
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: ''
+          },
+          position: 'left',
+          display: 'auto',
         }
       },
-      y: {
-        beginAtZero: true,
-        title: {
-          display: true,
-          text: ''
-        },
-        position: 'left',
-        display: 'auto',
-      }
-    },
-    legend: {
-      onClick: function (e, legendItem) {
-        di = legendItem.datasetIndex
-        myBarChart.data.datasets[di].hidden = !myBarChart.data.datasets[di].hidden;
-        myBarChart.options.scales.yAxes[0].ticks.suggestedMax = getMax(myBarChart) + 100;
-        myBarChart.update()
+      legend: {
+        onClick: function (e, legendItem) {
+          const di = legendItem.datasetIndex
+          myBarChart.data.datasets[di].hidden = !myBarChart.data.datasets[di].hidden
+          myBarChart.options.scales.yAxes[0].ticks.suggestedMax = getMax(myBarChart) + 100
+          myBarChart.update()
+        }
       }
     }
+
+  } catch (error) {
+    console.error(error)
+    showChart.value = false
+  } finally {
+    if (currentConfigStr === props.config) {
+      loadingFlag.value = false
+    }
   }
-  loadingFlag.value = false
 }
-
-
 
 </script>
 

@@ -59,24 +59,43 @@ function updateLinechartConfig(currentTimestamp, lastTimestamp) {
 }
 
 async function calculateTimestampLength() {
-  loadingFlag.value = true;
-  const configParsed = JSON.parse(props.config);
-  const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, configParsed.params, endpoint, "measures");
+  const currentConfigStr = props.config
+  loadingFlag.value = true
 
-  if (JSON.stringify(configParsed) !== props.config) return;
-  if (chartDataResponse) {
-    data.value = chartDataResponse.data;
-    timestamps.value = new Set();
-  } else {
-    data.value = [];
+  try {
+    const configParsed = JSON.parse(props.config)
+    const chartDataResponse = await communicationService.getChartData(
+      configParsed.environment,
+      configParsed.paths,
+      configParsed.params,
+      endpoint,
+      "measures"
+    )
+
+    if (currentConfigStr !== props.config) {
+      return
+    }
+
+    if (chartDataResponse) {
+      data.value = chartDataResponse.data
+      timestamps.value = new Set()
+    } else {
+      data.value = []
+    }
+
+    data.value.forEach(d => {
+      timestamps.value.add(d.timestamp)
+    })
+
+    timestampsArray.value = Array.from(timestamps.value).sort((a, b) => a - b)
+
+  } catch (error) {
+    console.error(error)
+  } finally {
+    if (currentConfigStr === props.config) {
+      loadingFlag.value = false
+    }
   }
-
-  data.value.forEach(d => {
-    timestamps.value.add(d.timestamp);
-  });
-
-  timestampsArray.value = Array.from(timestamps.value).sort((a, b) => a - b);
-  loadingFlag.value = false;
 }
 
 function startLoop() {

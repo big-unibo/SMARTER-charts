@@ -206,51 +206,68 @@ async function drawImage(timestamp) {
 }
 
 async function mountChart() {
-  const configParsed = JSON.parse(props.config);
-
+  const currentConfigStr = props.config
   showChart.value = false
   loadingFlag.value = true
 
-  let data = null
-  let binningId = null
+  try {
+    const configParsed = JSON.parse(props.config)
+    
+    let chartDataResponse = await communicationService.getChartData(
+      configParsed.environment,
+      configParsed.paths,
+      configParsed.params,
+      endpoint,
+      'images'
+    )
 
-  let chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, configParsed.params, endpoint, 'images')
-  if (JSON.stringify(configParsed) !== props.config) {
-    return
-  }
-
-
-  if(chartDataResponse) {
-    data = chartDataResponse.data
-    binningId = chartDataResponse.binningId
-    showChart.value = data.length > 0
-  } else {
-    showChart.value = false
-    loadingFlag.value = false
-    return 
-  }
-
-  if (data && binningId) {
-    images.value = new Map(data.map(obj => [obj.timestamp, obj.image]))
-    binningInfo.value = await communicationService.getBinningInfo(configParsed.environment, binningId, 'bins')
-    if (JSON.stringify(configParsed) !== props.config) {
+    if (currentConfigStr !== props.config) {
       return
     }
 
-    if (images.value.size > 0 && binningInfo.value.length > 0) {
-      showChart.value = true
-      const timestamps = Array.from(images.value.keys()).sort()
-      await nextTick()
-      if (props.selectedTimestamp) {
-        await drawImage(props.selectedTimestamp)
-      } else {
-        await drawImage(timestamps[timestamps.length - 1])
-      }
+    let data = null
+    let binningId = null
+
+    if (chartDataResponse) {
+      data = chartDataResponse.data
+      binningId = chartDataResponse.binningId
+      showChart.value = data.length > 0
+    } else {
+      showChart.value = false
+      return
     }
-  } else {
+
+    if (data && binningId) {
+      images.value = new Map(data.map(obj => [obj.timestamp, obj.image]))
+      binningInfo.value = await communicationService.getBinningInfo(configParsed.environment, binningId, 'bins')
+
+      if (currentConfigStr !== props.config) {
+        return
+      }
+
+      if (images.value.size > 0 && binningInfo.value.length > 0) {
+        showChart.value = true
+        const timestamps = Array.from(images.value.keys()).sort()
+        await nextTick()
+        
+        if (props.selectedTimestamp) {
+          await drawImage(props.selectedTimestamp)
+        } else {
+          await drawImage(timestamps[timestamps.length - 1])
+        }
+      }
+    } else {
+      showChart.value = false
+    }
+
+  } catch (error) {
+    console.error(error)
     showChart.value = false
+  } finally {
+    if (currentConfigStr === props.config) {
+      loadingFlag.value = false
+    }
   }
-  loadingFlag.value = false
 }
 </script>
 

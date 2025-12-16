@@ -78,86 +78,96 @@ watchEffect(async () => {
 });
 
 async function mountChart() {
-  const configParsed = JSON.parse(props.config);
-  const extraParamsParsed = JSON.parse(props.extraParams)
-  const mergedParams = {
-    ...configParsed.params,
-    ...extraParamsParsed 
-  };
-
-  let data = []
+  const currentConfigStr = props.config
   showChart.value = false
   loadingFlag.value = true
 
-  const chartDataResponse = await communicationService.getChartData(
-    configParsed.environment,
-    configParsed.paths,
-    mergedParams,
-    endpoint
-  );
+  try {
+    const configParsed = JSON.parse(props.config)
+    const extraParamsParsed = JSON.parse(props.extraParams)
+    const mergedParams = {
+      ...configParsed.params,
+      ...extraParamsParsed
+    }
 
-  if(JSON.stringify(configParsed) !== props.config){
+    const chartDataResponse = await communicationService.getChartData(
+      configParsed.environment,
+      configParsed.paths,
+      mergedParams,
+      endpoint
+    )
+
+    if (currentConfigStr !== props.config) {
       return
-  }
+    }
 
-  if (chartDataResponse) {
-    data = chartDataResponse
-    showChart.value = data.length > 0
-  } else data = []
+    let data = []
+    if (chartDataResponse) {
+      data = chartDataResponse
+      showChart.value = data.length > 0
+    }
 
-  const datasets = createDatasets(data).map(bin => bin.getDataSet())
+    const datasets = createDatasets(data).map(bin => bin.getDataSet())
 
-  const yLabel = dripperUnit.value || "L";
-  const y1Label = pluvCurrUnit.value || "mm";
+    const yLabel = dripperUnit.value || "L"
+    const y1Label = pluvCurrUnit.value || "mm"
 
-  chartData.value = {
-    datasets: datasets
-  }
+    chartData.value = {
+      datasets: datasets
+    }
 
-  options.value = {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      x: {
-        type: 'time',
-        time: {
-          unit: 'day',
-          tooltipFormat: 'yyyy-MM-dd HH:mm:ss',
-          displayFormats: {
-            minute: 'yyyy-MM-dd HH:mm', // Customize the display format for minutes
-            second: 'yyyy-MM-dd HH:mm', // Customize the display format for seconds,
-            hour: 'yyyy-MM-dd HH:mm:ss',
-            day: 'yyyy-MM-dd',
-            month: 'yyyy-MM-dd HH:mm:ss'
+    options.value = {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          type: 'time',
+          time: {
+            unit: 'day',
+            tooltipFormat: 'yyyy-MM-dd HH:mm:ss',
+            displayFormats: {
+              minute: 'yyyy-MM-dd HH:mm',
+              second: 'yyyy-MM-dd HH:mm',
+              hour: 'yyyy-MM-dd HH:mm:ss',
+              day: 'yyyy-MM-dd',
+              month: 'yyyy-MM-dd HH:mm:ss'
+            },
           },
+          ticks: {
+            source: 'data'
+          },
+          title: {
+            display: true,
+            text: 'Tempo'
+          }
         },
-        ticks: {
-          source: 'data'
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: yLabel
+          },
+          position: 'left',
         },
-        title: {
-          display: true,
-          text: 'Tempo'
+        y1: {
+          beginAtZero: true,
+          position: 'right',
+          title: {
+            display: true,
+            text: y1Label
+          },
         }
-      },
-      y: {
-        beginAtZero: true,
-        title: {
-          display: true,
-          text: yLabel
-        },
-        position: 'left',
-      },
-      y1: {
-        beginAtZero: true,
-        position: 'right',
-        title: {
-          display: true,
-          text: y1Label
-        },
       }
     }
+
+  } catch (error) {
+    console.error(error)
+    showChart.value = false
+  } finally {
+    if (currentConfigStr === props.config) {
+      loadingFlag.value = false
+    }
   }
-  loadingFlag.value = false
 }
 
 </script>

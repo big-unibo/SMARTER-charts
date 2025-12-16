@@ -24,71 +24,88 @@ watchEffect(async () => {
 });
 
 async function mountChart() {
-  const configParsed = JSON.parse(props.config);
-  let data = []
-  showChart.value = false
-  loadingFlag.value = true
-
-  const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, configParsed.params, endpoint, 'measures')
-  if (JSON.stringify(configParsed) !== props.config) {
-    return
-  }
-  if (chartDataResponse) {
-    data = chartDataResponse.data
-    const binningId = chartDataResponse.binningId
-
-    binningInfo.value = await communicationService.getBinningInfo(configParsed.environment, binningId, 'bins')
-    if (JSON.stringify(configParsed) !== props.config) {
-      return
-    }
-
-
-    data.sort((a, b) => {
-      if (a.z !== b.z) return a.z - b.z;
-      if (a.y !== b.y) return b.y - a.y;
-      return a.x - b.x;
-    });
-
-    showChart.value = data.length > 0
-  } else {
-    showChart.value = false
-  }
-  loadingFlag.value = false
-  if (!showChart.value) {
-    return
-  }
+  const currentConfigStr = props.config;
+  
+  showChart.value = false;
+  loadingFlag.value = true;
 
   let axisX = [];
   let axisY = [];
   let mean = [];
 
-  const Z = data.map(d => d.z);
-  const z_unique = [...new Set(Z)];
+  try {
+    const configParsed = JSON.parse(props.config);
 
-  if (z_unique.length <= 2) {
-    data.forEach(d => {
-      axisY.push(d.y)
-      axisX.push(d.x)
-      mean.push(d.mean)
+    const chartDataResponse = await communicationService.getChartData(
+      configParsed.environment, 
+      configParsed.paths, 
+      configParsed.params, 
+      endpoint, 
+      'measures'
+    );
+
+    if (currentConfigStr !== props.config || !chartDataResponse?.data?.length) {
+      return;
+    }
+
+    const dataRaw = chartDataResponse.data;
+    const binningId = chartDataResponse.binningId;
+
+    binningInfo.value = await communicationService.getBinningInfo(
+      configParsed.environment, 
+      binningId, 
+      'bins'
+    );
+
+    if (currentConfigStr !== props.config) return;
+
+    dataRaw.sort((a, b) => {
+      if (a.z !== b.z) return a.z - b.z;
+      if (a.y !== b.y) return b.y - a.y;
+      return a.x - b.x;
     });
-  } else {
-    const dataTemp = groupBy(data, t => t.y);
-    for (const [key, value] of Object.entries(dataTemp)) {
-      let dataTemp2 = groupBy(value, e => e.x)
-      for (const [key2, value2] of Object.entries(dataTemp2)) {
-        let means_to_mean = []
-        let temp_y, temp_x
-        value2.forEach(d => {
-          means_to_mean.push(parseFloat(d.mean))
-          temp_x = d.x;
-          temp_y = d.y;
-        });
-        axisY.push(temp_y)
-        axisX.push(temp_x)
-        mean.push(average(means_to_mean))
+
+    const Z = dataRaw.map(d => d.z);
+    const z_unique = [...new Set(Z)];
+
+    if (z_unique.length <= 2) {
+      dataRaw.forEach(d => {
+        axisY.push(d.y);
+        axisX.push(d.x);
+        mean.push(d.mean);
+      });
+    } else {
+      const dataTemp = groupBy(dataRaw, t => t.y);
+      for (const [key, value] of Object.entries(dataTemp)) {
+        let dataTemp2 = groupBy(value, e => e.x);
+        for (const [key2, value2] of Object.entries(dataTemp2)) {
+          let means_to_mean = [];
+          let temp_y, temp_x;
+          value2.forEach(d => {
+            means_to_mean.push(parseFloat(d.mean));
+            temp_x = d.x;
+            temp_y = d.y;
+          });
+          axisY.push(temp_y);
+          axisX.push(temp_x);
+          mean.push(average(means_to_mean));
+        }
       }
     }
+
+    showChart.value = true;
+
+  } catch (error) {
+    console.error("Errore durante mountChart:", error);
+    showChart.value = false;
+    return;
+  } finally {
+    if (currentConfigStr === props.config) {
+      loadingFlag.value = false;
+    }
   }
+
+  if (!showChart.value) return;
 
   let margin = { top: 10, bottom: 35, left: 47, right: 100 }
 
@@ -169,7 +186,7 @@ async function mountChart() {
     .attr("fill", function (d) { return mycolor(d.value); });
 
   const ticks2 = [...binningInfo.value.map(bin => bin.lowerBound),
-    ];
+  ];
   const ticksLabels2 = [
     ...binningInfo.value.map(bin => bin.humidityBinDescription),
   ];

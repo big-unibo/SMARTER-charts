@@ -184,62 +184,61 @@ async function drawImage() {
 }
 
 async function mountChart() {
-  const configParsed = JSON.parse(props.config);
-  
+  // Snapshot immediato per race condition
   const currentTimestamp = props.selectedTimestamp;
-  const currentConfigStr = props.config; 
+  const currentConfigStr = props.config;
 
   showChart.value = false;
   loadingFlag.value = true;
 
-  let chartDataResponse;
-
   try {
-    chartDataResponse = await communicationService.getChartData(
-      configParsed.environment, 
-      configParsed.paths, 
-      { timestamp: currentTimestamp }, 
-      endpoint, 
+    const configParsed = JSON.parse(props.config);
+
+    const chartDataResponse = await communicationService.getChartData(
+      configParsed.environment,
+      configParsed.paths,
+      { timestamp: currentTimestamp },
+      endpoint,
       'image'
     );
+
+    if (props.selectedTimestamp !== currentTimestamp || props.config !== currentConfigStr) {
+      return;
+    }
+
+    const data = chartDataResponse?.data;
+    
+    if (!data || data.length === 0) {
+      showChart.value = false;
+      return;
+    }
+
+    image.value = data;
+    showChart.value = true;
+
+    const totals = data.reduce((acc, item) => {
+      acc.valSum += item.value;      
+      acc.weightSum += item.weight;
+      return acc;
+    }, { valSum: 0, weightSum: 0 });
+
+    if (totals.weightSum !== 0) {
+      rDistance.value = (totals.valSum / totals.weightSum).toFixed(2);
+    } else {
+      rDistance.value = "0.00";
+    }
+
+    await drawImage();
+
   } catch (error) {
     console.error("Errore recupero dati grafico:", error);
-    loadingFlag.value = false;
-    return;
-  }
-
-  if (props.selectedTimestamp !== currentTimestamp || props.config !== currentConfigStr) {
-    return;
-  }
-
-  const data = chartDataResponse?.data; 
-  if (!data || data.length === 0) {
     showChart.value = false;
-    loadingFlag.value = false;
-    return;
+  } finally {
+    if (props.selectedTimestamp === currentTimestamp && props.config === currentConfigStr) {
+      loadingFlag.value = false;
+    }
   }
-  image.value = data;
-  showChart.value = true;
-
-  const totals = data.reduce((acc, item) => {
-    acc.valSum += item.value;
-    acc.weightSum += item.weight;
-    return acc;
-  }, { valSum: 0, weightSum: 0 });
-
-  if (totals.weightSum !== 0) {
-      rDistance.value = (totals.valSum / totals.weightSum).toFixed(2);
-  } else {
-      rDistance.value = "0.00";
-  }
-
-  await drawImage();
-  loadingFlag.value = false;
 }
-
-watch(() => props.selectedTimestamp, async () => {
-  await mountChart()
-}) 
 </script>
 
 <template>

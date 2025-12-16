@@ -1,10 +1,10 @@
 <script setup>
 
-import {Line} from "vue-chartjs";
-import {ref, watchEffect} from "vue";
+import { Line } from "vue-chartjs";
+import { ref, watchEffect } from "vue";
 import 'chartjs-adapter-luxon';
-import {luxonDateTime} from '../common/dateUtils.js'
-import {CommunicationService} from "../services/CommunicationService.js";
+import { luxonDateTime } from '../common/dateUtils.js'
+import { CommunicationService } from "../services/CommunicationService.js";
 
 const communicationService = new CommunicationService();
 
@@ -26,8 +26,8 @@ const props = defineProps(['config', 'extraParams'])
 
 const endpoint = 'signals'
 
-const chartData = ref({datasets: [], labels: []})
-const options = ref({responsive: true, maintainAspectRatio: false})
+const chartData = ref({ datasets: [], labels: [] })
+const options = ref({ responsive: true, maintainAspectRatio: false })
 const showChart = ref(false)
 const loadingFlag = ref(false)
 
@@ -35,105 +35,114 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 
 watchEffect(async () => {
   let value = props.config;
-  if(value) {
+  if (value) {
     await mountChart()
   }
 });
 
 async function mountChart() {
-  const configParsed = JSON.parse(props.config);
-  const extraParamsParsed = JSON.parse(props.extraParams)
-  const mergedParams = {
-    ...configParsed.params,
-    ...extraParamsParsed 
-  };
+  const currentConfigStr = props.config
 
-  let data = []
   showChart.value = false
   loadingFlag.value = true
 
-  const chartDataResponse = await communicationService.getChartData(
-    configParsed.environment,
-    configParsed.paths,
-    mergedParams,
-    endpoint,
-    "0.signals.0.measurements"
-  );
+  try {
+    const configParsed = JSON.parse(props.config);
+    const extraParamsParsed = JSON.parse(props.extraParams)
+    const mergedParams = {
+      ...configParsed.params,
+      ...extraParamsParsed
+    };
 
-  if(JSON.stringify(configParsed) !== props.config){
+    const chartDataResponse = await communicationService.getChartData(
+      configParsed.environment,
+      configParsed.paths,
+      mergedParams,
+      endpoint,
+      "0.signals.0.measurements"
+    );
+
+    if (currentConfigStr !== props.config) {
       return
-  }
+    }
 
-  let unit = "C°"
-  if (chartDataResponse) {
-    data = chartDataResponse.data
+    let unit = "C°"
+    let data = []
 
-    if(!Array.isArray(data)){
+    if (chartDataResponse && Array.isArray(chartDataResponse.data)) {
+      data = chartDataResponse.data
+      unit = chartDataResponse.unit ?? unit
+      showChart.value = data.length > 0
+    } else {
       loadingFlag.value = false
       return
     }
-    showChart.value = data.length > 0
-    unit = chartDataResponse.unit ?? unit;
-  } else data = []
 
-  chartData.value = {
-  datasets: [{
-    data: data.map(d => ({
-      timestamp: Number(d.timestamp) * 1000, 
-      value: d.value
-    })),
-    borderColor: signalsColorFunction('Air Temperature'),
-    backgroundColor: signalsColorFunction('Air Temperature'),
-    label: "AirTemp"
-  }]
-}
+    chartData.value = {
+      datasets: [{
+        data: data.map(d => ({
+          timestamp: Number(d.timestamp) * 1000,
+          value: d.value
+        })),
+        borderColor: signalsColorFunction('Air Temperature'),
+        backgroundColor: signalsColorFunction('Air Temperature'),
+        label: "AirTemp"
+      }]
+    }
 
-  options.value = {
-    responsive: true,
-    maintainAspectRatio: false,
-    parsing: {
-      xAxisKey: 'timestamp',
-      yAxisKey: 'value'
-    },
-    scales: {
-      x: {
-        type: 'time',
-        time: {
-          unit: 'day',
-          tooltipFormat: 'yyyy-MM-dd HH:mm:ss',
-          displayFormats: {
-            minute: 'yyyy-MM-dd HH:mm', // Customize the display format for minutes
-            second: 'yyyy-MM-dd HH:mm', // Customize the display format for seconds,
-            hour: 'yyyy-MM-dd HH:mm:ss',
-            day: 'yyyy-MM-dd',
-            month: 'yyyy-MM-dd HH:mm:ss'
-          },
-        },
-        ticks: {
-          source: 'data'
-        },
-        title: {
-          display: true,
-          text: 'Tempo'
-        }
+    options.value = {
+      responsive: true,
+      maintainAspectRatio: false,
+      parsing: {
+        xAxisKey: 'timestamp',
+        yAxisKey: 'value'
       },
-      y: {
-        title: {
-          display: true,
-          text: unit
+      scales: {
+        x: {
+          type: 'time',
+          time: {
+            unit: 'day',
+            tooltipFormat: 'yyyy-MM-dd HH:mm:ss',
+            displayFormats: {
+              minute: 'yyyy-MM-dd HH:mm',
+              second: 'yyyy-MM-dd HH:mm',
+              hour: 'yyyy-MM-dd HH:mm:ss',
+              day: 'yyyy-MM-dd',
+              month: 'yyyy-MM-dd HH:mm:ss'
+            },
+          },
+          ticks: {
+            source: 'data'
+          },
+          title: {
+            display: true,
+            text: 'Tempo'
+          }
+        },
+        y: {
+          title: {
+            display: true,
+            text: unit
+          }
         }
       }
     }
-  }
 
-  loadingFlag.value = false
+  } catch (error) {
+    console.error("Errore mountChart:", error)
+    showChart.value = false
+  } finally {
+    if (currentConfigStr === props.config) {
+      loadingFlag.value = false
+    }
+  }
 }
 
 </script>
 
 <template>
   <div v-if="showChart">
-    <Line  :data="chartData" :options="options" />
+    <Line :data="chartData" :options="options" />
   </div>
   <div v-else-if="loadingFlag" class="d-flex justify-content-center align-items-center">
     <div class="spinner-border" role="status">
@@ -146,5 +155,4 @@ async function mountChart() {
 
 <style>
 @import '../assets/main.css';
-
 </style>

@@ -321,36 +321,52 @@ async function drawWeightsImage() {
 }
 
 async function mountChart() {
-  const configParsed = JSON.parse(props.config);
+  const currentConfigStr = props.config
+  const currentTimestamp = props.selectedTimestamp
 
   showChart.value = false
   loadingFlag.value = true
 
-  const selectedTimestamp = props.selectedTimestamp
+  try {
+    const configParsed = JSON.parse(props.config)
 
-  const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, { timestamp: selectedTimestamp } , endpoint)
-  if (JSON.stringify(configParsed) !== props.config || selectedTimestamp !== props.selectedTimestamp) {
-    loadingFlag.value = false
-    return
-  }
+    const chartDataResponse = await communicationService.getChartData(
+      configParsed.environment,
+      configParsed.paths,
+      { timestamp: currentTimestamp },
+      endpoint
+    )
 
-  if (chartDataResponse && chartDataResponse.optimalProfile) {
-    showChart.value = chartDataResponse.optimalProfile.length > 0
-    if (showChart.value) {
+    if (currentConfigStr !== props.config || currentTimestamp !== props.selectedTimestamp) {
+      return
+    }
+
+    if (chartDataResponse && chartDataResponse.optimalProfile && chartDataResponse.optimalProfile.length > 0) {
       image.value = chartDataResponse.optimalProfile
       gridId.value = chartDataResponse.gridId
       const binningId = chartDataResponse.binningId
+
       binningInfo.value = await communicationService.getBinningInfo(configParsed.environment, binningId, 'bins')
-      if (JSON.stringify(configParsed) !== props.config) {
+
+      if (currentConfigStr !== props.config || currentTimestamp !== props.selectedTimestamp) {
         return
       }
+
+      showChart.value = true
       await drawValuesImage()
       await drawWeightsImage()
+    } else {
+      showChart.value = false
     }
-  } else {
+
+  } catch (error) {
+    console.error(error)
     showChart.value = false
+  } finally {
+    if (currentConfigStr === props.config && currentTimestamp === props.selectedTimestamp) {
+      loadingFlag.value = false
+    }
   }
-  loadingFlag.value = false
 }
 
 watch(() => props.selectedTimestamp, async () => {

@@ -161,24 +161,52 @@ async function drawImage(timestamp) {
 }
 
 async function mountChart() {
-  loadingFlag.value = true;
-  const configParsed = JSON.parse(props.config);
-  const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, configParsed.params, endpoint, 'images')
+  const currentConfigStr = props.config
+  loadingFlag.value = true
 
-  if (chartDataResponse) {
-    const data = chartDataResponse.data;
-    images.value = new Map(data.map(obj => [obj.timestamp, obj.image]))
-    const binningId = chartDataResponse.binningId ?? 1;
-    binningInfo.value = await communicationService.getBinningInfo(configParsed.environment, binningId, 'bins')
-    showChart.value = images.value.size > 0
-    await nextTick()
-    if (showChart.value) {
-      const timestamps = Array.from(images.value.keys()).sort()
-      loadingFlag.value = false
-      await drawImage(timestamps[timestamps.length - 1])
+  try {
+    const configParsed = JSON.parse(props.config);
+    const chartDataResponse = await communicationService.getChartData(
+      configParsed.environment,
+      configParsed.paths,
+      configParsed.params,
+      endpoint,
+      'images'
+    )
+
+    if (currentConfigStr !== props.config) {
+      return
     }
-  } else {
+
+    if (chartDataResponse) {
+      const data = chartDataResponse.data;
+      images.value = new Map(data.map(obj => [obj.timestamp, obj.image]))
+      const binningId = chartDataResponse.binningId ?? 1;
+
+      binningInfo.value = await communicationService.getBinningInfo(configParsed.environment, binningId, 'bins')
+
+      if (currentConfigStr !== props.config) {
+        return
+      }
+
+      showChart.value = images.value.size > 0
+      await nextTick()
+
+      if (showChart.value) {
+        const timestamps = Array.from(images.value.keys()).sort()
+        await drawImage(timestamps[timestamps.length - 1])
+      }
+    } else {
+      showChart.value = false
+    }
+
+  } catch (error) {
+    console.error(error)
     showChart.value = false
+  } finally {
+    if (currentConfigStr === props.config) {
+      loadingFlag.value = false
+    }
   }
 }
 </script>

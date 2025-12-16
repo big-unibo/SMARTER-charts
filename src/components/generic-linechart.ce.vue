@@ -52,59 +52,78 @@ function addValueAndMaintainSize(value) {
 }
 
 async function mountChart() {
-  const configParsed = JSON.parse(props.config);
-  const extraParamsParsed = JSON.parse(props.extraParams)
-  const mergedParams = {
-    ...configParsed.params,
-    ...extraParamsParsed
-  };
+  const currentConfigStr = props.config
+  loadingFlag.value = true
 
-  const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, mergedParams, props.endpoint, "0.signals.0.measurements")
-  if (JSON.stringify(configParsed) !== props.config) {
-    return
-  }
+  try {
+    const configParsed = JSON.parse(props.config)
+    const extraParamsParsed = JSON.parse(props.extraParams)
+    const mergedParams = {
+      ...configParsed.params,
+      ...extraParamsParsed
+    }
 
-  const responseData = chartDataResponse.data
-  if (props.yTitle == null && chartDataResponse.unit != null) {
-    yUnit.value = chartDataResponse.unit;
-  }
+    const chartDataResponse = await communicationService.getChartData(
+      configParsed.environment,
+      configParsed.paths,
+      mergedParams,
+      props.endpoint,
+      "0.signals.0.measurements"
+    )
 
-  if (responseData?.[0]?.value != null) {
-    addValueAndMaintainSize(responseData[0].value)
-  }
+    if (currentConfigStr !== props.config) {
+      return
+    }
 
-  chartData.value = {
-    labels: ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
-    datasets: [{
-      data: data.value,
-      borderColor: props.color,
-      backgroundColor: props.color,
-      label: props.label,
-      pointRadius: 0,
-    }]
-  }
+    const responseData = chartDataResponse?.data
 
-  options.value = {
-    maintainAspectRatio: true,
-    animation: {
-      duration: 0
-    },
-    scales: {
-      x: {
-        ticks: {
-          stepSize: 5
-        }
+    if (props.yTitle == null && chartDataResponse?.unit != null) {
+      yUnit.value = chartDataResponse.unit
+    }
+
+    if (responseData?.[0]?.value != null) {
+      addValueAndMaintainSize(responseData[0].value)
+    }
+
+    chartData.value = {
+      labels: ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+      datasets: [{
+        data: data.value,
+        borderColor: props.color,
+        backgroundColor: props.color,
+        label: props.label,
+        pointRadius: 0,
+      }]
+    }
+
+    options.value = {
+      maintainAspectRatio: true,
+      animation: {
+        duration: 0
       },
-      y: {
-        title: {
-          display: true,
-          text: props.yTitle || yUnit.value || '?'
+      scales: {
+        x: {
+          ticks: {
+            stepSize: 5
+          }
         },
-        min: 0
+        y: {
+          title: {
+            display: true,
+            text: props.yTitle || yUnit.value || '?'
+          },
+          min: 0
+        }
       }
     }
-  }
 
+  } catch (error) {
+    console.error(error)
+  } finally {
+    if (currentConfigStr === props.config) {
+      loadingFlag.value = false
+    }
+  }
 }
 
 </script>
