@@ -147,8 +147,11 @@ function titleFunction(event) {
   if (event.updatedBy !== null) {
     return "Irrigazione modificata"
   }
-  if (event.wateringStart < Date.now() / 1000 && event.advice > 0) {
+  if(event.scheduled){
     return "Irrigazione inviata"
+  }
+  if (event.advice !== null) {
+    return "Irrigazione calcolata"
   }
   return "Irrigazione programmata"
 }
@@ -160,8 +163,11 @@ function colorFunction(event) {
   if (event.updatedBy !== null) {
     return "updated"
   }
-  if (event.wateringStart < Date.now() / 1000 && event.advice > 0) {
+  if(event.scheduled){
     return "sent"
+  }
+  if (event.advice !== null) {
+    return "computed"
   }
   return "planned"
 }
@@ -255,7 +261,7 @@ async function mountChart(timeFilter = null) {
       }
 
       const eventdata = {
-        enabled: e.enabled, duration: e.duration, advice: e.advice, expectedWater: e.expectedWater, note: e.note, updatedBy: e.updatedBy, theses: e.theses
+        enabled: e.enabled, scheduled: e.scheduled, duration: e.duration, advice: e.advice, expectedWater: e.expectedWater, note: e.note, updatedBy: e.updatedBy, theses: e.theses
       }
 
       const event = {
@@ -275,10 +281,11 @@ async function mountChart(timeFilter = null) {
         locale: 'it-IT',
         views: [createViewMonthGrid()],
         calendars: {
-          sent: { colorName: 'sent', lightColors: { main: '#fff', container: '#a3c2c2', onContainer: '#fff', }, },
+          computed: { colorName: 'computed', lightColors: { main: '#fff', container: '#7E9595', onContainer: '#fff', }, },
           disabled: { colorName: 'disabled', lightColors: { main: 'fff', container: '#ff3336', onContainer: '#fff', }, },
           updated: { colorName: 'updated', lightColors: { main: '#fff', container: '#9966ff', onContainer: '#fff', }, },
           planned: { colorName: 'planned', lightColors: { main: '#fff', container: '#339CFF', onContainer: '#fff', }, },
+          sent: { colorName: 'sent', lightColors: { main: '#fff', container: '#34C16E', onContainer: '#fff', }, },
         },
         plugins: [eventModalPlugin],
         callbacks: {
@@ -328,6 +335,11 @@ async function mountChart(timeFilter = null) {
               <p>
                 <span class="label">Stato: </span>
                 <span>{{ calendarEvent.customData.enabled ? 'Abilitata' : 'Disabilitata' }}</span>
+              </p>
+
+              <p>
+                <span class="label">Programmazione: </span>
+                <span>{{ calendarEvent.customData.scheduled ? 'Inviata' : 'Non inviata' }}</span>
               </p>
 
               <p>
