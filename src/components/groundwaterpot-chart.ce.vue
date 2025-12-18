@@ -171,7 +171,8 @@ async function mountChart() {
             text: yLabel
           },
           ticks: {
-            stepSize: 20
+            autoSkip: true,
+            maxTicksLimit: 10
           },
         }
       }
