@@ -29,12 +29,9 @@ config: {
     token: string  // Authorization token for API calls
   },
   paths: {
-    refStructureName: string,
-    companyName: string,
-    fieldName: string,
-    sectorName: string,
-    thesisName: string // name of the thesis
-  },  // One or more resource identifiers (e.g., field IDs, sensors, plots)
+    sectorId: integer,
+    thesisId: integer
+  },  // One or more resource identifiers (e.g., farm IDs, sensors, plots)
   params: {
     timeFilterFrom?: string,  // ISO date string or timestamp (start of time range)
     timeFilterTo?: string     // ISO date string or timestamp (end of time range)

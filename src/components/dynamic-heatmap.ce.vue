@@ -60,7 +60,7 @@ async function drawImage(timestamp) {
       name: key,
       data: value.sort((a, b) => a.x - b.x).map(e => e.value)
     }
-  }).sort((a, b) => b.name - a.name)
+  }).sort((a, b) => a.name - b.name)
 
   heatmapSeries.value = series
   if (!container.value) {
