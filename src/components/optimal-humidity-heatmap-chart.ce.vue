@@ -11,7 +11,7 @@ const weightsSeries = ref([])
 const optValueChartOptions = ref({ emitsOptions: false })
 const weightsChartOptions = ref({ emitsOptions: false })
 const image = ref({})
-const gridId = ref(null)
+const optProfileId = ref(null)
 
 const containerOptimal = ref(null)
 
@@ -158,7 +158,7 @@ async function drawValuesImage() {
       width: 0
     },
     title: {
-      text: 'Matrice ottima (Id: ' + gridId.value + ')',
+      text: 'Matrice ottima (Id: ' + optProfileId.value + ')',
       align: 'center',
       offsetY: 10,
     },
@@ -343,7 +343,7 @@ async function mountChart() {
 
     if (chartDataResponse && chartDataResponse.optimalProfile && chartDataResponse.optimalProfile.length > 0) {
       image.value = chartDataResponse.optimalProfile
-      gridId.value = chartDataResponse.gridId
+      optProfileId.value = chartDataResponse.optimalProfileId
       const binningId = chartDataResponse.binningId
 
       binningInfo.value = await communicationService.getBinningInfo(configParsed.environment, binningId, 'bins')
