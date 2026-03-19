@@ -21,7 +21,7 @@ export class CalendarElement extends HTMLElement {
     this.app = createApp({
       render: () =>
         h(Calendar, {
-          config: JSON.parse(this._configRef.value)
+          config: this._configRef.value
         })
     })
 

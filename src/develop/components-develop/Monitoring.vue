@@ -1,7 +1,7 @@
 <script setup>
 import '@/assets/basebase-develop.css';
 import authService from '@/develop/services-develop/auth.service.js';
-import { computed, watch, onMounted, reactive, ref, watchEffect } from "vue";
+import { computed, watch, reactive, ref } from "vue";
 
 const props = defineProps(['token', 'user'])
 
@@ -15,7 +15,6 @@ let customSelectedTimestampFrom = ref(getCurrentTimestampMinusDays(30))
 let selectedSectorName = ref("Seleziona un settore")
 let selectedThesisName = ref("Seleziona una tesi")
 let selectedThesis = ref({})
-let selectedTimeLabel = ref("")
 let showDynamicHeatmap = ref(false)
 let showOptimalMatrix = ref(false)
 let showDetailedWatering = ref(false)
@@ -33,7 +32,6 @@ const userPermissions = reactive({})
 
 const sectors = ref([])
 const theses = ref([])
-let activeThesis
 
 function updateConnectionParams() {
 	if (selectedThesis.value) {
