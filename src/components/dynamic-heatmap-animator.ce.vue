@@ -3,7 +3,7 @@
 import '../assets/animator.css'
 
 import { ref, watchEffect } from 'vue';
-import GenericLinearChart from "./generic-linechart.ce.vue";
+import IncrementalLinearChart from "./incremental-linechart.ce.vue";
 import { CommunicationService } from "../services/CommunicationService.js";
 import DynamicHeatmap from "../components/dynamic-heatmap.ce.vue";
 
@@ -13,7 +13,12 @@ const buttonTexts = {
   stop: 'Stop'
 }
 
-const props = defineProps(['config'])
+const props = defineProps({
+  config: {
+    type: Object,
+    required: true
+  }
+})
 
 const heatmapAnimatorConfig = ref(null)
 const linechartAnimatorConfig = ref(null)
@@ -35,44 +40,41 @@ const currentDate = ref('');
 const loadingFlag = ref(false)
 
 function updateHeatmapConfig(firstTimestamp, lastTimestamp) {
-  const parsedConfigProp = JSON.parse(props.config);
-  heatmapAnimatorConfig.value = JSON.stringify({
-    environment: parsedConfigProp.environment,
-    paths: parsedConfigProp.paths,
+  heatmapAnimatorConfig.value = {
+    environment: props.config.environment,
+    paths: props.config.paths,
     params: {
       timeFilterFrom: firstTimestamp,
       timeFilterTo: lastTimestamp
     }
-  })
+  }
 }
 
 function updateLinechartConfig(currentTimestamp, lastTimestamp) {
-  const parsedConfigProp = JSON.parse(props.config);
-  linechartAnimatorConfig.value = JSON.stringify({
-    environment: parsedConfigProp.environment,
-    paths: parsedConfigProp.paths,
+  linechartAnimatorConfig.value = {
+    environment: props.config.environment,
+    paths: props.config.paths,
     params: {
       timeFilterFrom: (Number(lastTimestamp) + 1),
       timeFilterTo: currentTimestamp
     }
-  })
+  }
 }
 
 async function calculateTimestampLength() {
-  const currentConfigStr = props.config
+  const currentConfigStr = JSON.stringify(props.config)
   loadingFlag.value = true
 
   try {
-    const configParsed = JSON.parse(props.config)
     const chartDataResponse = await communicationService.getChartData(
-      configParsed.environment,
-      configParsed.paths,
-      configParsed.params,
+      props.config.environment,
+      props.config.paths,
+      props.config.params,
       endpoint,
       "measures"
     )
 
-    if (currentConfigStr !== props.config) {
+    if (currentConfigStr !== JSON.stringify(props.config)) {
       return
     }
 
@@ -92,7 +94,7 @@ async function calculateTimestampLength() {
   } catch (error) {
     console.error(error)
   } finally {
-    if (currentConfigStr === props.config) {
+    if (currentConfigStr === JSON.stringify(props.config)) {
       loadingFlag.value = false
     }
   }
@@ -208,12 +210,12 @@ watchEffect(async () => {
           <p></p>
         </div>
         <div class="line_charts col-5">
-          <generic-linear-chart style="height: 200px" :config="linechartAnimatorConfig"
-            :extraParams="JSON.stringify({ signalTypes: ['DRIPPER'] })" :endpoint="'signals'" :label="'Dripper'"
-            :color="'rgb(31, 119, 180)'"></generic-linear-chart>
-          <generic-linear-chart style="height: 200px" :config="linechartAnimatorConfig"
-            :extraParams="JSON.stringify({ signalTypes: ['PLUV_CURR'] })" :endpoint="'signals'" :label="'Pluv'"
-            :color="'rgb(31, 119, 180)'"></generic-linear-chart>
+          <IncrementalLinearChart style="height: 200px" :config="{...linechartAnimatorConfig, params: {...linechartAnimatorConfig.params ?? {}, signalTypes: ['DRIPPER']}}" 
+            :endpoint="'signals'" :label="'Dripper'"
+            :color="'rgb(31, 119, 180)'"></IncrementalLinearChart>
+          <IncrementalLinearChart style="height: 200px" :config="{...linechartAnimatorConfig, params: {...linechartAnimatorConfig.params ?? {}, signalTypes: ['PLUV_CURR']}}"
+            :endpoint="'signals'" :label="'Pluv'"
+            :color="'rgb(31, 119, 180)'"></IncrementalLinearChart>
         </div>
       </div>
     </div>

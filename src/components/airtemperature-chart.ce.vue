@@ -22,7 +22,7 @@ import {
 } from 'chart.js'
 import { signalsColorFunction } from "@/common/colorsConfig.js";
 
-const props = defineProps(['config', 'extraParams'])
+const props = defineProps(['config'])
 
 const endpoint = 'signals'
 
@@ -41,28 +41,21 @@ watchEffect(async () => {
 });
 
 async function mountChart() {
-  const currentConfigStr = props.config
+  const currentConfigStr = JSON.stringify(props.config)
 
   showChart.value = false
   loadingFlag.value = true
 
   try {
-    const configParsed = JSON.parse(props.config);
-    const extraParamsParsed = JSON.parse(props.extraParams)
-    const mergedParams = {
-      ...configParsed.params,
-      ...extraParamsParsed
-    };
-
     const chartDataResponse = await communicationService.getChartData(
-      configParsed.environment,
-      configParsed.paths,
-      mergedParams,
+      props.config.environment,
+      props.config.paths,
+      props.config.params,
       endpoint,
       "0.signals.0.measurements"
     );
 
-    if (currentConfigStr !== props.config) {
+    if (currentConfigStr !== JSON.stringify(props.config)) {
       return
     }
 
@@ -132,7 +125,7 @@ async function mountChart() {
     console.error("Errore mountChart:", error)
     showChart.value = false
   } finally {
-    if (currentConfigStr === props.config) {
+    if (currentConfigStr === JSON.stringify(props.config)) {
       loadingFlag.value = false
     }
   }

@@ -22,7 +22,7 @@ import {
   TimeScale
 } from 'chart.js'
 import { LineDatasetData } from "../common/LineDatasetData.js";
-import { groundWaterPotentialColorFunction } from "@/common/colorsConfig.js";
+import { genericSignalsColorFunction } from "@/common/colorsConfig.js";
 
 const chartData = ref({ datasets: [], labels: [] })
 const options = ref({ responsive: true, maintainAspectRatio: false })
@@ -31,7 +31,7 @@ const loadingFlag = ref(false)
 
 const unitLabel = ref(null);
 
-const props = defineProps(['config', 'extraParams', 'hideOnMissingSignal'])
+const props = defineProps(['config', 'hideOnMissingSignal'])
 
 const endpoint = 'signals'
 
@@ -63,7 +63,7 @@ const createDatasets = (data) => {
         x: signal.x,
         y: signal.y
       }
-      datasets.push(new LineDatasetData(label, dataPoints, false, 3, 0.3, groundWaterPotentialColorFunction, index, sortingKey));
+      datasets.push(new LineDatasetData(label, dataPoints, false, 3, 0.3, genericSignalsColorFunction, index, sortingKey));
     });
   });
   return datasets
@@ -80,27 +80,22 @@ watchEffect(async () => {
 });
 
 async function mountChart() {
-  const currentConfigStr = props.config
+  const currentConfigStr = JSON.stringify(props.config)
   showChart.value = false
   loadingFlag.value = true
   unitLabel.value = null
 
   try {
-    const configParsed = JSON.parse(props.config)
-    const extraParamsParsed = JSON.parse(props.extraParams)
-    const mergedParams = {
-      ...configParsed.params,
-      ...extraParamsParsed
-    }
-
+    const configParsed = props.config
+  
     const chartDataResponse = await communicationService.getChartData(
       configParsed.environment,
       configParsed.paths,
-      mergedParams,
+      configParsed.params,
       endpoint
     )
 
-    if (currentConfigStr !== props.config) {
+    if (currentConfigStr !== JSON.stringify(props.config)) {
       return
     }
 
@@ -181,7 +176,7 @@ async function mountChart() {
     console.error(error)
     showChart.value = false
   } finally {
-    if (currentConfigStr === props.config) {
+    if (currentConfigStr === JSON.stringify(props.config)) {
       loadingFlag.value = false
     }
   }

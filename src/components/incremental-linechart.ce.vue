@@ -3,7 +3,6 @@
 import { Line } from "vue-chartjs";
 import { ref, watchEffect } from "vue";
 import 'chartjs-adapter-luxon';
-import { luxonDateTime } from '../common/dateUtils.js'
 import { CommunicationService } from "../services/CommunicationService.js";
 
 const communicationService = new CommunicationService();
@@ -22,8 +21,10 @@ import {
 } from 'chart.js'
 
 const props = defineProps({
-  config: String,
-  extraParams: String,
+  config: {
+    type: Object,
+    required: true
+  },
   endpoint: String,
   yTitle: String,
   label: String,
@@ -34,12 +35,12 @@ const chartData = ref(null)
 const options = ref(null)
 const data = ref(new Array(20).fill(0))
 const yUnit = ref(null)
+const loadingFlag = ref(false)
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler, TimeScale)
 
 watchEffect(async () => {
-  const parsed = JSON.parse(props.config);
-  if (parsed) {
+  if (props.config) {
     await mountChart()
   }
 });
@@ -52,26 +53,19 @@ function addValueAndMaintainSize(value) {
 }
 
 async function mountChart() {
-  const currentConfigStr = props.config
+  const currentConfigStr = JSON.stringify(props.config)
   loadingFlag.value = true
 
   try {
-    const configParsed = JSON.parse(props.config)
-    const extraParamsParsed = JSON.parse(props.extraParams)
-    const mergedParams = {
-      ...configParsed.params,
-      ...extraParamsParsed
-    }
-
     const chartDataResponse = await communicationService.getChartData(
-      configParsed.environment,
-      configParsed.paths,
-      mergedParams,
+      props.config.environment,
+      props.config.paths,
+      props.config.params,
       props.endpoint,
       "0.signals.0.measurements"
     )
 
-    if (currentConfigStr !== props.config) {
+    if (currentConfigStr !== JSON.stringify(props.config)) {
       return
     }
 
@@ -120,7 +114,7 @@ async function mountChart() {
   } catch (error) {
     console.error(error)
   } finally {
-    if (currentConfigStr === props.config) {
+    if (currentConfigStr === JSON.stringify(props.config)) {
       loadingFlag.value = false
     }
   }
@@ -129,7 +123,7 @@ async function mountChart() {
 </script>
 
 <template>
-  <div class="generic-line-chart">
+  <div style="height: 200px;">
     <Line v-if="chartData" :data="chartData" :options="options" />
     <div v-else>Nessun dato disponibile.</div>
   </div>
@@ -137,8 +131,4 @@ async function mountChart() {
 
 <style>
 @import '../assets/main.css';
-
-.generic-line-chart {
-  height: 200px;
-}
 </style>

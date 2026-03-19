@@ -24,7 +24,7 @@ watchEffect(async () => {
 });
 
 async function mountChart() {
-  const currentConfigStr = props.config;
+  const currentConfigStr = JSON.stringify(props.config);
   
   showChart.value = false;
   loadingFlag.value = true;
@@ -34,17 +34,15 @@ async function mountChart() {
   let mean = [];
 
   try {
-    const configParsed = JSON.parse(props.config);
-
     const chartDataResponse = await communicationService.getChartData(
-      configParsed.environment, 
-      configParsed.paths, 
-      configParsed.params, 
+      props.config.environment, 
+      props.config.paths, 
+      props.config.params, 
       endpoint, 
       'measures'
     );
 
-    if (currentConfigStr !== props.config || !chartDataResponse?.data?.length) {
+    if (currentConfigStr !== JSON.stringify(props.config) || !chartDataResponse?.data?.length) {
       return;
     }
 
@@ -52,12 +50,12 @@ async function mountChart() {
     const binningId = chartDataResponse.binningId;
 
     binningInfo.value = await communicationService.getBinningInfo(
-      configParsed.environment, 
+      props.config.environment, 
       binningId, 
       'bins'
     );
 
-    if (currentConfigStr !== props.config) return;
+    if (currentConfigStr !== JSON.stringify(props.config)) return;
 
     dataRaw.sort((a, b) => {
       if (a.z !== b.z) return a.z - b.z;
@@ -100,7 +98,7 @@ async function mountChart() {
     showChart.value = false;
     return;
   } finally {
-    if (currentConfigStr === props.config) {
+    if (currentConfigStr === JSON.stringify(props.config)) {
       loadingFlag.value = false;
     }
   }

@@ -97,10 +97,8 @@ async function submitForm() {
 
   const eventId = selectedEvent.value.eventId
 
-  const configParsed = JSON.parse(props.config);
-
   try {
-    const saveStatus = await communicationService.updateEvent(configParsed.environment, eventId, updateEventEndpoint, updatedEvent)
+    const saveStatus = await communicationService.updateEvent(props.config.environment, eventId, updateEventEndpoint, updatedEvent)
 
     await mountChart()
     activeModal.hide()
@@ -220,17 +218,17 @@ watchEffect(async () => {
 });
 
 async function mountChart(timeFilter = null) {
-  const configParsed = JSON.parse(props.config);
+  const config = props.config;
 
   const RANGE_OFFSET_SECONDS = 3024000; //35 Days
 
   if (!timeFilter) {
     let referenceTimestamp;
-    const selectedTimeFilter = { ...configParsed.params };
+    const selectedTimeFilterTo = props.config?.params?.timeFilterTo;
 
-    if (selectedTimeFilter.timeFilterTo) {
-      referenceTimestamp = selectedTimeFilter.timeFilterTo;
-      selectedDate.value = unixToZonedDateTime(referenceTimestamp);
+    if (selectedTimeFilterTo) {
+      referenceTimestamp = selectedTimeFilterTo
+      selectedDate.value = unixToZonedDateTime(selectedTimeFilterTo);
     } else {
       const nowZoned = Temporal.Now.zonedDateTimeISO('Europe/Rome');
       selectedDate.value = nowZoned;
@@ -243,8 +241,8 @@ async function mountChart(timeFilter = null) {
     };
   }
 
-  const calendarResponse = await communicationService.getWateringSchedule(configParsed.environment, configParsed.paths, timeFilter, getEventsEndpoint)
-  if (JSON.stringify(configParsed) !== props.config) {
+  const calendarResponse = await communicationService.getWateringSchedule(config.environment, config.paths, timeFilter, getEventsEndpoint)
+  if (JSON.stringify(config) !== JSON.stringify(props.config)) {
     return
   }
 

@@ -10,7 +10,13 @@ export default defineConfig({
   root: path.resolve(__dirname, 'src/develop'),
 
   plugins: [
-    vue(),
+    vue({
+      template: {
+        compilerOptions: {
+          isCustomElement: (tag) => tag.endsWith('-smarter')
+        }
+      }
+    }),
     cssInjectedByJsPlugin()
   ],
   resolve: {

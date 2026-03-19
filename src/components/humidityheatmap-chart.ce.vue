@@ -68,8 +68,7 @@ async function drawImage(timestamp) {
     data: new Array(series[0].data.length).fill(EMPTY_VALUE)
   }
 
-  const parsed = JSON.parse(props.config);
-  const dripperData = await communicationService.getDripperInfo(parsed.environment, parsed.paths, {timestamp: timestamp}, signalsEndpoint )
+  const dripperData = await communicationService.getDripperInfo(props.config.environment, props.config.paths, {timestamp: timestamp}, signalsEndpoint )
   if(dripperData?.x !== undefined){
     const dripperX = dripperData.x ?? 0;
     dripperSeries.data[xValues.indexOf(dripperX)] = DRIPPER_VALUE;
@@ -206,22 +205,20 @@ async function drawImage(timestamp) {
 }
 
 async function mountChart() {
-  const currentConfigStr = props.config
+  const currentConfigStr = JSON.stringify(props.config)
   showChart.value = false
   loadingFlag.value = true
 
-  try {
-    const configParsed = JSON.parse(props.config)
-    
+  try {    
     let chartDataResponse = await communicationService.getChartData(
-      configParsed.environment,
-      configParsed.paths,
-      configParsed.params,
+      props.config.environment,
+      props.config.paths,
+      props.config.params,
       endpoint,
       'images'
     )
 
-    if (currentConfigStr !== props.config) {
+    if (currentConfigStr !== JSON.stringify(props.config)) {
       return
     }
 
@@ -239,9 +236,9 @@ async function mountChart() {
 
     if (data && binningId) {
       images.value = new Map(data.map(obj => [obj.timestamp, obj.image]))
-      binningInfo.value = await communicationService.getBinningInfo(configParsed.environment, binningId, 'bins')
+      binningInfo.value = await communicationService.getBinningInfo(props.config.environment, binningId, 'bins')
 
-      if (currentConfigStr !== props.config) {
+      if (currentConfigStr !== JSON.stringify(props.config)) {
         return
       }
 
@@ -264,7 +261,7 @@ async function mountChart() {
     console.error(error)
     showChart.value = false
   } finally {
-    if (currentConfigStr === props.config) {
+    if (currentConfigStr === JSON.stringify(props.config)) {
       loadingFlag.value = false
     }
   }

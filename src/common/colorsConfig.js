@@ -74,7 +74,7 @@ const tableau20Colors = [
 ];
 
 
-export const groundWaterPotentialColorFunction = (index) => {
+export const genericSignalsColorFunction = (index) => {
   const pairIndex = index % 10;
   const isSecondRound = Math.floor(index / 10) % 2 === 1;
 
