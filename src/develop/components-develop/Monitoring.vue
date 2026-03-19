@@ -281,7 +281,11 @@ function selectedTime(time) {
 					<groundwaterpot-chart-smarter style="height: 320px" :config="baseConnectionParams" :extraParams="JSON.stringify({
 						signalTypes: ['SOIL_WATER_CONTENT', 'SOIL_WATER_POTENTIAL'],
 						aggregationType: 'AVG'
-					})" />
+					})" :hideOnMissingData="false" />
+					<groundwaterpot-chart-smarter style="height: 320px" :config="baseConnectionParams" :extraParams="JSON.stringify({
+						signalTypes: ['ELECT_COND'],
+						aggregationType: 'AVG'
+					})" :hideOnMissingSignal="true" />
 				</div>
 			</div>
 		</div>

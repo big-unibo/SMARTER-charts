@@ -31,10 +31,9 @@ const loadingFlag = ref(false)
 
 const unitLabel = ref(null);
 
-const props = defineProps(['config', 'extraParams'])
+const props = defineProps(['config', 'extraParams', 'hideOnMissingSignal'])
 
 const endpoint = 'signals'
-
 
 const createDatasets = (data) => {
   const datasets = [];
@@ -192,14 +191,16 @@ async function mountChart() {
 
 <template>
   <div v-if="showChart">
-    <Line :data="chartData" :options="options" />
+   <Line :data="chartData" :options="options" />
   </div>
-  <div v-else-if="loadingFlag" class="d-flex justify-content-center align-items-center">
-    <div class="spinner-border" role="status">
-      <span class="sr-only"></span>
+  <div v-else-if="!props.hideOnMissingSignal">
+    <div v-if="loadingFlag" class="d-flex justify-content-center align-items-center">
+      <div class="spinner-border" role="status">
+        <span class="sr-only"></span>
+      </div>
     </div>
+    <div v-else>Nessun dato disponibile.</div>
   </div>
-  <div v-else>Nessun dato disponibile.</div>
 </template>
 
 <style>
