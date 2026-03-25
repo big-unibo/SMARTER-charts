@@ -8,7 +8,7 @@ import { binningColorConfig } from "@/common/colorsConfig.js";
 
 const communicationService = new CommunicationService();
 const heatmapSeries = ref([]);
-const chartOptions = ref({ emitsOptions: false })
+const chartOptions = ref({})
 const images = ref(new Map())
 const container = ref(null)
 const binningInfo = ref([])
@@ -30,7 +30,7 @@ watch(() => props.selectedTimestamp, async (timestamp) => {
   if (timestamp && images.value.size > 0 && binningInfo.value.length > 0) {
     await drawImage(timestamp)
   }
-})
+}) 
 
 async function drawImage(timestamp) {
   timestamp = Number(timestamp)
@@ -195,8 +195,8 @@ async function drawImage(timestamp) {
           }
           return ('<div class="arrow_box m-1">' +
             '<div> <strong>val</strong>: ' + value + '</div>' +
-            '<div> <strong>x</strong>: ' + xValues[dataPointIndex] + '</div>' +
-            '<div> <strong>y</strong>: ' + heatmapSeries.value[seriesIndex].name + '</div>' +
+            '<div> <strong>x</strong>: ' + w.globals.labels[dataPointIndex] + '</div>' +
+            '<div> <strong>y</strong>: ' + w.config.series[seriesIndex].name + '</div>' +
             '</div>')
         }
       }
