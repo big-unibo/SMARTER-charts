@@ -176,8 +176,8 @@ async function mountChart() {
   </div>
   
   <div class="card-body">
-    <div v-if="showChart">
-      <Line style="height: 320px;" :data="chartData" :options="options"/>
+    <div v-if="showChart" class="chart-container">
+      <Line :data="chartData" :options="options"/>
     </div>
     <div v-else-if="loadingFlag" class="d-flex justify-content-center align-items-center">
       <div class="spinner-border" role="status">

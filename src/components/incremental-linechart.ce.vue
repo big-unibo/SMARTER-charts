@@ -123,7 +123,7 @@ async function mountChart() {
 </script>
 
 <template>
-  <div style="height: 200px;">
+  <div class="chart-container" style="min-height: 200px;">
     <Line v-if="chartData" :data="chartData" :options="options" />
     <div v-else>Nessun dato disponibile.</div>
   </div>

@@ -21,7 +21,6 @@ import {
   TimeScale
 } from 'chart.js'
 import { LineDatasetData } from "../common/LineDatasetData.js";
-import * as d3 from "d3";
 import { binningColorConfig } from "@/common/colorsConfig.js";
 
 let chartData = ref({ datasets: [], labels: [] })
@@ -235,8 +234,8 @@ async function mountChart() {
 </script>
 
 <template>
-  <div v-if="showChart">
-    <Line style="height: 300px" :data="chartData" :options="options" ref="myChart" />
+  <div v-if="showChart" class="chart-container">
+    <Line :data="chartData" :options="options" ref="myChart" />
   </div>
   <div v-else-if="loadingFlag" class="d-flex justify-content-center align-items-center">
     <div class="spinner-border" role="status">

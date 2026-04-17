@@ -36,17 +36,21 @@ const props = defineProps(['config', 'hideOnMissingSignal'])
 const endpoint = 'signals'
 
 const createDatasets = (data) => {
-  const datasets = [];
-  data.forEach(signalType => {
-    signalType.signals.sort((a, b) => {
-        if (a.x === b.x) {
-            return b.y - a.y; 
-        }
-        return a.x - b.x; 
-    });
-    signalType.signals.forEach((signal, index) => {
-      const label = `${signalType.signalTypeDescription} (${signal.x}, ${signal.y})`;
+  const datasets = data
+    .flatMap(signalType => {
+      signalType.signals.sort((a, b) => {
+        if (a.x === b.x) return b.y - a.y;
+        return a.x - b.x;
+      });
 
+      return signalType.signals.map(signal => ({
+        signalTypeDescription: signalType.signalTypeDescription,
+        ...signal
+      }))
+    })
+    .map(({ signalTypeDescription, ...signal }, index) => {
+      const label = `${signalTypeDescription} ${signal.x != null || signal.y != null ? `(${signal.x}, ${signal.y})` : ''
+        }`;
 
       if (unitLabel.value === null && signal?.unit != null) {
         unitLabel.value = signal.unit;
@@ -62,10 +66,19 @@ const createDatasets = (data) => {
       const sortingKey = {
         x: signal.x,
         y: signal.y
-      }
-      datasets.push(new LineDatasetData(label, dataPoints, false, 3, 0.3, genericSignalsColorFunction, index, sortingKey));
+      };
+
+      return new LineDatasetData(
+        label,
+        dataPoints,
+        false,
+        3,
+        0.3,
+        genericSignalsColorFunction,
+        index,
+        sortingKey
+      );
     });
-  });
   return datasets
 }
 
@@ -185,7 +198,7 @@ async function mountChart() {
 </script>
 
 <template>
-  <div v-if="showChart">
+  <div v-if="showChart" class="chart-container">
    <Line :data="chartData" :options="options" />
   </div>
   <div v-else-if="!props.hideOnMissingSignal">

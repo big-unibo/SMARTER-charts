@@ -1,5 +1,10 @@
 @import 'bootstrap/dist/css/bootstrap.min.css';
 
+.chart-container {
+  height: 100%;
+  min-height: 300px;
+}
+
 :root {
   --vt-c-white: #ffffff;
   --vt-c-white-soft: #f8f8f8;

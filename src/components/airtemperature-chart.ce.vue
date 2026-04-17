@@ -134,7 +134,7 @@ async function mountChart() {
 </script>
 
 <template>
-  <div v-if="showChart">
+  <div v-if="showChart" class="chart-container">
     <Line :data="chartData" :options="options" />
   </div>
   <div v-else-if="loadingFlag" class="d-flex justify-content-center align-items-center">
