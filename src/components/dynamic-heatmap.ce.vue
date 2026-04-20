@@ -213,7 +213,7 @@ async function mountChart() {
 
 <template>
   <div v-if="showChart" ref="container">
-    <VueApexCharts type="heatmap" :options="chartOptions" :series="heatmapSeries"></VueApexCharts>
+    <VueApexCharts v-if="chartOptions.chart" type="heatmap" :options="chartOptions" :series="heatmapSeries"></VueApexCharts>
   </div>
   <div v-else-if="loadingFlag" class="d-flex justify-content-center align-items-center">
     <div class="spinner-border" role="status">
