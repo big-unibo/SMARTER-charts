@@ -3,7 +3,6 @@ import { ref, watch, watchEffect, nextTick } from "vue";
 import { CommunicationService } from "../services/CommunicationService.js";
 import VueApexCharts from "vue3-apexcharts"
 import { luxonDateTimeToString } from "../common/dateUtils.js"
-import * as d3 from "d3";
 import { binningColorConfig } from "@/common/colorsConfig.js";
 
 const communicationService = new CommunicationService();
@@ -30,7 +29,7 @@ watch(() => props.selectedTimestamp, async (timestamp) => {
   if (timestamp && images.value.size > 0 && binningInfo.value.length > 0) {
     await drawImage(timestamp)
   }
-}) 
+})
 
 async function drawImage(timestamp) {
   timestamp = Number(timestamp)
@@ -68,14 +67,16 @@ async function drawImage(timestamp) {
     data: new Array(series[0].data.length).fill(EMPTY_VALUE)
   }
 
-  const dripperData = await communicationService.getDripperInfo(props.config.environment, props.config.paths, {timestamp: timestamp}, signalsEndpoint )
-  if(dripperData?.x !== undefined){
+  const configParsed = JSON.parse(props.config)
+
+  const dripperData = await communicationService.getDripperInfo(configParsed.environment, configParsed.paths, { timestamp: timestamp }, signalsEndpoint)
+  if (dripperData?.x !== undefined) {
     const dripperX = dripperData.x ?? 0;
     dripperSeries.data[xValues.indexOf(dripperX)] = DRIPPER_VALUE;
   }
 
   series.push(dripperSeries)
-  
+
   heatmapSeries.value = series
   if (!container.value) {
     return
@@ -189,7 +190,7 @@ async function drawImage(timestamp) {
         let value = series[seriesIndex][dataPointIndex]
         if (value == EMPTY_VALUE) {
           return ""
-        }else{
+        } else {
           if (value == DRIPPER_VALUE) {
             value = "G"
           }
@@ -205,20 +206,21 @@ async function drawImage(timestamp) {
 }
 
 async function mountChart() {
-  const currentConfigStr = JSON.stringify(props.config)
+  const currentConfigStr = props.config
+  const configParsed = JSON.parse(props.config)
   showChart.value = false
   loadingFlag.value = true
 
-  try {    
+  try {
     let chartDataResponse = await communicationService.getChartData(
-      props.config.environment,
-      props.config.paths,
-      props.config.params,
+      configParsed.environment,
+      configParsed.paths,
+      configParsed.params,
       endpoint,
       'images'
     )
 
-    if (currentConfigStr !== JSON.stringify(props.config)) {
+    if (currentConfigStr !== props.config) {
       return
     }
 
@@ -236,9 +238,9 @@ async function mountChart() {
 
     if (data && binningId) {
       images.value = new Map(data.map(obj => [obj.timestamp, obj.image]))
-      binningInfo.value = await communicationService.getBinningInfo(props.config.environment, binningId, 'bins')
+      binningInfo.value = await communicationService.getBinningInfo(configParsed.environment, binningId, 'bins')
 
-      if (currentConfigStr !== JSON.stringify(props.config)) {
+      if (currentConfigStr !== props.config) {
         return
       }
 
@@ -246,7 +248,7 @@ async function mountChart() {
         showChart.value = true
         const timestamps = Array.from(images.value.keys()).sort()
         await nextTick()
-        
+
         if (props.selectedTimestamp) {
           await drawImage(props.selectedTimestamp)
         } else {
@@ -261,7 +263,7 @@ async function mountChart() {
     console.error(error)
     showChart.value = false
   } finally {
-    if (currentConfigStr === JSON.stringify(props.config)) {
+    if (currentConfigStr === props.config) {
       loadingFlag.value = false
     }
   }
@@ -270,7 +272,7 @@ async function mountChart() {
 
 <template>
   <div v-if="showChart" ref="container">
-    <VueApexCharts type="heatmap" :options="chartOptions" :series="heatmapSeries"></VueApexCharts>
+    <VueApexCharts :ref="chartRef" type="heatmap" :options="chartOptions" :series="heatmapSeries"></VueApexCharts>
   </div>
   <div v-else-if="loadingFlag" class="d-flex justify-content-center align-items-center">
     <div class="spinner-border" role="status">

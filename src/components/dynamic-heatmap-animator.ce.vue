@@ -40,9 +40,10 @@ const currentDate = ref('');
 const loadingFlag = ref(false)
 
 function updateHeatmapConfig(firstTimestamp, lastTimestamp) {
+  const parsedConfig = JSON.parse(props.config)
   heatmapAnimatorConfig.value = {
-    environment: props.config.environment,
-    paths: props.config.paths,
+    environment: parsedConfig.environment,
+    paths: parsedConfig.paths,
     params: {
       timeFilterFrom: firstTimestamp,
       timeFilterTo: lastTimestamp
@@ -51,9 +52,10 @@ function updateHeatmapConfig(firstTimestamp, lastTimestamp) {
 }
 
 function updateLinechartConfig(currentTimestamp, lastTimestamp) {
+  const parsedConfig = JSON.parse(props.config)
   linechartAnimatorConfig.value = {
-    environment: props.config.environment,
-    paths: props.config.paths,
+    environment: parsedConfig.environment,
+    paths: parsedConfig.paths,
     params: {
       timeFilterFrom: (Number(lastTimestamp) + 1),
       timeFilterTo: currentTimestamp
@@ -62,19 +64,20 @@ function updateLinechartConfig(currentTimestamp, lastTimestamp) {
 }
 
 async function calculateTimestampLength() {
-  const currentConfigStr = JSON.stringify(props.config)
+  const currentConfigStr = props.config
+  const configParsed = JSON.parse(props.config)
   loadingFlag.value = true
 
   try {
     const chartDataResponse = await communicationService.getChartData(
-      props.config.environment,
-      props.config.paths,
-      props.config.params,
+      configParsed.environment,
+      configParsed.paths,
+      configParsed.params,
       endpoint,
       "measures"
     )
 
-    if (currentConfigStr !== JSON.stringify(props.config)) {
+    if (currentConfigStr !== props.config) {
       return
     }
 
@@ -94,7 +97,7 @@ async function calculateTimestampLength() {
   } catch (error) {
     console.error(error)
   } finally {
-    if (currentConfigStr === JSON.stringify(props.config)) {
+    if (currentConfigStr === props.config) {
       loadingFlag.value = false
     }
   }
@@ -203,17 +206,17 @@ watchEffect(async () => {
 
       <div class="charts-wrapper row">
         <div class="heatmap-dataviz col-6">
-          <DynamicHeatmap style="margin-left: -10px" :config="heatmapAnimatorConfig"
+          <DynamicHeatmap style="margin-left: -10px" :config="JSON.stringify(heatmapAnimatorConfig)"
             :selectedTimestamp="currentTimestamp"></DynamicHeatmap>
         </div>
         <div class="col-1">
           <p></p>
         </div>
         <div class="line_charts col-5">
-          <IncrementalLinearChart style="height: 200px" :config="{...linechartAnimatorConfig, params: {...linechartAnimatorConfig.params ?? {}, signalTypes: ['DRIPPER']}}" 
+          <IncrementalLinearChart style="height: 200px" :config="JSON.stringify({...linechartAnimatorConfig, params: {...linechartAnimatorConfig.params ?? {}, signalTypes: ['DRIPPER']}})" 
             :endpoint="'signals'" :label="'Dripper'"
             :color="'rgb(31, 119, 180)'"></IncrementalLinearChart>
-          <IncrementalLinearChart style="height: 200px" :config="{...linechartAnimatorConfig, params: {...linechartAnimatorConfig.params ?? {}, signalTypes: ['PLUV_CURR']}}"
+          <IncrementalLinearChart style="height: 200px" :config="JSON.stringify({...linechartAnimatorConfig, params: {...linechartAnimatorConfig.params ?? {}, signalTypes: ['PLUV_CURR']}})"
             :endpoint="'signals'" :label="'Pluv'"
             :color="'rgb(31, 119, 180)'"></IncrementalLinearChart>
         </div>

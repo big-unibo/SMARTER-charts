@@ -186,21 +186,22 @@ async function drawImage() {
 async function mountChart() {
   // Snapshot immediato per race condition
   const currentTimestamp = props.selectedTimestamp;
-  const currentConfigStr = JSON.stringify(props.config);
+  const currentConfigStr = props.config;
+  const configParsed = JSON.parse(props.config)
 
   showChart.value = false;
   loadingFlag.value = true;
 
   try {
     const chartDataResponse = await communicationService.getChartData(
-      props.config.environment,
-      props.config.paths,
+      configParsed.environment,
+      configParsed.paths,
       { timestamp: currentTimestamp },
       endpoint,
       'image'
     );
 
-    if (props.selectedTimestamp !== currentTimestamp || JSON.stringify(props.config) !== currentConfigStr) {
+    if (props.selectedTimestamp !== currentTimestamp || props.config !== currentConfigStr) {
       return;
     }
 

@@ -58,14 +58,15 @@ async function drawValuesImage() {
     return
   }
 
-  const config = props.config;
-  const dripperData = await communicationService.getDripperInfo(config.environment, config.paths, { timestamp: props.selectedTimestamp }, signalsEndpoint)
+  const configStr = props.config;
+  const parsedConfig = JSON.parse(configStr)
+  const dripperData = await communicationService.getDripperInfo(parsedConfig.environment, parsedConfig.paths, { timestamp: props.selectedTimestamp }, signalsEndpoint)
   const dripperX = dripperData?.x ?? 0;
   const maxUpperBound = Math.max(...binningInfo.value.map(bin => Number(bin.upperBound)));
   const EMPTY_VALUE = maxUpperBound + 1;
   const DRIPPER_VALUE = maxUpperBound;
 
-  if (JSON.stringify(config) !== JSON.stringify(props.config)) {
+  if (configStr !== props.config) {
     return
   }
 
@@ -321,7 +322,8 @@ async function drawWeightsImage() {
 }
 
 async function mountChart() {
-  const currentConfigStr = JSON.stringify(props.config)
+  const currentConfigStr = props.config
+  const configParsed = JSON.parse(currentConfigStr)
   const currentTimestamp = props.selectedTimestamp
 
   showChart.value = false
@@ -329,13 +331,13 @@ async function mountChart() {
 
   try {
     const chartDataResponse = await communicationService.getChartData(
-      props.config.environment,
-      props.config.paths,
+      configParsed.environment,
+      configParsed.paths,
       { timestamp: currentTimestamp },
       endpoint
     )
 
-    if (currentConfigStr !== JSON.stringify(props.config) || currentTimestamp !== props.selectedTimestamp) {
+    if (currentConfigStr !== props.config || currentTimestamp !== props.selectedTimestamp) {
       return
     }
 
@@ -344,9 +346,9 @@ async function mountChart() {
       optProfileId.value = chartDataResponse.optimalProfileId
       const binningId = chartDataResponse.binningId
 
-      binningInfo.value = await communicationService.getBinningInfo(props.config.environment, binningId, 'bins')
+      binningInfo.value = await communicationService.getBinningInfo(configParsed.environment, binningId, 'bins')
 
-      if (currentConfigStr !== JSON.stringify(props.config) || currentTimestamp !== props.selectedTimestamp) {
+      if (currentConfigStr !== props.config || currentTimestamp !== props.selectedTimestamp) {
         return
       }
 
@@ -361,7 +363,7 @@ async function mountChart() {
     console.error(error)
     showChart.value = false
   } finally {
-    if (currentConfigStr === JSON.stringify(props.config) && currentTimestamp === props.selectedTimestamp) {
+    if (currentConfigStr === props.config && currentTimestamp === props.selectedTimestamp) {
       loadingFlag.value = false
     }
   }

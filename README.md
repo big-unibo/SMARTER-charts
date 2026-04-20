@@ -20,7 +20,7 @@ registerChartComponents()
 
 ## Global `config` Prop
 
-All components accept a `config` object to handle backend connection, resource paths, and time filtering.
+All components accept a `config` string that is the JSON representation of an object to handle backend connection, resource paths, and time filtering.
 
 ```js
 config: {

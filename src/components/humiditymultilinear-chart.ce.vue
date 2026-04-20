@@ -91,20 +91,21 @@ watchEffect(async () => {
 });
 
 async function mountChart() {
-  const currentConfigStr = JSON.stringify(props.config)
+  const currentConfigStr = props.config
+  const configParsed = JSON.parse(props.config)
   showChart.value = false
   loadingFlag.value = true
 
   try {
     const chartDataResponse = await communicationService.getChartData(
-      props.config.environment,
-      props.config.paths,
-      props.config.params,
+      configParsed.environment,
+      configParsed.paths,
+      configParsed.params,
       endpoint,
       'measures'
     )
 
-    if (currentConfigStr !== JSON.stringify(props.config)) {
+    if (currentConfigStr !== props.config) {
       return
     }
 
@@ -225,7 +226,7 @@ async function mountChart() {
     console.error(error)
     showChart.value = false
   } finally {
-    if (currentConfigStr === JSON.stringify(props.config)) {
+    if (currentConfigStr === props.config) {
       loadingFlag.value = false
     }
   }

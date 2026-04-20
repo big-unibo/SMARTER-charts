@@ -53,19 +53,20 @@ function addValueAndMaintainSize(value) {
 }
 
 async function mountChart() {
-  const currentConfigStr = JSON.stringify(props.config)
+  const currentConfigStr = props.config
+  const configParsed = JSON.parse(props.config)
   loadingFlag.value = true
 
   try {
     const chartDataResponse = await communicationService.getChartData(
-      props.config.environment,
-      props.config.paths,
-      props.config.params,
+      configParsed.environment,
+      configParsed.paths,
+      configParsed.params,
       props.endpoint,
       "0.signals.0.measurements"
     )
 
-    if (currentConfigStr !== JSON.stringify(props.config)) {
+    if (currentConfigStr !== props.config) {
       return
     }
 
@@ -114,7 +115,7 @@ async function mountChart() {
   } catch (error) {
     console.error(error)
   } finally {
-    if (currentConfigStr === JSON.stringify(props.config)) {
+    if (currentConfigStr === props.config) {
       loadingFlag.value = false
     }
   }
