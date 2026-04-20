@@ -25,6 +25,14 @@ IF EXIST package-lock.json (
     echo package-lock.json not found.
 )
 
+REM Remove .tgz
+IF EXIST smarter-charts-*.tgz (
+    echo Removing .tgz files...
+    del /f /q smarter-charts-*.tgz
+) ELSE (
+    echo .tgz file not found.
+)
+
 echo Running npm install...
 call npm i
 IF ERRORLEVEL 1 (
