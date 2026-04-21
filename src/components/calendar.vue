@@ -55,7 +55,8 @@ const closeModal = () => {
 
 let activeModal = null;
 async function openEventModal(eventData) {
-  selectedEvent.value = eventsData.filter(e => e.eventId === eventData.id)[0]
+  selectedEvent.value = eventsData.filter(e => e.id === eventData.id)[0]
+  console.log("Selected event for update:", selectedEvent.value)
   updateForm.value = {
     enabled: selectedEvent.value.enabled,
     wateringStart: luxonZoneDateTimeToStringCalendar(selectedEvent.value.wateringStart),
@@ -264,7 +265,7 @@ async function mountChart(timeFilter = null) {
       }
 
       const event = {
-        id: e.eventId, start: startDate, end: endDate, title: titleFunction(e), calendarId: colorFunction(e), isEditable: false, customData: eventdata
+        id: e.id, start: startDate, end: endDate, title: titleFunction(e), calendarId: colorFunction(e), isEditable: false, customData: eventdata
       }
       eventsCalendar.push(event)
     }
@@ -304,14 +305,14 @@ async function mountChart(timeFilter = null) {
     <ScheduleXCalendar :calendar-app="calendarApp">
 
       <template #eventModal="{ calendarEvent }">
-        <div class="custom-event-modal" @vue:unmounted="isEditing = false">
-          <button class="close-btn" @click="closeModal">×</button>
+        <div class="smarter-calendar-event-modal" @vue:unmounted="isEditing = false">
+          <button class="smarter-calendar-close-btn" @click="closeModal">×</button>
 
-          <div class="event-title">
+          <div class="smarter-calendar-event-title">
             {{ calendarEvent.title }}
           </div>
 
-          <div class="event-time">
+          <div class="smarter-calendar-event-time">
             {{ formatEventDate(calendarEvent.start, calendarEvent.end) }}
           </div>
 
@@ -319,59 +320,59 @@ async function mountChart(timeFilter = null) {
 
           </div>
           <div v-else>
-            <div class="actions" v-if="isEventEditable(calendarEvent)">
-              <button class="btn btn-primary update-event" @click.stop.prevent="openEventModal(calendarEvent)">
+            <div class="smarter-calendar-actions" v-if="isEventEditable(calendarEvent)">
+              <button class="btn btn-primary smarter-calendar-update-event" @click.stop.prevent="openEventModal(calendarEvent)">
                 Modifica evento
               </button>
             </div>
 
-            <div class="event-updatedBy" v-if="calendarEvent.customData.updatedBy">
-              <span class="label">Modificato da: </span>
+            <div class="smarter-calendar-event-updatedBy" v-if="calendarEvent.customData.updatedBy">
+              <span class="smarter-calendar-label">Modificato da: </span>
               <span>{{ calendarEvent.customData.updatedBy }}</span>
             </div>
 
-            <div class="event-data">
+            <div class="smarter-calendar-event-data">
               <p>
-                <span class="label">Stato: </span>
+                <span class="smarter-calendar-label">Stato: </span>
                 <span>{{ calendarEvent.customData.enabled ? 'Abilitata' : 'Disabilitata' }}</span>
               </p>
 
               <p>
-                <span class="label">Programmazione: </span>
+                <span class="smarter-calendar-label">Programmazione: </span>
                 <span>{{ calendarEvent.customData.scheduled ? 'Inviata' : 'Non inviata' }}</span>
               </p>
 
               <p>
-                <span class="label">Consiglio irriguo: </span>
+                <span class="smarter-calendar-label">Consiglio irriguo: </span>
                 <span>{{ calendarEvent.customData.advice !== null ? calendarEvent.customData.advice + " L" :
                   "Non calcolato" }}</span>
               </p>
 
               <p>
-                <span class="label">Durata: </span>
+                <span class="smarter-calendar-label">Durata: </span>
                 <span>{{ calendarEvent.customData.duration !== null ? calendarEvent.customData.duration +
                   " minuti" : "Non calcolata" }}</span>
               </p>
 
               <p>
-                <span class="label">Acqua extra sistema: </span>
+                <span class="smarter-calendar-label">Acqua extra sistema: </span>
                 <span>{{ calendarEvent.customData.expectedWater ? calendarEvent.customData.expectedWater : 0
                 }} L</span>
               </p>
 
-              <p class="example">
+              <p class="smarter-calendar-example">
                 <em>Es. (fertirrigazione, pioggia prevista)</em>
               </p>
 
               <div v-if="calendarEvent.customData.theses && calendarEvent.customData.theses.length">
-                <p><span class="label">Tesi Considerate:</span></p>
-                <ul class="theses-list">
+                <p><span class="smarter-calendar-label">Tesi Considerate:</span></p>
+                <ul class="smarter-calendar-theses-list">
                   <li v-for="thesis in calendarEvent.customData.theses" :key="thesis.thesisId">
-                    <div class="thesis-item">
+                    <div class="smarter-calendar-thesis-item">
                       <span class="thesis-name">{{ thesis.thesisName }}</span>
                       <span class="thesis-weight">{{ (thesis.weight * 100).toFixed(0) }}%</span>
                     </div>
-                    <div class="thesis-timestamp">
+                    <div class="smarter-calendar-thesis-timestamp">
                       <small>{{ formatTimestamp(thesis.imageTimestamp) }}</small>
                     </div>
                   </li>
@@ -379,7 +380,7 @@ async function mountChart(timeFilter = null) {
               </div>
 
               <div v-if="calendarEvent.customData.note">
-                <span class="label">Note: </span>
+                <span class="smarter-calendar-label">Note: </span>
                 <span>{{ calendarEvent.customData.note }}</span>
               </div>
 
@@ -454,106 +455,5 @@ async function mountChart(timeFilter = null) {
 </template>
 
 <style>
-@import '../assets/main.css';
-
-.actions {
-  margin-top: 16px;
-  text-align: left;
-}
-
-.update-event {
-  opacity: 1 !important;
-  visibility: visible !important;
-  color: white !important;
-  background-color: #0d6efd !important;
-}
-
-.update-event:hover {
-  background-color: #0b5ed7 !important;
-}
-
-
-/* Modal styles */
-.custom-event-modal {
-  padding: 26px;
-  background: #fff;
-  color: black;
-  border: 1px solid rgb(224 224 224);
-  border-radius: 8px;
-  box-shadow: 0 12px 24px #00000017, 0 6px 12px #0000002e;
-  max-width: 420px;
-  z-index: 999;
-}
-
-.close-btn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: transparent;
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
-  color: #555;
-  font-weight: bold;
-  z-index: 1000;
-}
-
-.close-btn:hover {
-  color: #000;
-}
-
-.event-title {
-  font-weight: 500;
-  font-size: 22px;
-  margin-bottom: 0.4em;
-}
-
-.event-time,
-.event-updatedBy {
-  font-size: 14px;
-  margin-bottom: 0.6em;
-}
-
-.event-data {
-  padding: 12px;
-}
-
-.event-data p {
-  margin: 0.4em 0;
-  font-size: 16px;
-}
-
-.label {
-  font-size: 16px;
-  font-weight: 700;
-  color: #222;
-  min-width: 150px;
-}
-
-.event-data .example {
-  margin-top: 0px;
-  font-size: 12px;
-  color: #555;
-  font-style: italic;
-}
-
-.theses-list {
-  list-style: none;
-  padding-left: 0;
-  margin: 0.4em 0;
-  font-size: 14px;
-}
-
-.thesis-item {
-  display: flex;
-  justify-content: space-between;
-  font-weight: 500;
-  width: 70%;
-}
-
-.thesis-timestamp {
-  color: #555;
-  font-size: 13px;
-  margin-bottom: 4px;
-}
+@import '../assets/calendar.css';
 </style>
