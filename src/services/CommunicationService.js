@@ -118,8 +118,8 @@ export class CommunicationService {
         });
     }
 
-    async updateEvent(environment, eventId, endpoint, updatedEvent) {
-        const url = this.buildURL(environment.host, "/wateringSchedule", eventId, endpoint);
+    async updateEvent(environment, sectorId, eventId, endpoint, updatedEvent) {
+        const url = this.buildURL(environment.host, "/wateringSchedule", `${sectorId}/${eventId}`, endpoint);
         
         return await this._request('PUT', url, {
             data: { ...updatedEvent },
