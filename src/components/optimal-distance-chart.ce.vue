@@ -107,14 +107,14 @@ async function mountChart() {
         x: {
           type: 'time',
           time: {
-            unit: 'day',
+            unit: 'hour',
             tooltipFormat: 'yyyy-MM-dd HH:mm:ss',
             displayFormats: {
               minute: 'yyyy-MM-dd HH:mm',
-              second: 'yyyy-MM-dd HH:mm',
-              hour: 'yyyy-MM-dd HH:mm:ss',
+              second: 'yyyy-MM-dd',
+              hour: 'yyyy-MM-dd',
               day: 'yyyy-MM-dd',
-              month: 'yyyy-MM-dd HH:mm:ss'
+              month: 'yyyy-MM'
             },
           },
           ticks: {
