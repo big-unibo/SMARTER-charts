@@ -378,12 +378,12 @@ watch(() => props.selectedTimestamp, async () => {
   <div class="row" v-if="showChart">
     <div class="col-lg-6 order-lg-1 order-2 ">
       <div ref="containerOptimal">
-        <VueApexCharts type="heatmap" :options="weightsChartOptions" :series="weightsSeries"></VueApexCharts>
+        <VueApexCharts v-if="weightsChartOptions.chart" type="heatmap" :options="weightsChartOptions" :series="weightsSeries"></VueApexCharts>
       </div>
     </div>
     <div class="col-lg-6 order-lg-2 order-1">
       <div>
-        <VueApexCharts type="heatmap" :options="optValueChartOptions" :series="heatmapSeries"></VueApexCharts>
+        <VueApexCharts v-if="optValueChartOptions.chart" type="heatmap" :options="optValueChartOptions" :series="heatmapSeries"></VueApexCharts>
       </div>
     </div>
     <div class="col-8 offset-lg-2">
