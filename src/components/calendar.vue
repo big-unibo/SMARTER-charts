@@ -398,7 +398,7 @@ async function mountChart(timeFilter = null) {
             </div>
             <div class="smarter-form-group">
               <div class="smarter-switch-row">
-                <label class="smarter-switch-label pe-2">Abilita evento</label>
+                <label class="smarter-switch-label">Abilita evento</label>
                 <label class="smarter-switch">
                   <input type="checkbox" v-model="updateForm.enabled" />
                   <span class="slider"></span>
