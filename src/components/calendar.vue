@@ -266,11 +266,11 @@ async function mountChart(timeFilter = null) {
         locale: 'it-IT',
         views: [createViewMonthGrid()],
         calendars: {
-          computed: { colorName: 'computed', lightColors: { container: '#7E9595' } },
-          disabled: { colorName: 'disabled', lightColors: { container: '#ff3336' } },
-          updated: { colorName: 'updated', lightColors: { container: '#9966ff' } },
-          planned: { colorName: 'planned', lightColors: { container: '#339CFF' } },
-          sent: { colorName: 'sent', lightColors: { container: '#34C16E' } }
+          computed: { colorName: 'computed', lightColors: { container: '#7E9595', onContainer: '#ffffff' } },
+          disabled: { colorName: 'disabled', lightColors: { container: '#ff3336', onContainer: '#ffffff' } },
+          updated: { colorName: 'updated', lightColors: { container: '#9966ff', onContainer: '#ffffff' } },
+          planned: { colorName: 'planned', lightColors: { container: '#339CFF', onContainer: '#ffffff' } },
+          sent: { colorName: 'sent', lightColors: { container: '#34C16E', onContainer: '#ffffff' } }
         },
         plugins: [eventModalPlugin],
         callbacks: {

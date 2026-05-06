@@ -39,9 +39,11 @@ export const optimalDistanceColorFunction = (str) => {
   if (str === 'Media giornaliera')
     return '#339CFF'
   if (str === 'Asciutto')
-    return '#fa5f43'
+    return '#fc4c31'
   if (str === 'Capacità di campo')
-    return '#2cb8b8'
+    return '#3842fa'
+  if (str === 'Stop irrigazione')
+    return '#1c9c87'
 }
 
 export const devColorFunction = (d) => {

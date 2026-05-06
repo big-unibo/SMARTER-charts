@@ -93,8 +93,11 @@ async function mountChart() {
 
     showChart.value = true
 
+    const wetLevel = Math.min(...data.filter(({_, valueType}) => valueType === 'Capacità di campo')[0]?.values.map(({value, _}) => value))
+    const dryLevel = Math.max(...data.filter(({_, valueType}) => valueType === 'Asciutto')[0]?.values.map(({value, _}) => value))
+
     const unit = data[0]?.unit ?? "N/A"
-    const datasets = createDatasets(data).map(bin => bin.getDataSet())
+    const datasets = createDatasets(data.filter(({_, valueType}) => valueType !== 'Asciutto' && valueType !== 'Capacità di campo')).map(bin => bin.getDataSet())
 
     chartData.value = {
       datasets: datasets
@@ -131,6 +134,8 @@ async function mountChart() {
             display: true,
             text: unit
           },
+          suggestedMin: wetLevel,
+          suggestedMax: dryLevel
         }
       }
     }

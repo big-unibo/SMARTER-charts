@@ -180,7 +180,7 @@ async function mountChart() {
 </script>
 
 <template>
-  <div v-if="unitGroups && unitGroups.size" class="p-2" style="padding-left: 20px; padding-top: 10px;">
+  <div v-if="unitGroups && unitGroups.size" class="px-4 py-2" style="font-size: 11px;">
     <template v-for="([unit, types], i) in Array.from(unitGroups)" :key="unit">
       <p class="mb-1">
         <b>{{ types.join(', ') }}</b>
@@ -189,10 +189,10 @@ async function mountChart() {
     </template>
   </div>
 
-  <div class="d-flex flex-wrap justify-content-end">
-    <div v-for="([group, { unit, total }]) in totalGroups" :key="group" class="px-2 p-1 m-1 mx-auto"
-      :style="{ backgroundColor: signalsColorFunction(group), borderColor: signalsColorFunction(group), borderRadius: '8px', borderWidth: '1px', borderStyle: 'solid' }">
-      <div>Totale {{ group }}: {{ total.toFixed(2) }} ({{ unit }})</div>
+  <div class="d-flex flex-wrap justify-content-around">
+    <div v-for="([group, { unit, total }]) in totalGroups" :key="group" class="p-1 m-1"
+      :style="{ backgroundColor: signalsColorFunction(group), borderColor: signalsColorFunction(group), borderRadius: '8px', borderWidth: '1px', borderStyle: 'solid', fontSize: '12px' }">
+      <div>Totale {{ group }}: <strong>{{ total.toFixed(2) }}</strong> ({{ unit }})</div>
     </div>
   </div>
   <div class="card-body">

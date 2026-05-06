@@ -76,14 +76,13 @@ async function drawImage(timestamp) {
     const dripperX = dripperData.x ?? 0;
     dripperSeries.data[xValues.indexOf(dripperX)] = DRIPPER_VALUE;
   }
-
   series.push(dripperSeries)
-
-  heatmapSeries.value = series
+  
   if (!container.value) {
     return
   }
 
+  heatmapSeries.value = series
   const containerWidth = container.value.offsetWidth
 
   let cellSize

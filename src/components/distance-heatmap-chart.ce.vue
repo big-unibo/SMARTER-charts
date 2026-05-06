@@ -9,6 +9,8 @@ const chartOptions = ref({ emitsOptions: false })
 const image = ref(null)
 const container = ref(null)
 const rDistance = ref(null)
+const chartWidthValue = ref('auto');
+const chartHeightValue = ref('auto');
 
 const props = defineProps(['config', 'selectedTimestamp'])
 const showChart = ref(false)
@@ -73,6 +75,9 @@ async function drawImage() {
   const horizontalOffset = 10
   const chartHeight = (cellSize * heatmapSeries.value.length + verticalOffset)
   const chartWidth = (cellSize * heatmapSeries.value[0].data.length + horizontalOffset)
+
+  chartHeightValue.value = chartHeight + "px"
+  chartWidthValue.value = chartWidth + "px"
 
   chartOptions.value = {
     chart: {
@@ -245,7 +250,7 @@ async function mountChart() {
     <div>Distanza dall'ottimo (r): {{ rDistance }}</div>
   </div>
   <div v-if="showChart" ref="container">
-    <VueApexCharts v-if="chartOptions.chart" type="heatmap" :options="chartOptions" :series="heatmapSeries"></VueApexCharts>
+    <VueApexCharts v-if="chartOptions.chart" type="heatmap" :width="chartWidthValue" :height="chartHeightValue" :options="chartOptions" :series="heatmapSeries"></VueApexCharts>
   </div>
   <div v-else-if="loadingFlag" class="d-flex justify-content-center align-items-center">
     <div class="spinner-border" role="status">

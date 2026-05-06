@@ -11,6 +11,8 @@ const chartOptions = ref({ emitsOptions: false })
 const images = ref({})
 const container = ref(null)
 const binningInfo = ref([])
+const chartWidthValue = ref('auto');
+const chartHeightValue = ref('auto');
 
 const props = defineProps(['config', 'selectedTimestamp'])
 const showChart = ref(false)
@@ -81,6 +83,9 @@ async function drawImage(timestamp) {
   const horizontalOffset = 10
   const chartHeight = (cellSize * Math.max(heatmapSeries.value.length, 7) + verticalOffset)
   const chartWidth = (cellSize * Math.max(heatmapSeries.value[0].data.length, 7) + horizontalOffset)
+
+  chartHeightValue.value = chartHeight + "px"
+  chartWidthValue.value = chartWidth + "px"
 
   chartOptions.value = {
     chart: {
@@ -213,7 +218,7 @@ async function mountChart() {
 
 <template>
   <div v-if="showChart" ref="container">
-    <VueApexCharts v-if="chartOptions.chart" type="heatmap" :options="chartOptions" :series="heatmapSeries"></VueApexCharts>
+    <VueApexCharts v-if="chartOptions.chart" type="heatmap" :width="chartWidthValue" :height="chartHeightValue" :options="chartOptions" :series="heatmapSeries"></VueApexCharts>
   </div>
   <div v-else-if="loadingFlag" class="d-flex justify-content-center align-items-center">
     <div class="spinner-border" role="status">

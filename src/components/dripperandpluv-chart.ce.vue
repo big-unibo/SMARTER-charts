@@ -167,7 +167,7 @@ async function mountChart() {
 </script>
 
 <template>
-  <div v-if="pluvCurrUnit || dripperUnit" class="p-2" style="padding-left: 20px; padding-top: 10px;">
+  <div v-if="pluvCurrUnit || dripperUnit" class="px-4 py-2" style="font-size: 11px;">
     <p v-if="pluvCurrUnit" class="mb-1">
       <b>Pluv Curr</b> espresso in <b>{{ pluvCurrUnit }}</b>
     </p>
