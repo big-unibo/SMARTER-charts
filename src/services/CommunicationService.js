@@ -60,7 +60,8 @@ export class CommunicationService {
     }
 
     async getChartData(environment, pathsParams, queryParams, endpoint, dataKey = null) {
-        const url = this.buildURL(environment.host, "/fieldCharts", pathsParams.thesisId, endpoint);
+        const path =  pathsParams.scope ? pathsParams.scope === 'sector' ? `${pathsParams.scope}/${pathsParams.sectorId}` :  `${pathsParams.scope}/${pathsParams.thesisId}` : pathsParams.thesisId;
+        const url = this.buildURL(environment.host, "/fieldCharts", path, endpoint);
         
         const data = await this._request('GET', url, {
             params: queryParams,
