@@ -73,8 +73,8 @@ async function drawImage() {
 
   const verticalOffset = 25
   const horizontalOffset = 10
-  const chartHeight = (cellSize * heatmapSeries.value.length + verticalOffset)
-  const chartWidth = (cellSize * heatmapSeries.value[0].data.length + horizontalOffset)
+  const chartHeight = (cellSize * Math.max(heatmapSeries.value.length, 7) + verticalOffset)
+  const chartWidth = (cellSize * Math.max(heatmapSeries.value[0].data.length, 7) + horizontalOffset)
 
   chartHeightValue.value = chartHeight + "px"
   chartWidthValue.value = chartWidth + "px"
@@ -99,27 +99,27 @@ async function drawImage() {
         radius: 0,
         colorScale: {
           ranges: [
-            { from: -20, to: -1.9, color: '#053061', name: 'Very Low' },
-            { from: -1.9, to: -1.7, color: '#1b4c7c', name: 'Low' },
-            { from: -1.7, to: -1.5, color: '#256795', name: 'Below Average' },
-            { from: -1.5, to: -1.3, color: '#3081af', name: 'Slightly Below Average' },
-            { from: -1.3, to: -1.1, color: '#3b9cc9', name: 'Moderate Below Average' },
-            { from: -1.1, to: -0.9, color: '#46b7e3', name: 'Minor Below Average' },
-            { from: -0.9, to: -0.7, color: '#51d1fd', name: 'Low Average' },
-            { from: -0.7, to: -0.5, color: '#b4d9fc', name: 'Near Average' },
-            { from: -0.5, to: -0.3, color: '#cde6f6', name: 'Slightly Near Average' },
-            { from: -0.3, to: -0.1, color: '#e6f3f0', name: 'Near Neutral' },
+            { from: -20, to: -1.9, color: '#8c0000', name: 'Very Low' },
+            { from: -1.9, to: -1.7, color: '#cc0000', name: 'Low' },
+            { from: -1.7, to: -1.5, color: '#ff0b0b', name: 'Below Average' },
+            { from: -1.5, to: -1.3, color: '#ff2c2c', name: 'Slightly Below Average' },
+            { from: -1.3, to: -1.1, color: '#ff4d4d', name: 'Moderate Below Average' },
+            { from: -1.1, to: -0.9, color: '#ff6e6e', name: 'Minor Below Average' },
+            { from: -0.9, to: -0.7, color: '#ff8f8f', name: 'Low Average' },
+            { from: -0.7, to: -0.5, color: '#ffb0b0', name: 'Near Average' },
+            { from: -0.5, to: -0.3, color: '#ffd1d1', name: 'Slightly Near Average' },
+            { from: -0.3, to: -0.1, color: '#fff1e6', name: 'Near Neutral' },
             { from: -0.1, to: 0.1, color: '#ffffff', name: 'Neutral' },
-            { from: 0.1, to: 0.3, color: '#fff1e6', name: 'Near Neutral' },
-            { from: 0.3, to: 0.5, color: '#ffd1d1', name: 'Slightly Near Average' },
-            { from: 0.5, to: 0.7, color: '#ffb0b0', name: 'Near Average' },
-            { from: 0.7, to: 0.9, color: '#ff8f8f', name: 'Low Average' },
-            { from: 0.9, to: 1.1, color: '#ff6e6e', name: 'Minor Above Average' },
-            { from: 1.1, to: 1.3, color: '#ff4d4d', name: 'Moderate Above Average' },
-            { from: 1.3, to: 1.5, color: '#ff2c2c', name: 'Slightly Above Average' },
-            { from: 1.5, to: 1.7, color: '#ff0b0b', name: 'Above Average' },
-            { from: 1.7, to: 1.9, color: '#cc0000', name: 'High' },
-            { from: 1.9, to: 20, color: '#8c0000', name: 'Very High' },
+            { from: 0.1, to: 0.3, color: '#e6f3f0', name: 'Near Neutral' },
+            { from: 0.3, to: 0.5, color: '#cde6f6', name: 'Slightly Near Average' },
+            { from: 0.5, to: 0.7, color: '#b4d9fc', name: 'Near Average' },
+            { from: 0.7, to: 0.9, color: '#51d1fd', name: 'Low Average' },
+            { from: 0.9, to: 1.1, color: '#46b7e3', name: 'Minor Above Average' },
+            { from: 1.1, to: 1.3, color: '#3b9cc9', name: 'Moderate Above Average' },
+            { from: 1.3, to: 1.5, color: '#3081af', name: 'Slightly Above Average' },
+            { from: 1.5, to: 1.7, color: '#256795', name: 'Above Average' },
+            { from: 1.7, to: 1.9, color: '#1b4c7c', name: 'High' },
+            { from: 1.9, to: 20, color: '#053061', name: 'Very High' },
           ],
         }
       },

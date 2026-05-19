@@ -43,7 +43,7 @@ export const optimalDistanceColorFunction = (str) => {
   if (str === 'Capacità di campo')
     return '#3842fa'
   if (str === 'Stop irrigazione')
-    return '#1c9c87'
+    return '#b4d4ce'
 }
 
 export const devColorFunction = (d) => {
