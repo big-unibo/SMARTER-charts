@@ -6,8 +6,6 @@ import 'chartjs-adapter-luxon';
 import { luxonDateTime } from '../common/dateUtils.js'
 import { CommunicationService } from "../services/CommunicationService.js";
 
-const communicationService = new CommunicationService();
-
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -20,18 +18,43 @@ import {
   Filler,
   TimeScale
 } from 'chart.js'
-import { signalsColorFunction } from "@/common/colorsConfig.js";
+import { LineDatasetData } from "../common/LineDatasetData.js";
+import { optimalDistanceColorFunction } from '@/common/colorsConfig.js';
 
-const props = defineProps(['config'])
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler, TimeScale)
 
-const endpoint = 'signals'
+const communicationService = new CommunicationService();
 
 const chartData = ref({ datasets: [], labels: [] })
 const options = ref({ responsive: true, maintainAspectRatio: false })
 const showChart = ref(false)
 const loadingFlag = ref(false)
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler, TimeScale)
+const props = defineProps(['config'])
+
+const endpoint = 'optimalDistance'
+
+const createDatasets = (data) => {
+  const datasets = [];
+
+  data.forEach(signalType => {
+    const type = signalType.valueType;
+    const unit = signalType.signals?.[0]?.unit || '';
+    const label = unit ? `${type} (${unit})` : type;
+
+    const dataPoints = signalType.values
+      .map(m =>
+        JSON.stringify({
+          x: luxonDateTime(m.timestamp),
+          y: Number(m.value).toFixed(2)
+        })
+      );
+
+    datasets.push(new LineDatasetData(label, dataPoints, 'false', 2, 0.2, optimalDistanceColorFunction, type));
+  });
+
+  return datasets;
+};
 
 watchEffect(async () => {
   let value = props.config;
@@ -43,7 +66,6 @@ watchEffect(async () => {
 async function mountChart() {
   const currentConfigStr = props.config
   const configParsed = JSON.parse(props.config)
-
   showChart.value = false
   loadingFlag.value = true
 
@@ -52,57 +74,50 @@ async function mountChart() {
       configParsed.environment,
       configParsed.paths,
       configParsed.params,
-      endpoint,
-      "0.signals.0.measurements"
-    );
+      endpoint
+    )
 
     if (currentConfigStr !== props.config) {
       return
     }
 
-    let unit = "C°"
     let data = []
+    if (chartDataResponse) {
+      data = chartDataResponse
+    }
 
-    if (chartDataResponse && Array.isArray(chartDataResponse.data)) {
-      data = chartDataResponse.data
-      unit = chartDataResponse.unit ?? unit
-      showChart.value = data.length > 0
-    } else {
-      loadingFlag.value = false
+    if (!data || data.length === 0) {
+      showChart.value = false
       return
     }
 
+    showChart.value = true
+
+    const wetLevel = Math.min(...data.filter(({_, valueType}) => valueType === 'Capacità di campo')[0]?.values.map(({value, _}) => value))
+    const dryLevel = Math.max(...data.filter(({_, valueType}) => valueType === 'Asciutto')[0]?.values.map(({value, _}) => value))
+
+    const unit = data[0]?.unit ?? "N/A"
+    const datasets = createDatasets(data.filter(({_, valueType}) => valueType !== 'Asciutto' && valueType !== 'Capacità di campo')).map(bin => bin.getDataSet())
+
     chartData.value = {
-      datasets: [{
-        data: data.map(d => ({
-          timestamp: Number(d.timestamp) * 1000,
-          value: d.value
-        })),
-        borderColor: signalsColorFunction('Air Temperature'),
-        backgroundColor: signalsColorFunction('Air Temperature'),
-        label: "AirTemp"
-      }]
+      datasets: datasets
     }
 
     options.value = {
       responsive: true,
       maintainAspectRatio: false,
-      parsing: {
-        xAxisKey: 'timestamp',
-        yAxisKey: 'value'
-      },
       scales: {
         x: {
           type: 'time',
           time: {
-            unit: 'day',
+            unit: 'hour',
             tooltipFormat: 'yyyy-MM-dd HH:mm:ss',
             displayFormats: {
               minute: 'yyyy-MM-dd HH:mm',
-              second: 'yyyy-MM-dd HH:mm',
-              hour: 'yyyy-MM-dd HH:mm:ss',
+              second: 'yyyy-MM-dd',
+              hour: 'yyyy-MM-dd',
               day: 'yyyy-MM-dd',
-              month: 'yyyy-MM-dd HH:mm:ss'
+              month: 'yyyy-MM'
             },
           },
           ticks: {
@@ -114,16 +129,19 @@ async function mountChart() {
           }
         },
         y: {
+          position: 'left',
           title: {
             display: true,
             text: unit
-          }
+          },
+          suggestedMin: wetLevel,
+          suggestedMax: dryLevel
         }
       }
     }
 
   } catch (error) {
-    console.error("Errore mountChart:", error)
+    console.error(error)
     showChart.value = false
   } finally {
     if (currentConfigStr === props.config) {
@@ -144,7 +162,6 @@ async function mountChart() {
     </div>
   </div>
   <div v-else>Nessun dato disponibile.</div>
-
 </template>
 
 <style>

@@ -1,38 +1,44 @@
 <script setup>
-import {nextTick, ref, watch, watchEffect} from "vue";
-import {CommunicationService} from "../services/CommunicationService.js";
-import VueApexCharts  from "vue3-apexcharts"
+import { nextTick, ref, watch, watchEffect } from "vue";
+import { CommunicationService } from "../services/CommunicationService.js";
+import VueApexCharts from "vue3-apexcharts"
+import { binningColorConfig } from "@/common/colorsConfig.js";
+import { luxonDateTimeToString } from "../common/dateUtils.js"
 
 const communicationService = new CommunicationService();
 const heatmapSeries = ref([]);
-const chartOptions = ref({emitsOptions: false})
+const chartOptions = ref({ emitsOptions: false })
 const images = ref({})
 const container = ref(null)
+const binningInfo = ref([])
+const chartWidthValue = ref('auto');
+const chartHeightValue = ref('auto');
 
 const props = defineProps(['config', 'selectedTimestamp'])
 const showChart = ref(false)
 const loadingFlag = ref(false)
 const endpoint = 'heatmap'
 
-watchEffect( async () => {
+watchEffect(async () => {
   let value = props.config;
-  if(value) {
+  if (value) {
     await mountChart()
   }
 });
 
-watch( () => props.selectedTimestamp, async (timestamp) => {
-  if(timestamp){
+watch(() => props.selectedTimestamp, async (timestamp) => {
+  if (timestamp) {
     await drawImage(timestamp)
   }
 })
 
-async function drawImage(timestamp){
-  if (!(Object.keys(images.value).length == 0)){
+async function drawImage(timestamp) {
+  if (!(Object.keys(images.value).length == 0)) {
     return
   }
-  timestamp = String(timestamp)
-  if(!images.value.has(timestamp)){
+
+  timestamp = Number(timestamp)
+  if (!images.value.has(timestamp)) {
     console.log("Image " + timestamp + " is missing")
     return
   }
@@ -41,13 +47,14 @@ async function drawImage(timestamp){
 
   let xValues = []
   const series = Array.from(image.reduce((accumulator, currentValue) => {
-    if (!accumulator.has(currentValue.yy))
-      accumulator.set(currentValue.yy, []);
-    accumulator.get(currentValue.yy).push({ x: currentValue.xx,
+    if (!accumulator.has(currentValue.y))
+      accumulator.set(currentValue.y, []);
+    accumulator.get(currentValue.y).push({
+      x: currentValue.x,
       value: currentValue.value.toFixed(2)
     })
     return accumulator
-  }, new Map()), ([key, value])=> {
+  }, new Map()), ([key, value]) => {
     if (xValues.length === 0) {
       xValues = value.map(e => e.x)
     }
@@ -55,10 +62,10 @@ async function drawImage(timestamp){
       name: key,
       data: value.sort((a, b) => a.x - b.x).map(e => e.value)
     }
-  }).sort((a,b)=> b.name - a.name)
+  }).sort((a, b) => a.name - b.name)
 
   heatmapSeries.value = series
-  if(!container.value){
+  if (!container.value) {
     await nextTick()
   }
   const containerWidth = container.value.offsetWidth
@@ -72,10 +79,13 @@ async function drawImage(timestamp){
 
   cellSize = Math.min(cellSize, 40)
 
-  const verticalOffset = 60
+  const verticalOffset = -20
   const horizontalOffset = 10
-  const chartHeight = (cellSize * heatmapSeries.value.length + verticalOffset)
-  const chartWidth = (cellSize * heatmapSeries.value[0].data.length + horizontalOffset)
+  const chartHeight = (cellSize * Math.max(heatmapSeries.value.length, 7) + verticalOffset)
+  const chartWidth = (cellSize * Math.max(heatmapSeries.value[0].data.length, 7) + horizontalOffset)
+
+  chartHeightValue.value = chartHeight + "px"
+  chartWidthValue.value = chartWidth + "px"
 
   chartOptions.value = {
     chart: {
@@ -92,55 +102,25 @@ async function drawImage(timestamp){
       animations: {
         enabled: false,
         animateGradually: {
-            enabled: false,
+          enabled: false,
         },
         dynamicAnimation: {
-            enabled: false,
+          enabled: false,
         }
-    }
+      }
     },
     plotOptions: {
       heatmap: {
         enableShades: false,
         radius: 0,
         colorScale: {
-          ranges: [ 
-          {
-            from: -29.99,
-            to: 0,
-            name: '(-30,0]',
-            color: '#053061'
-          },
-          {
-            from: -99.99,
-            to: -30,
-            name: '(-100,-30]',
-            color: '#337CB7'
-          },
-          {
-            from: -199.99,
-            to: -100,
-            name: '(-200,-100]',
-            color: '#8FC2DD'
-          },
-          {
-            from: -299.99,
-            to: -200,
-            name: '(-300,-200]',
-            color: '#F1A385'
-          },
-          {
-            from: -1499.99,
-            to: -300,
-            name: '(-1500,-300]',
-            color: '#C33D3D'
-          },
-          {
-            from: -2500,
-            to: -1500,
-            name: '(-∞,-1500]',
-            color: '#8C0D25'
-          }]
+          ranges: [...binningInfo.value.map(bin => ({
+            from: Number(bin.lowerBound),
+            to: Number(bin.upperBound),
+            name: bin.humidityBinDescription,
+            color: binningColorConfig(bin.humidityBin)
+          }))
+          ]
         }
       },
     },
@@ -153,11 +133,16 @@ async function drawImage(timestamp){
     stroke: {
       width: 0
     },
+    title: {
+      text: 'Matrice dell\'umidità a ' + luxonDateTimeToString(timestamp),
+      align: 'center',
+      offsetY: 10,
+    },
     xaxis: {
       type: 'category',
       categories: xValues,
       tooltip: {
-          enabled: false,
+        enabled: false,
       },
       tickPlacement: 'on',
       labels: {
@@ -174,36 +159,73 @@ async function drawImage(timestamp){
         }
       }
     },
-    tooltip:{
+    tooltip: {
       enabled: false
     }
   }
 }
 
 async function mountChart() {
-  const parsed = JSON.parse(props.config);
+  const currentConfigStr = props.config
+  const configParsed = JSON.parse(props.config)
+  loadingFlag.value = true
 
-  const chartDataResponse = await communicationService.getChartData(parsed.environment, parsed.paths, parsed.params, endpoint, 'values.0.measures')
-  if(JSON.stringify(parsed) !== props.config){
+  try {
+    const chartDataResponse = await communicationService.getChartData(
+      configParsed.environment,
+      configParsed.paths,
+      configParsed.params,
+      endpoint,
+      'images'
+    )
+
+    if (currentConfigStr !== props.config) {
       return
-  }
-  if(chartDataResponse) {
-    images.value = new Map(chartDataResponse.map(obj => [obj.timestamp, obj.image]))
-    showChart.value = images.value.size > 0
-    if (showChart.value){
-      const timestamps = Array.from(images.value.keys()).sort()
-      await drawImage(timestamps[timestamps.length - 1])
     }
-  } else {
+
+    if (chartDataResponse) {
+      const data = chartDataResponse.data;
+      images.value = new Map(data.map(obj => [obj.timestamp, obj.image]))
+      const binningId = chartDataResponse.binningId ?? 1;
+
+      binningInfo.value = await communicationService.getBinningInfo(configParsed.environment, binningId, 'bins')
+
+      if (currentConfigStr !== props.config) {
+        return
+      }
+
+      showChart.value = images.value.size > 0
+      await nextTick()
+
+      if (showChart.value) {
+        const timestamps = Array.from(images.value.keys()).sort()
+        await drawImage(timestamps[timestamps.length - 1])
+      }
+    } else {
+      showChart.value = false
+    }
+
+  } catch (error) {
+    console.error(error)
     showChart.value = false
+  } finally {
+    if (currentConfigStr === props.config) {
+      loadingFlag.value = false
+    }
   }
 }
 </script>
 
 <template>
   <div v-if="showChart" ref="container">
-    <VueApexCharts type="heatmap" :options="chartOptions" :series="heatmapSeries"></VueApexCharts>
+    <VueApexCharts v-if="chartOptions.chart" type="heatmap" :width="chartWidthValue" :height="chartHeightValue" :options="chartOptions" :series="heatmapSeries"></VueApexCharts>
   </div>
+  <div v-else-if="loadingFlag" class="d-flex justify-content-center align-items-center">
+    <div class="spinner-border" role="status">
+      <span class="sr-only"></span>
+    </div>
+  </div>
+  <div v-else>Nessun dato disponibile.</div>
 </template>
 
 <style>

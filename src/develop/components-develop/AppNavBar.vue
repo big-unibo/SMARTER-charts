@@ -7,12 +7,6 @@
     const user = reactive(props.user)
   }
 
-
-  // const handleLogout = async () => {
-  //   authService.logout()
-  // }
-
-
 </script>
 
 <template>

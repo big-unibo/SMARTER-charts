@@ -20,7 +20,7 @@ registerChartComponents()
 
 ## Global `config` Prop
 
-All components accept a `config` object to handle backend connection, resource paths, and time filtering.
+All components accept a `config` string that is the JSON representation of an object to handle backend connection, resource paths, and time filtering.
 
 ```js
 config: {
@@ -29,15 +29,14 @@ config: {
     token: string  // Authorization token for API calls
   },
   paths: {
-    refStructureName: string,
-    companyName: string,
-    fieldName: string,
-    sectorName: string,
-    thesisName: string // name of the thesis
-  },  // One or more resource identifiers (e.g., field IDs, sensors, plots)
+    sectorId: integer,
+    thesisId: integer
+  },  // One or more resource identifiers (e.g., farm IDs, sensors, plots)
   params: {
     timeFilterFrom?: string,  // ISO date string or timestamp (start of time range)
     timeFilterTo?: string     // ISO date string or timestamp (end of time range)
+    signalTypes?: string[], // String IDs of the possible signal type retrieved by SMARTER API (e.g. ['AIR_TEMP'])
+		aggregationType?: string // Type of aggregation to perform on data. Accepted type: (SUM, AVG, MIN, MAX, MED)
   }
 }
 ```
@@ -46,12 +45,12 @@ config: {
 
 | Component Tag| Description| Props/Events|
 |----------------------------------------------|-------------------------------------------------------------------------|---|
-| `<delta-chart-smarter>`                      | Line chart showing humidity level in relation to optimal state ||
+| `<optimal-distance-chart-smarter>`           | Line chart showing humidity level in relation to optimal state ||
 | `<airtemperature-chart-smarter>`             | Line chart for air temperature trends |
 | `<meancountor-chart-smarter>`                | Heatmap of monitored soil portion for **mean** of matric potential in a given period|
 | `<stdcountor-chart-smarter>`                 | Heatmap of monitored soil portion for **standard deviation** of matric potential in a given period |
 | `<dripperandpluv-chart-smarter>`             | Line chart showing irrigation and rainfall |
-| `<groundwaterpot-chart-smarter>`             | Line chart for matric potential of grid sensors |
+| `<signals-linechart-chart-smarter>`          | Line chart for signals of requested type | `:hideOnMissingSignal` flage that indicates if hide chart when no signals retrieved
 | `<humiditymap-smarter>`                      | Heatmap of monitored soil portion showing the matric potential | `:selectedTimestamp` timestamp of image to show
 | `<humiditymultiline-chart-smarter>`          | Area chart of humidity levels over times | `@selectTimestamp` events emitted containing the timestamp clicked
 | `<heatmap-animation-smarter>`                | Animation of humidity heatmap over time |

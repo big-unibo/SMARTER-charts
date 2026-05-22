@@ -1,27 +1,31 @@
 <script setup>
-import {nextTick, ref, watch, watchEffect} from "vue";
-import {CommunicationService} from "../services/CommunicationService.js";
-import VueApexCharts  from "vue3-apexcharts"
+import { nextTick, ref, watch, watchEffect } from "vue";
+import { CommunicationService } from "../services/CommunicationService.js";
+import VueApexCharts from "vue3-apexcharts"
 import DistanceChart from "../components/distance-heatmap-chart.ce.vue"
+import { binningColorConfig } from "@/common/colorsConfig.js";
 
 const communicationService = new CommunicationService();
 const heatmapSeries = ref([]);
 const weightsSeries = ref([])
-const optValueChartOptions = ref({emitsOptions: false})
-const weightsChartOptions = ref({emitsOptions: false})
+const optValueChartOptions = ref({ emitsOptions: false })
+const weightsChartOptions = ref({ emitsOptions: false })
 const image = ref({})
-const matrixId = ref(null)
+const optProfileId = ref(null)
 
 const containerOptimal = ref(null)
 
 const props = defineProps(['config', 'selectedTimestamp', 'showDistance'])
 const showChart = ref(false)
 const loadingFlag = ref(false)
-const endpoint = 'getOptimalState'
+const endpoint = 'optimalState'
+const signalsEndpoint = 'signals'
 
-watchEffect( async () => {
+const binningInfo = ref([])
+
+watchEffect(async () => {
   let value = props.config;
-  if(value) {
+  if (value) {
     await mountChart()
   }
 });
@@ -29,56 +33,62 @@ watchEffect( async () => {
 const buildHeatmapSeries = (valueKey) => {
   let x = []
   const series = Array.from(image.value.reduce((accumulator, currentValue) => {
-    if (!accumulator.has(currentValue.yy))
-      accumulator.set(currentValue.yy, []);
-    accumulator.get(currentValue.yy).push({ x: currentValue.xx,
+    if (!accumulator.has(currentValue.y))
+      accumulator.set(currentValue.y, []);
+    accumulator.get(currentValue.y).push({
+      x: currentValue.x,
       value: currentValue[valueKey].toFixed(2)
     })
     return accumulator
-  }, new Map()), ([key, value])=> {
-    if(x.length === 0){
-      x = value.map(e => e.x).sort((a,b)=>parseInt(a)-parseInt(b))
+  }, new Map()), ([key, value]) => {
+    if (x.length === 0) {
+      x = value.map(e => e.x).sort((a, b) => parseInt(a) - parseInt(b))
     }
     return {
-      name: key, 
-      data: value.sort((a,b) => a.x - b.x).map(e => e.value)
+      name: key,
+      data: value.sort((a, b) => a.x - b.x).map(e => e.value)
     }
-  }).sort((a,b)=> b.name - a.name)
+  }).sort((a, b) => a.name - b.name)
 
   return [x, series]
 }
 
-async function drawValuesImage(){
-  if (!image.value){
+async function drawValuesImage() {
+  if (!image.value) {
     return
-  } 
- 
-  const parsed = JSON.parse(props.config);
-  const dripperPos = await communicationService.getFieldInfo(parsed.environment, parsed.paths, {timestamp: props.selectedTimestamp}, "dripperInfo")
-  if(JSON.stringify(parsed) !== props.config){
-      return
   }
 
-  const [xValues, series] = buildHeatmapSeries("optValue")
+  const configStr = props.config;
+  const parsedConfig = JSON.parse(configStr)
+  const dripperData = await communicationService.getDripperInfo(parsedConfig.environment, parsedConfig.paths, { timestamp: props.selectedTimestamp }, signalsEndpoint)
+  const dripperX = dripperData?.x ?? 0;
+  const maxUpperBound = Math.max(...binningInfo.value.map(bin => Number(bin.upperBound)));
+  const EMPTY_VALUE = maxUpperBound + 1;
+  const DRIPPER_VALUE = maxUpperBound;
+
+  if (configStr !== props.config) {
+    return
+  }
+
+  const [xValues, series] = buildHeatmapSeries("value")
 
   const dripperSeries = {
     name: "0",
-    data: new Array(series[0].data.length).fill(1)
+    data: new Array(series[0].data.length).fill(EMPTY_VALUE)
   }
 
-  dripperSeries.data[xValues.indexOf(dripperPos.xx)] = 0
-
+  dripperSeries.data[xValues.indexOf(dripperX)] = DRIPPER_VALUE;
   series.push(dripperSeries)
 
   heatmapSeries.value = series
-  if(!containerOptimal.value){
+  if (!containerOptimal.value) {
     await nextTick()
   }
 
   const containerWidth = containerOptimal.value.offsetWidth
 
   let cellSize
-  if(heatmapSeries.value[0].data.length > heatmapSeries.value.length){
+  if (heatmapSeries.value[0].data.length > heatmapSeries.value.length) {
     cellSize = containerWidth / heatmapSeries.value[0].data.length
   } else {
     cellSize = containerWidth / heatmapSeries.value.length * 0.9
@@ -88,12 +98,12 @@ async function drawValuesImage(){
 
   const verticalOffset = 25
   const horizontalOffset = 10
-  const chartHeight = (cellSize * heatmapSeries.value.length + verticalOffset) 
-  const chartWidth = (cellSize * heatmapSeries.value[0].data.length + horizontalOffset)
+  const chartHeight = (cellSize * Math.max(heatmapSeries.value.length, 7) + verticalOffset)
+  const chartWidth = (cellSize * Math.max(heatmapSeries.value[0].data.length, 7) + horizontalOffset)
 
   optValueChartOptions.value = {
     chart: {
-      offsetX: (containerWidth - chartWidth)/2,
+      offsetX: (containerWidth - chartWidth) / 2,
       type: 'heatmap',
       height: (chartHeight + "px"),
       width: (chartWidth + "px"),
@@ -110,55 +120,28 @@ async function drawValuesImage(){
         enableShades: false,
         radius: 0,
         colorScale: {
-          ranges: [
+          ranges: [...binningInfo.value.map(bin => ({
+            from: Number(bin.lowerBound),
+            to: Number(bin.upperBound),
+            name: bin.humidityBinDescription,
+            color: binningColorConfig(bin.humidityBin)
+          })),
           {
-            from: 0.01,
-            to: 1000,
+            from: EMPTY_VALUE,
+            to: EMPTY_VALUE,
             name: " ",
-            color: '#ffffff'
-          },  
-          {
-            from: -29.99,
-            to: 0,
-            name: '(-30,0]',
-            color: '#053061'
-          },
-          {
-            from: -99.99,
-            to: -30,
-            name: '(-100,-30]',
-            color: '#337CB7'
-          },
-          {
-            from: -199.99,
-            to: -100,
-            name: '(-200,-100]',
-            color: '#8FC2DD'
-          },
-          {
-            from: -299.99,
-            to: -200,
-            name: '(-300,-200]',
-            color: '#F1A385'
-          },
-          {
-            from: -1499.99,
-            to: -300,
-            name: '(-1500,-300]',
-            color: '#C33D3D'
-          },
-          {
-            from: -2500,
-            to: -1500,
-            name: '(-∞,-1500]',
-            color: '#8C0D25'
-          }]
+            color: "#ffffff"
+          }
+          ]
         }
       },
     },
     dataLabels: {
-      formatter: function(value, { seriesIndex, dataPointIndex, w }) { 
-        if (value == 0){
+      formatter: function (value, { seriesIndex, dataPointIndex, w }) {
+        if (value == EMPTY_VALUE) {
+          return ""
+        }
+        if (value == DRIPPER_VALUE) {
           return "G"
         } else {
           return value.toFixed(0)
@@ -176,7 +159,7 @@ async function drawValuesImage(){
       width: 0
     },
     title: {
-      text: 'Matrice ottima (Id: ' + matrixId.value +')',
+      text: 'Matrice ottima (Id: ' + optProfileId.value + ')',
       align: 'center',
       offsetY: 10,
     },
@@ -184,7 +167,7 @@ async function drawValuesImage(){
       type: 'category',
       categories: xValues,
       tooltip: {
-          enabled: false,
+        enabled: false,
       },
       tickPlacement: 'on',
       labels: {
@@ -201,11 +184,13 @@ async function drawValuesImage(){
         }
       }
     },
-    tooltip:{
-      custom: function({series, seriesIndex, dataPointIndex, w}) {
+    tooltip: {
+       custom: function ({ series, seriesIndex, dataPointIndex, w }) {
         let value = series[seriesIndex][dataPointIndex]
-        if (value <= 0) {
-          if (value == 0) {
+        if (value == EMPTY_VALUE) {
+          return ""
+        }else{
+          if (value == DRIPPER_VALUE) {
             value = "G"
           }
           return ('<div class="arrow_box m-1">' +
@@ -213,18 +198,16 @@ async function drawValuesImage(){
             '<div> <strong>x</strong>: ' + xValues[dataPointIndex] + '</div>' +
             '<div> <strong>y</strong>: ' + heatmapSeries.value[seriesIndex].name + '</div>' +
             '</div>')
-        } else 
-          return ""
-
+        }
       }
     }
   }
 }
 
-async function drawWeightsImage(){
-  if (!image.value){
+async function drawWeightsImage() {
+  if (!image.value) {
     return
-  } 
+  }
 
   const [xValues, series] = buildHeatmapSeries("weight")
 
@@ -236,14 +219,14 @@ async function drawWeightsImage(){
   series.push(dripperSeries)
 
   weightsSeries.value = series
-  if(!containerOptimal.value){
+  if (!containerOptimal.value) {
     await nextTick()
   }
 
   const containerWidth = containerOptimal.value.offsetWidth
 
   let cellSize
-  if(weightsSeries.value[0].data.length > weightsSeries.value.length){
+  if (weightsSeries.value[0].data.length > weightsSeries.value.length) {
     cellSize = containerWidth / weightsSeries.value[0].data.length
   } else {
     cellSize = containerWidth / weightsSeries.value.length * 0.9
@@ -253,12 +236,12 @@ async function drawWeightsImage(){
 
   const verticalOffset = 25
   const horizontalOffset = 10
-  const chartHeight = (cellSize * weightsSeries.value.length + verticalOffset) 
-  const chartWidth = (cellSize * weightsSeries.value[0].data.length + horizontalOffset)
+  const chartHeight = (cellSize * Math.max(weightsSeries.value.length, 7) + verticalOffset)
+  const chartWidth = (cellSize * Math.max(weightsSeries.value[0].data.length, 7) + horizontalOffset)
 
   weightsChartOptions.value = {
     chart: {
-      offsetX: (containerWidth - chartWidth)/2,
+      offsetX: (containerWidth - chartWidth) / 2,
       type: 'heatmap',
       height: (chartHeight + "px"),
       width: (chartWidth + "px"),
@@ -278,8 +261,8 @@ async function drawWeightsImage(){
     },
     colors: ['#7f7f7f'],
     dataLabels: {
-      formatter: function(value, { seriesIndex, dataPointIndex, w }) { 
-        if (value == 0){
+      formatter: function (value, { seriesIndex, dataPointIndex, w }) {
+        if (value == 0) {
           return ""
         } else {
           return value
@@ -304,7 +287,7 @@ async function drawWeightsImage(){
       type: 'category',
       categories: xValues,
       tooltip: {
-          enabled: false,
+        enabled: false,
       },
       tickPlacement: 'on',
       labels: {
@@ -321,8 +304,8 @@ async function drawWeightsImage(){
         }
       }
     },
-    tooltip:{
-      custom: function({series, seriesIndex, dataPointIndex, w}) {
+    tooltip: {
+      custom: function ({ series, seriesIndex, dataPointIndex, w }) {
         let value = series[seriesIndex][dataPointIndex]
         if (value > 0) {
           return ('<div class="arrow_box m-1">' +
@@ -330,7 +313,7 @@ async function drawWeightsImage(){
             '<div> <strong>x</strong>: ' + xValues[dataPointIndex] + '</div>' +
             '<div> <strong>y</strong>: ' + heatmapSeries.value[seriesIndex].name + '</div>' +
             '</div>')
-        } else 
+        } else
           return ""
 
       }
@@ -339,31 +322,54 @@ async function drawWeightsImage(){
 }
 
 async function mountChart() {
-  const parsed = JSON.parse(props.config);
-  const selectedTimestamp = props.selectedTimestamp
-  const params = {...parsed.params}
-  params["timestamp"] = selectedTimestamp
+  const currentConfigStr = props.config
+  const configParsed = JSON.parse(currentConfigStr)
+  const currentTimestamp = props.selectedTimestamp
+
   showChart.value = false
   loadingFlag.value = true
-  const chartDataResponse = await communicationService.getChartData(parsed.environment, parsed.paths, params, endpoint, "")
-  if(JSON.stringify(parsed) !== props.config || selectedTimestamp !== props.selectedTimestamp){
-      return
-  }
-  if(chartDataResponse) {
-    showChart.value = chartDataResponse.optimalState.length > 0
-    if(showChart.value){
-        image.value = chartDataResponse.optimalState
-        matrixId.value = chartDataResponse.matrixId
-        await drawValuesImage()
-        await drawWeightsImage()
-    }
-  } else {
-    showChart.value = false
-  }
-  loadingFlag.value = false
-} 
 
-watch( () => props.selectedTimestamp, async () => {
+  try {
+    const chartDataResponse = await communicationService.getChartData(
+      configParsed.environment,
+      configParsed.paths,
+      { timestamp: currentTimestamp },
+      endpoint
+    )
+
+    if (currentConfigStr !== props.config || currentTimestamp !== props.selectedTimestamp) {
+      return
+    }
+
+    if (chartDataResponse && chartDataResponse.optimalProfile && chartDataResponse.optimalProfile.length > 0) {
+      image.value = chartDataResponse.optimalProfile
+      optProfileId.value = chartDataResponse.optimalProfileId
+      const binningId = chartDataResponse.binningId
+
+      binningInfo.value = await communicationService.getBinningInfo(configParsed.environment, binningId, 'bins')
+
+      if (currentConfigStr !== props.config || currentTimestamp !== props.selectedTimestamp) {
+        return
+      }
+
+      showChart.value = true
+      await drawValuesImage()
+      await drawWeightsImage()
+    } else {
+      showChart.value = false
+    }
+
+  } catch (error) {
+    console.error(error)
+    showChart.value = false
+  } finally {
+    if (currentConfigStr === props.config && currentTimestamp === props.selectedTimestamp) {
+      loadingFlag.value = false
+    }
+  }
+}
+
+watch(() => props.selectedTimestamp, async () => {
   await mountChart()
 })
 </script>
@@ -372,16 +378,17 @@ watch( () => props.selectedTimestamp, async () => {
   <div class="row" v-if="showChart">
     <div class="col-lg-6 order-lg-1 order-2 ">
       <div ref="containerOptimal">
-        <VueApexCharts type="heatmap" :options="weightsChartOptions" :series="weightsSeries"></VueApexCharts>
+        <VueApexCharts v-if="weightsChartOptions.chart" type="heatmap" :options="weightsChartOptions" :series="weightsSeries"></VueApexCharts>
       </div>
     </div>
     <div class="col-lg-6 order-lg-2 order-1">
       <div>
-        <VueApexCharts type="heatmap" :options="optValueChartOptions" :series="heatmapSeries"></VueApexCharts>
+        <VueApexCharts v-if="optValueChartOptions.chart" type="heatmap" :options="optValueChartOptions" :series="heatmapSeries"></VueApexCharts>
       </div>
     </div>
     <div class="col-8 offset-lg-2">
-      <DistanceChart v-if="props.showDistance" :config="props.config" :selectedTimestamp="props.selectedTimestamp"></DistanceChart>
+      <DistanceChart v-if="props.showDistance" :config="props.config" :selectedTimestamp="props.selectedTimestamp">
+      </DistanceChart>
     </div>
   </div>
   <div v-else-if="loadingFlag" class="d-flex justify-content-center align-items-center">
