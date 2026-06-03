@@ -134,8 +134,8 @@ async function mountChart() {
             display: true,
             text: unit
           },
-          suggestedMin: wetLevel,
-          suggestedMax: dryLevel
+          suggestedMin: dryLevel,
+          suggestedMax: wetLevel
         }
       }
     }
