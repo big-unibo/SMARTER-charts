@@ -6,13 +6,15 @@ import calendarStyles from '../assets/calendar.css?inline';
 export class CalendarElement extends HTMLElement {
 
   static get observedAttributes() {
-    return ['config']
+    return ['config', 'isEditable']
   }
 
   constructor() {
     super()
     this._configProp = null
     this._configRef = null
+    this._isEditableProp = false
+    this._isEditableRef = null
   }
 
   set config(value) {
@@ -27,6 +29,17 @@ export class CalendarElement extends HTMLElement {
     return this._configProp
   }
 
+  set isEditable(value) {
+    this._isEditableProp = value
+    if (this._isEditableRef) {
+      this._isEditableRef.value = value
+    }
+  }
+
+  get isEditable() {
+    return this._isEditableProp
+  }
+
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === 'config') {
       let parsed = newValue
@@ -34,6 +47,8 @@ export class CalendarElement extends HTMLElement {
       if (this._configRef) {
         this._configRef.value = parsed
       }
+    } else if (name === 'isEditable') {
+      this.isEditable = newValue === 'true'
     }
   }
 
@@ -56,11 +71,12 @@ export class CalendarElement extends HTMLElement {
     }
 
     this._configRef = ref(this._configProp)
-
+    this._isEditableRef = ref(this._isEditableProp)
     this.app = createApp({
       render: () =>
         h(Calendar, {
-          config: this._configRef.value
+          config: this._configRef.value,
+          isEditable: this._isEditableRef.value
         })
     })
 
