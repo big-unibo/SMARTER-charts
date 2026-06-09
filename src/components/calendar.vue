@@ -17,7 +17,7 @@ const updateEventEndpoint = "update"
 const updateFailedMessage = ref(null)
 const updateFailed = ref(false)
 
-const props = defineProps(['config'])
+const props = defineProps(['config', 'isEditable'])
 const communicationService = new CommunicationService()
 
 const calendarApp = shallowRef(null)
@@ -122,7 +122,7 @@ function zonedDateTimeToUnixSeconds(zonedDateTime) {
 }
 
 function isEventEditable(event) {
-  if (!event || !event.start) return false
+  if (!props.isEditable || !event || !event.start) return false
   const eventTime = Number(event.start.epochMilliseconds)
   return eventTime > (Date.now() + SCHEDULE_SAFE_PERIOD * 1000)
 }
@@ -327,7 +327,7 @@ async function mountChart(timeFilter = null) {
 
             <p>
               <span class="smarter-calendar-label">Consiglio irriguo: </span>
-              <span>{{ calendarEvent.customData.advice !== null ? calendarEvent.customData.advice + " L" : "Non calcolato" }}</span>
+              <span>{{ calendarEvent.customData.advice !== null ? calendarEvent.customData.advice.toFixed(2) + " L" : "Non calcolato" }}</span>
             </p>
 
             <p>
@@ -418,7 +418,7 @@ async function mountChart(timeFilter = null) {
 
               <div class="smarter-form-group p-2">
                 <label for="waterAmount">Acqua extra sistema (L)</label>
-                <input type="number" id="waterAmount" v-model="updateForm.expectedWater" />
+                <input type="number" id="waterAmount" step="0.01" v-model="updateForm.expectedWater" />
               </div>
             </div>
 

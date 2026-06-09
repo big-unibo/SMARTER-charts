@@ -55,7 +55,7 @@ config: {
 | `<humiditymultiline-chart-smarter>`          | Area chart of humidity levels over times | `@selectTimestamp` events emitted containing the timestamp clicked
 | `<heatmap-animation-smarter>`                | Animation of humidity heatmap over time |
 | `<optimal-humidity-heatmap-smarter>`         | Heatmaps of optimal soil state to obtain with cell weights | `:selectedTimestamp` timestamp of image to show <br>`:showDistance` flag that indicates if show the distance matrix
-| `<calendar-smarter>`                         | Calendar with irrigation events |
+| `<calendar-smarter>`                         | Calendar with irrigation events | `:isEditable` flag that indicates if events can be editated
 | `<water-aggregate-chart-smarter>`            | Bar chart to summarize daily irrigation and rainfalls|
 
 
