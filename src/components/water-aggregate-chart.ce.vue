@@ -39,19 +39,18 @@ const createDatasets = (data) => {
 
   data.forEach(signalType => {
     const type = signalType.signalTypeDescription;
-    const label = type;
 
-    const dataPoints = signalType.signals
-      .flatMap(signal =>
-        signal.measurements.map(m =>
-          JSON.stringify({
-            x: luxonDateTime(m.timestamp),
-            y: Number(m.value).toFixed(2)
-          })
-        )
+    signalType.signals.forEach(signal => {
+      const label = type + (signal.sensorTechnology ? `(${signal.sensorTechnology})` : '')
+      const dataPoints = signal.measurements.map(m =>
+        JSON.stringify({
+          x: luxonDateTime(m.timestamp),
+          y: Number(m.value).toFixed(2)
+        })
       );
 
-    datasets.push(new BarDatasetData(label, dataPoints, 'y', signalsColorFunction, type));
+      datasets.push(new BarDatasetData(label, dataPoints, 'y', signalsColorFunction, type));
+    });
   });
 
   return datasets;
@@ -60,12 +59,9 @@ const createDatasets = (data) => {
 
 const getTotalGroups = data =>
   new Map(
-    (Array.isArray(data) ? data : []).map(type => {
-      const total = type.signals?.flatMap(s => s.measurements || [])
-        .reduce((sum, m) => sum + Number(m?.value || 0), 0);
-
-      const unit = type.signals?.[0]?.unit || '';
-      return [type.signalTypeDescription, { total, unit }];
+    (Array.isArray(data) ? data : []).flatMap(type => {
+      const res = type.signals?.map(s => ([type.signalTypeDescription + (s.sensorTechnology ? `(${s.sensorTechnology})` : ''), {unit: s.unit ?? '', total: s.measurements.reduce((sum, m) => sum + Number(m?.value || 0), 0) || 0}]))
+      return res;
     })
   );
 
@@ -191,7 +187,7 @@ async function mountChart() {
 
   <div class="d-flex flex-wrap justify-content-around">
     <div v-for="([group, { unit, total }]) in totalGroups" :key="group" class="p-1 m-1"
-      :style="{ backgroundColor: signalsColorFunction(group), borderColor: signalsColorFunction(group), borderRadius: '8px', borderWidth: '1px', borderStyle: 'solid', fontSize: '12px' }">
+      :style="{ backgroundColor: signalsColorFunction(group.split('(')[0]), borderColor: signalsColorFunction(group.split('(')[0]), borderRadius: '8px', borderWidth: '1px', borderStyle: 'solid', fontSize: '12px' }">
       <div>Totale {{ group }}: <strong>{{ total.toFixed(2) }}</strong> ({{ unit }})</div>
     </div>
   </div>
