@@ -45,26 +45,25 @@ const createDatasets = (data) => {
 
   data.forEach(signalType => {
     const type = signalType.signalTypeDescription;
-    const unit = signalType.signals?.[0]?.unit || '';
-    const label = unit ? `${type} (${unit})` : type;
-    const yAxisID = ['Dripper', 'Sprinkler'].includes(type) ? 'y' : 'y1';
 
-    if (dripperUnit.value === null && ['Dripper', 'Sprinkler'].includes(type))
-      dripperUnit.value = unit;
-    else if (pluvCurrUnit.value === null  && type === 'Pluv Curr')
-      pluvCurrUnit.value = unit;
+    signalType.signals.forEach(signal => {
+      const unit = signal.unit || '';
+      const label = unit ? `${type}${signal.sensorTechnology ? ` - ${signal.sensorTechnology}` : ''} (${unit})` : type;
+      const yAxisID = ['Dripper', 'Sprinkler'].includes(type) ? 'y' : 'y1';
 
-    const dataPoints = signalType.signals
-      .flatMap(signal =>
-        signal.measurements.map(m =>
-          JSON.stringify({
-            x: luxonDateTime(m.timestamp),
-            y: Number(m.value).toFixed(2)
-          })
-        )
+      if (dripperUnit.value === null && ['Dripper', 'Sprinkler'].includes(type))
+        dripperUnit.value = unit;
+      else if (pluvCurrUnit.value === null  && type === 'Pluv Curr')
+        pluvCurrUnit.value = unit;
+      const dataPoints = signal.measurements.map(m =>
+        JSON.stringify({
+          x: luxonDateTime(m.timestamp),
+          y: Number(m.value).toFixed(2)
+        })
       );
 
-    datasets.push(new MultiAxisLineDatasetData(label, dataPoints, yAxisID, signalsColorFunction, type));
+      datasets.push(new MultiAxisLineDatasetData(label, dataPoints, yAxisID, signalsColorFunction, type));
+    });
   });
 
   return datasets;
