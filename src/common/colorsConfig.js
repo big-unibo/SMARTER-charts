@@ -15,22 +15,45 @@ export const binningColorConfig = function (value) {
   } else return 'rgb(255, 255, 255)'
 };
 
+const signalColors = {
+  'Dripper': '#339CFF',
+  'Pluv Curr': '#FFCD3D',
+  'Advice': '#6064C8',
+  'Potential Evapotranspiration': '#FA4443',
+  'Expected Water': '#4CAF50',
+  'Sprinkler': '#99ceff',
+  'Air Temperature': '#339CFFC5'
+};
+
+const opacityVariants = [0.8, 0.4, 1, 0.2, 0.6];
+
+const hexToRgba = (hex, opacityMultiplier = 1) => {
+  const normalized = hex.replace('#', '');
+  const r = parseInt(normalized.slice(0, 2), 16);
+  const g = parseInt(normalized.slice(2, 4), 16);
+  const b = parseInt(normalized.slice(4, 6), 16);
+  const baseAlpha = normalized.length === 8
+    ? parseInt(normalized.slice(6, 8), 16) / 255
+    : 1;
+
+  return `rgba(${r}, ${g}, ${b}, ${Number((baseAlpha * opacityMultiplier).toFixed(2))})`;
+};
+
 // Function assigning colors to every signal type
-export const signalsColorFunction = (str) => {
-  if (str === 'Dripper')
-    return '#339CFFC5'
-  if (str === 'Pluv Curr')
-    return '#FFCD3DC5'
-  if (str === 'Advice')
-    return '#6064C8C5'
-  if (str === 'Potential Evapotranspiration')
-    return '#FA4443C5'
-  if (str === 'Expected Water')
-    return '#4CAF50C5'
-  if (str === 'Sprinkler')
-    return '#99ceff'
-  if (str === 'Air Temperature')
-    return '#339CFF'
+export const signalsColorFunction = (signal) => {
+  const type = typeof signal === 'object' ? signal.type : signal;
+  const color = signalColors[type];
+
+  if (!color) {
+    return undefined;
+  }
+
+  if (typeof signal !== 'object' || signal.variantIndex == null) {
+    return color;
+  }
+
+  const opacity = opacityVariants[signal.variantIndex % opacityVariants.length];
+  return hexToRgba(color, opacity);
 }
 
 export const optimalDistanceColorFunction = (str) => {

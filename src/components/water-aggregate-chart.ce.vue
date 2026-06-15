@@ -36,34 +36,61 @@ const unitGroups = ref(null)
 
 const createDatasets = (data) => {
   const datasets = [];
+  const typeCounters = new Map();
 
   data.forEach(signalType => {
     const type = signalType.signalTypeDescription;
 
     signalType.signals.forEach(signal => {
+      const variantIndex = typeCounters.get(type) ?? 0;
+      typeCounters.set(type, variantIndex + 1);
       const label = type + (signal.sensorTechnology ? `(${signal.sensorTechnology})` : '')
-      const dataPoints = signal.measurements.map(m =>
+      const grouped = signal.measurements.reduce((acc, m) => {
+        const x = luxonDateTime(m.timestamp);
+        const y = Number(m.value);
+
+        if (!acc[x]) {
+          acc[x] = 0;
+        }
+
+        acc[x] += y;
+
+        return acc;
+      }, {});
+      const dataPoints = Object.entries(grouped).map(([x, y]) =>
         JSON.stringify({
-          x: luxonDateTime(m.timestamp),
-          y: Number(m.value).toFixed(2)
+          x,
+          y: Number(y.toFixed(2))
         })
       );
-
-      datasets.push(new BarDatasetData(label, dataPoints, 'y', signalsColorFunction, type));
+      datasets.push(new BarDatasetData(label, dataPoints, 'y', signalsColorFunction, { type, variantIndex }));
     });
   });
-
   return datasets;
 };
 
 
-const getTotalGroups = data =>
-  new Map(
-    (Array.isArray(data) ? data : []).flatMap(type => {
-      const res = type.signals?.map(s => ([type.signalTypeDescription + (s.sensorTechnology ? `(${s.sensorTechnology})` : ''), {unit: s.unit ?? '', total: s.measurements.reduce((sum, m) => sum + Number(m?.value || 0), 0) || 0}]))
-      return res;
+const getTotalGroups = data => {
+  const typeCounters = new Map();
+
+  return new Map(
+    (Array.isArray(data) ? data : []).flatMap(signalType => {
+      const type = signalType.signalTypeDescription;
+
+      return signalType.signals?.map(s => {
+        const variantIndex = typeCounters.get(type) ?? 0;
+        typeCounters.set(type, variantIndex + 1);
+        const label = type + (s.sensorTechnology ? `(${s.sensorTechnology})` : '');
+
+        return [label, {
+          unit: s.unit ?? '',
+          total: s.measurements.reduce((sum, m) => sum + Number(m?.value || 0), 0) || 0,
+          colorKey: { type, variantIndex }
+        }];
+      }) ?? [];
     })
   );
+};
 
 const getUnitGroups = totalGroups =>
   new Map(
@@ -186,8 +213,8 @@ async function mountChart() {
   </div>
 
   <div class="d-flex flex-wrap justify-content-around">
-    <div v-for="([group, { unit, total }]) in totalGroups" :key="group" class="p-1 m-1"
-      :style="{ backgroundColor: signalsColorFunction(group.split('(')[0]), borderColor: signalsColorFunction(group.split('(')[0]), borderRadius: '8px', borderWidth: '1px', borderStyle: 'solid', fontSize: '12px' }">
+    <div v-for="([group, { unit, total, colorKey }]) in totalGroups" :key="group" class="p-1 m-1"
+      :style="{ backgroundColor: signalsColorFunction(colorKey), borderColor: signalsColorFunction(colorKey), borderRadius: '8px', borderWidth: '1px', borderStyle: 'solid', fontSize: '12px' }">
       <div>Totale {{ group }}: <strong>{{ total.toFixed(2) }}</strong> ({{ unit }})</div>
     </div>
   </div>

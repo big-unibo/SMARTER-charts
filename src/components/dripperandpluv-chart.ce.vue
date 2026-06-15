@@ -42,11 +42,14 @@ const endpoint = 'signals'
 
 const createDatasets = (data) => {
   const datasets = [];
+  const typeCounters = new Map();
 
   data.forEach(signalType => {
     const type = signalType.signalTypeDescription;
 
     signalType.signals.forEach(signal => {
+      const variantIndex = typeCounters.get(type) ?? 0;
+      typeCounters.set(type, variantIndex + 1);
       const unit = signal.unit || '';
       const label = unit ? `${type}${signal.sensorTechnology ? ` - ${signal.sensorTechnology}` : ''} (${unit})` : type;
       const yAxisID = ['Dripper', 'Sprinkler'].includes(type) ? 'y' : 'y1';
@@ -62,7 +65,7 @@ const createDatasets = (data) => {
         })
       );
 
-      datasets.push(new MultiAxisLineDatasetData(label, dataPoints, yAxisID, signalsColorFunction, type));
+      datasets.push(new MultiAxisLineDatasetData(label, dataPoints, yAxisID, signalsColorFunction, { type, variantIndex }));
     });
   });
 
