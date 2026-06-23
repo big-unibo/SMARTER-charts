@@ -20,10 +20,10 @@ npm run dev
 # Build for production
 npm run build
 
-#Public the updates on npm
+# Publish new version on npm
 npm publish
 
-#Utility Windows script for clean the dependency and all the cached file, ensuring correct rebuild and pack for local usage in a .tgz archive
+# Windows utility script for cleaning the dependency and all the cached file, ensuring correct rebuild and pack for local usage in a .tgz archive
 ./clean.bat
 ```
 
