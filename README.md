@@ -1,21 +1,40 @@
 # SMARTER-charts
 
-In this package are distributed the charts components developed for the precision irrigation system **SMARTER** by the *Business Intelligence Group* of University of Bologna.
-
+In this package are distributed the chart components developed for the precision irrigation system **SMARTER** by the *Business Intelligence Group* of University of Bologna.
 
 ## Installation
+
 ```bash
 npm install smarter-charts
 ```
+
+## Development Setup
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server (http://localhost:5173)
+npm run dev
+
+# Build for production
+npm run build
+
+#Public the updates on npm
+npm publish
+
+#Utility Windows script for clean the dependency and all the cached file, ensuring correct rebuild and pack for local usage in a .tgz archive
+./clean.bat
+```
+
 ## Usage
 
-All the components are exposed as Custum Elements that are defined by the funcion `registerChartComponents()` and then they can be used directly as HTML tags. 
+All components are exposed as Custom Elements defined by the `registerChartComponents()` function and can be used directly as HTML tags.
 
 ```js
 import {registerChartComponents} from 'smarter-charts'
 
 registerChartComponents()
-
 ```
 
 ## Global `config` Prop
@@ -50,12 +69,14 @@ config: {
 | `<meancountor-chart-smarter>`                | Heatmap of monitored soil portion for **mean** of matric potential in a given period|
 | `<stdcountor-chart-smarter>`                 | Heatmap of monitored soil portion for **standard deviation** of matric potential in a given period |
 | `<dripperandpluv-chart-smarter>`             | Line chart showing irrigation and rainfall |
-| `<signals-linechart-chart-smarter>`          | Line chart for signals of requested type | `:hideOnMissingSignal` flage that indicates if hide chart when no signals retrieved
+| `<signals-linechart-chart-smarter>`          | Line chart for signals of requested type | `:hideOnMissingSignal` flag that indicates if the chart should be hidden when no signals are retrieved
 | `<humiditymap-smarter>`                      | Heatmap of monitored soil portion showing the matric potential | `:selectedTimestamp` timestamp of image to show
 | `<humiditymultiline-chart-smarter>`          | Area chart of humidity levels over times | `@selectTimestamp` events emitted containing the timestamp clicked
 | `<heatmap-animation-smarter>`                | Animation of humidity heatmap over time |
 | `<optimal-humidity-heatmap-smarter>`         | Heatmaps of optimal soil state to obtain with cell weights | `:selectedTimestamp` timestamp of image to show <br>`:showDistance` flag that indicates if show the distance matrix
-| `<calendar-smarter>`                         | Calendar with irrigation events | `:isEditable` flag that indicates if events can be editated
-| `<water-aggregate-chart-smarter>`            | Bar chart to summarize daily irrigation and rainfalls|
+| `<calendar-smarter>`                         | Calendar with irrigation events | `:isEditable` flag that indicates if events can be edited
+| `<water-aggregate-chart-smarter>`            | Bar chart to summarize daily irrigation and rainfalls| `:extraParams` object with additional aggregation parameters|
 
 
+## License
+This project is maintained by the Business Intelligence Group at University of Bologna.
