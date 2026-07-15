@@ -137,7 +137,12 @@ async function mountChart() {
     .range([0, height]);
   svg.append("g").call(d3.axisLeft(y));
 
-  const contours = d3.contours().size([numCellInWidth, numCellInHeight]).thresholds(d3.range(-200, 10000));
+  const stdMin = d3.min(std)
+  const stdMax = d3.max(std)
+
+  const contours = d3.contours()
+    .size([numCellInWidth, numCellInHeight])
+    .thresholds(d3.range(Math.floor(stdMin), Math.ceil(stdMax) + 1, 1));
 
   // Function to scale contours coordinates
   const scaleCoordinates = (geometry) => {
@@ -149,9 +154,10 @@ async function mountChart() {
     return geometry;
   };
 
-  svg.selectAll("path")
+  svg.selectAll(".contourstd")
     .data(contours(std).map(feature => scaleCoordinates(feature)))
     .enter().append("path")
+    .attr("class", "contourstd")
     .attr("d", d3.geoPath(d3.geoIdentity()))
     .attr("fill", function (d) { return devColorFunction(d.value); });
 

@@ -148,10 +148,13 @@ async function mountChart() {
     .range([0, height]);
   svg.append("g").call(d3.axisLeft(y));
 
-  const contours = d3.contours().size([numCellInWidth, numCellInHeight]).thresholds(d3.range(
-    Math.min(...binningInfo.value.map(b => Number(b.lowerBound))),
-    Math.max(...binningInfo.value.map(b => Number(b.upperBound)))
-  ));
+  const thresholds = binningInfo.value
+    .map(b => Number(b.lowerBound))
+    .sort((a, b) => a - b);
+
+  const contours = d3.contours()
+    .size([numCellInWidth, numCellInHeight])
+    .thresholds(thresholds);
 
   const colorRanges = [
     ...binningInfo.value.map(bin => ({
@@ -160,7 +163,6 @@ async function mountChart() {
       color: binningColorConfig(bin.humidityBin)
     }))
   ];
-
 
   const mycolor = function (d) {
     for (const r of colorRanges) {
@@ -178,11 +180,15 @@ async function mountChart() {
     return geometry;
   };
 
-  svg.selectAll("path")
-    .data(contours(mean).map(feature => scaleCoordinates(feature)))
-    .enter().append("path")
+  const features = contours(mean).map(feature => scaleCoordinates(feature));
+
+  svg.selectAll(".contourmean")
+    .data(features, d => d.value)
+    .enter()
+    .append("path")
+    .attr("class", "contourmean")
     .attr("d", d3.geoPath(d3.geoIdentity()))
-    .attr("fill", function (d) { return mycolor(d.value); });
+    .attr("fill", d => mycolor(d.value));
 
   const ticks2 = [...binningInfo.value.map(bin => bin.lowerBound),
   ];
