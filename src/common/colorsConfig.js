@@ -22,7 +22,8 @@ const signalColors = {
   'Potential Evapotranspiration': '#FA4443',
   'Expected Water': '#4CAF50',
   'Sprinkler': '#99ceff',
-  'Air Temperature': '#339CFFC5'
+  'Air Temperature': '#339CFFC5',
+  'Fogger': '#2fd0e5'
 };
 
 const opacityVariants = [0.8, 0.4, 1, 0.2, 0.6];
