@@ -58,7 +58,7 @@ async function mountChart() {
       data.forEach(d => {
         axisY.push(d.y)
         axisX.push(d.x)
-        std.push(d.std)
+        std.push(Number(d.std))
       });
     } else {
       const dataTemp = groupBy(data, t => t.y);
