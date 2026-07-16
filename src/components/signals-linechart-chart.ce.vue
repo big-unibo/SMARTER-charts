@@ -1,7 +1,7 @@
 <script setup>
 
 import { Line } from "vue-chartjs";
-import { ref, watchEffect } from "vue";
+import { ref, watchEffect, watch, nextTick, onBeforeUnmount } from "vue";
 import 'chartjs-adapter-luxon';
 import { luxonDateTime } from '../common/dateUtils.js'
 import { CommunicationService } from "../services/CommunicationService.js";
@@ -30,6 +30,29 @@ const showChart = ref(false)
 const loadingFlag = ref(false)
 
 const unitLabel = ref(null);
+
+const chartContainer = ref(null);
+const isCompact = ref(window.innerWidth < 500);
+
+const resizeObserver = new ResizeObserver(([entry]) => {
+  isCompact.value = entry.contentRect.width < 500;
+});
+
+watch(chartContainer, async (el, oldEl) => {
+  if (oldEl) {
+    resizeObserver.unobserve(oldEl);
+  }
+
+  if (el) {
+    await nextTick();
+    resizeObserver.observe(el);
+  }
+});
+
+
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect();
+});
 
 const props = defineProps(['config', 'hideOnMissingSignal'])
 
@@ -72,7 +95,7 @@ const createDatasets = (data) => {
         label,
         dataPoints,
         false,
-        3,
+        2,
         0.3,
         genericSignalsColorFunction,
         index,
@@ -100,7 +123,7 @@ async function mountChart() {
 
   try {
     const configParsed = JSON.parse(props.config)
-  
+
     const chartDataResponse = await communicationService.getChartData(
       configParsed.environment,
       configParsed.paths,
@@ -134,10 +157,25 @@ async function mountChart() {
     options.value = {
       responsive: true,
       maintainAspectRatio: false,
+      elements: {
+        point: {
+          hoverRadius: isCompact.value ? 2 : 5,
+          hitRadius: 4,
+          borderWidth: 2,
+          pointStyle: isCompact.value ? false : 'circle',
+          hoverBorderWidth: 3
+        },
+        line: {
+          borderWidth: isCompact.value ? 1 : 3
+        }
+      },
       plugins: {
         legend: {
           labels: {
             boxWidth: 2,
+            font: {
+              size: isCompact.value ? 10 : 12
+            }
           }
         }
       },
@@ -165,7 +203,10 @@ async function mountChart() {
             },
           },
           ticks: {
-            source: 'data'
+            source: 'data',
+            font: {
+              size: isCompact.value ? 10 : 12
+            }
           },
           title: {
             display: true,
@@ -179,7 +220,10 @@ async function mountChart() {
           },
           ticks: {
             autoSkip: true,
-            maxTicksLimit: 10
+            maxTicksLimit: 10,
+            font: {
+              size: isCompact.value ? 10 : 12
+            }
           },
         }
       }
@@ -198,8 +242,8 @@ async function mountChart() {
 </script>
 
 <template>
-  <div v-if="showChart" class="chart-container">
-   <Line :data="chartData" :options="options" />
+  <div v-if="showChart" ref="chartContainer" class="chart-container">
+      <Line :data="chartData" :options="options" />
   </div>
   <div v-else-if="!props.hideOnMissingSignal">
     <div v-if="loadingFlag" class="d-flex justify-content-center align-items-center">

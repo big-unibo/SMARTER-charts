@@ -1,7 +1,7 @@
 <script setup>
 
 import {Line} from "vue-chartjs";
-import {ref, watchEffect} from "vue";
+import {ref, watchEffect, onMounted, onBeforeUnmount} from "vue";
 import 'chartjs-adapter-luxon';
 import {luxonDateTime} from '../common/dateUtils.js'
 import {CommunicationService} from "../services/CommunicationService.js";
@@ -35,6 +35,28 @@ const loadingFlag = ref(false)
 
 const pluvCurrUnit = ref(null)
 const dripperUnit = ref(null)
+
+const chartContainer = ref(null);
+const isCompact = ref(window.innerWidth < 500);
+
+const resizeObserver = new ResizeObserver(([entry]) => {
+  isCompact.value = entry.contentRect.width < 500;
+});
+
+watch(chartContainer, async (el, oldEl) => {
+  if (oldEl) {
+    resizeObserver.unobserve(oldEl);
+  }
+
+  if (el) {
+    await nextTick();
+    resizeObserver.observe(el);
+  }
+});
+
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect();
+});
 
 const props = defineProps(['config'])
 
@@ -115,6 +137,19 @@ async function mountChart() {
     options.value = {
       responsive: true,
       maintainAspectRatio: false,
+      elements: {
+        point: {
+          hoverRadius: isCompact.value ? 2 : 5,
+          radius: 2,
+          hitRadius: 4,
+          borderWidth: 2,
+          pointStyle: isCompact.value ? false : 'circle',
+          hoverBorderWidth: 3
+        },
+        line: {
+          borderWidth: isCompact.value ? 1 : 3
+        }
+      },
       scales: {
         x: {
           type: 'time',
@@ -130,7 +165,10 @@ async function mountChart() {
             },
           },
           ticks: {
-            source: 'data'
+            source: 'data',
+            font: {
+              size: isCompact.value ? 10 : 12
+            }
           },
           title: {
             display: true,
@@ -144,6 +182,11 @@ async function mountChart() {
             text: yLabel
           },
           position: 'left',
+          ticks: {
+            font: {
+              size: isCompact.value ? 10 : 12
+            }
+          },
         },
         y1: {
           beginAtZero: true,
@@ -151,6 +194,11 @@ async function mountChart() {
           title: {
             display: true,
             text: y1Label
+          },
+          ticks: {
+            font: {
+              size: isCompact.value ? 10 : 12
+            }
           },
         }
       }
@@ -179,7 +227,7 @@ async function mountChart() {
   </div>
   
   <div class="card-body">
-    <div v-if="showChart" class="chart-container">
+    <div v-if="showChart" class="chart-container" ref="chartContainer">
       <Line :data="chartData" :options="options"/>
     </div>
     <div v-else-if="loadingFlag" class="d-flex justify-content-center align-items-center">
