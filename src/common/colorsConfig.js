@@ -71,17 +71,17 @@ export const optimalDistanceColorFunction = (str) => {
 }
 
 export const devColorFunction = (d) => {
-  if (d <= 5) {
+  if (d === 1) {
     return "rgba(49, 102, 140, 1)";
-  } else if (d <= 10) {
+  } else if (d === 2) {
     return "rgba(35, 130, 140, 1)";
-  } else if (d <= 20) {
+  } else if (d === 3) {
     return "rgba(28, 156, 135, 1)";
-  } else if (d <= 30) {
+  } else if (d === 4) {
     return "rgba(51, 181, 120, 1)";
-  } else if (d <= 50) {
+  } else if (d === 5) {
     return "rgba(110, 204, 87, 1)";
-  } else if (d <= 70) {
+  } else if (d === 6) {
     return "rgba(179, 220, 41, 1)";
   } else return "rgba(253, 230, 36, 1)";
 };

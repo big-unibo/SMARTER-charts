@@ -13,6 +13,7 @@ const endpoint = 'profileStatistics'
 const showChart = ref(false)
 const loadingFlag = ref(false)
 const container = ref(null)
+const binningInfo = ref([])
 const imageStyle = ref({ width: "", height: "" })
 
 watchEffect(async () => {
@@ -35,15 +36,20 @@ async function mountChart() {
   try {
     const chartDataResponse = await communicationService.getChartData(configParsed.environment, configParsed.paths, configParsed.params, endpoint, 'measures')
 
-    if (currentConfigStr !== props.config) {
-      return
-    }
-
-    if (!chartDataResponse || !Array.isArray(chartDataResponse.data) || chartDataResponse.data.length === 0) {
+    if (currentConfigStr !== props.config || !chartDataResponse?.data?.length) {
       return
     }
 
     const data = chartDataResponse.data
+    const binningId = chartDataResponse.binningId;
+
+    binningInfo.value = await communicationService.getBinningInfo(
+      configParsed.environment,
+      binningId,
+      'bins'
+    );
+
+    if (currentConfigStr !== props.config) return;
 
     data.sort((a, b) => {
       if (a.z !== b.z) return a.z - b.z;
@@ -140,9 +146,28 @@ async function mountChart() {
   const stdMin = d3.min(std)
   const stdMax = d3.max(std)
 
+  const maxStd = (Math.max(...binningInfo.value.map(b => b.upperBound)) - Math.min(...binningInfo.value.map(b => b.lowerBound))) / 2
+
+  const step = 0.015
+  const colorRanges = Array.from({ length: 7 }, (_, i) => ({
+    from: i * step * maxStd,
+    to: i === 6 ? maxStd : (i + 1) * step * maxStd,
+    color: devColorFunction(i + 1)
+  }));
+
+  const mycolor = function (d) {
+    for (const r of colorRanges) {
+      if (d >= r.from && d < r.to) return r.color;
+    }
+  };
+
+  const ticks2 = colorRanges.map(r => r.from)
+  const ticksLabels2 = colorRanges.map(r => `[${r.from}, ${r.to})`)
+
+
   const contours = d3.contours()
     .size([numCellInWidth, numCellInHeight])
-    .thresholds(d3.range(Math.floor(stdMin), Math.ceil(stdMax) + 1, 1));
+    .thresholds(d3.range(Math.floor(stdMin), Math.ceil(stdMax) + maxStd*0.001, maxStd*0.001));
 
   // Function to scale contours coordinates
   const scaleCoordinates = (geometry) => {
@@ -159,10 +184,7 @@ async function mountChart() {
     .enter().append("path")
     .attr("class", "contourstd")
     .attr("d", d3.geoPath(d3.geoIdentity()))
-    .attr("fill", function (d) { return devColorFunction(d.value); });
-
-  const ticks2 = [5, 10, 20, 30, 50, 70, 90];
-  const ticksLabels2 = ["[0, 5)", "[5, 10)", "[10, 20)", "[20, 30)", "[30, 50)", "[50, 70)", "[70, 90)"];
+    .attr("fill", d => mycolor(d.value));
 
   var size = 15
 
@@ -176,7 +198,7 @@ async function mountChart() {
     }) // 100 is where the first dot appears. 25 is the distance between dots
     .attr("width", size)
     .attr("height", size)
-    .style("fill", function (d) { return devColorFunction(d) })
+    .style("fill", d => mycolor(d))
 
   svg.selectAll("mylabels")
     .data(ticksLabels2)
@@ -184,7 +206,7 @@ async function mountChart() {
     .append("text")
     .attr("x", width + size * 2)
     .attr("y", function (d, i) { return i * (size + 5) + (size / 2) }) // 100 is where the first dot appears. 25 is the distance between dots
-    .style("fill", function (d, i) { return devColorFunction(ticks2[i]) })
+    .style("fill", function (d, i) { return mycolor(ticks2[i]) })
     .text(function (d) { return d })
     .attr("text-anchor", "left")
     .attr("font-size", 10)
