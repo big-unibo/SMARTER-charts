@@ -159,7 +159,7 @@ async function mountChart() {
       maintainAspectRatio: false,
       elements: {
         point: {
-          hoverRadius: isCompact.value ? 2 : 5,
+          hoverRadius: isCompact.value ? 2 : 3,
           hitRadius: 4,
           borderWidth: 2,
           pointStyle: isCompact.value ? false : 'circle',
