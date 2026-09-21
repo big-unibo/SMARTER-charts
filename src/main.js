@@ -1,5 +1,4 @@
 import OptimalDistanceChart from './components/optimal-distance-chart.ce.vue'
-import AirTemperatureChart from "./components/airtemperature-chart.ce.vue"
 import CountorMeanChart from "./components/countormean-chart.ce.vue"
 import CountorStdChart from "./components/countorstd-chart.ce.vue"
 import DripperAndPluvChart from "./components/dripperandpluv-chart.ce.vue"
@@ -13,7 +12,6 @@ import { CalendarElement } from './components/calendar.ce.js'
 import {defineCustomElement} from "vue";
 
 const optimalDistanceChart = defineCustomElement(OptimalDistanceChart);
-const airTempChart = defineCustomElement(AirTemperatureChart)
 const meanCountorChart = defineCustomElement(CountorMeanChart)
 const stdCountorChart = defineCustomElement(CountorStdChart)
 const dripperAndPluvChart = defineCustomElement(DripperAndPluvChart)
@@ -26,7 +24,6 @@ const waterAggregateChart = defineCustomElement(WaterAggregateChart);
 
 export function registerChartComponents(){
     customElements.define("optimal-distance-chart-smarter", optimalDistanceChart)
-    customElements.define("airtemperature-chart-smarter", airTempChart)
     customElements.define("meancountor-chart-smarter", meanCountorChart)
     customElements.define("stdcountor-chart-smarter", stdCountorChart)
     customElements.define("dripperandpluv-chart-smarter", dripperAndPluvChart)

@@ -8,25 +8,6 @@ In this package are distributed the chart components developed for the precision
 npm install smarter-charts
 ```
 
-## Development Setup
-
-```bash
-# Install dependencies
-npm install
-
-# Start development server (http://localhost:5173)
-npm run dev
-
-# Build for production
-npm run build
-
-# Publish new version on npm
-npm publish
-
-# Windows utility script for cleaning the dependency and all the cached file, ensuring correct rebuild and pack for local usage in a .tgz archive
-./clean.bat
-```
-
 ## Usage
 
 All components are exposed as Custom Elements defined by the `registerChartComponents()` function and can be used directly as HTML tags.
@@ -55,7 +36,7 @@ config: {
     timeFilterFrom?: string,  // ISO date string or timestamp (start of time range)
     timeFilterTo?: string     // ISO date string or timestamp (end of time range)
     signalTypes?: string[], // String IDs of the possible signal type retrieved by SMARTER API (e.g. ['AIR_TEMP'])
-		aggregationType?: string // Type of aggregation to perform on data. Accepted type: (SUM, AVG, MIN, MAX, MED)
+    aggregationType?: string // Type of aggregation to perform on data. Accepted type: (SUM, AVG, MIN, MAX, MED)
   }
 }
 ```
@@ -65,10 +46,6 @@ config: {
 | Component Tag| Description| Props/Events|
 |----------------------------------------------|-------------------------------------------------------------------------|---|
 | `<optimal-distance-chart-smarter>`           | Line chart showing humidity level in relation to optimal state ||
-| `<airtemperature-chart-smarter>`             | Line chart for air temperature trends |
-| `<meancountor-chart-smarter>`                | Heatmap of monitored soil portion for **mean** of matric potential in a given period|
-| `<stdcountor-chart-smarter>`                 | Heatmap of monitored soil portion for **standard deviation** of matric potential in a given period |
-| `<dripperandpluv-chart-smarter>`             | Line chart showing irrigation and rainfall |
 | `<signals-linechart-chart-smarter>`          | Line chart for signals of requested type | `:hideOnMissingSignal` flag that indicates if the chart should be hidden when no signals are retrieved
 | `<humiditymap-smarter>`                      | Heatmap of monitored soil portion showing the matric potential | `:selectedTimestamp` timestamp of image to show
 | `<humiditymultiline-chart-smarter>`          | Area chart of humidity levels over times | `@selectTimestamp` events emitted containing the timestamp clicked
@@ -76,7 +53,28 @@ config: {
 | `<optimal-humidity-heatmap-smarter>`         | Heatmaps of optimal soil state to obtain with cell weights | `:selectedTimestamp` timestamp of image to show <br>`:showDistance` flag that indicates if show the distance matrix
 | `<calendar-smarter>`                         | Calendar with irrigation events | `:isEditable` flag that indicates if events can be edited
 | `<water-aggregate-chart-smarter>`            | Bar chart to summarize daily irrigation and rainfalls| `:extraParams` object with additional aggregation parameters|
+| `<meancountor-chart-smarter>`                | Heatmap of monitored soil portion for **mean** of matric potential in a given period|
+| `<stdcountor-chart-smarter>`                 | Heatmap of monitored soil portion for **standard deviation** of matric potential in a given period |
+| `<dripperandpluv-chart-smarter>`             | Line chart showing irrigation and rainfall |
 
+## Development Setup
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server (http://localhost:5173)
+npm run dev
+
+# Build for production
+npm run build
+
+# Publish new version on npm
+npm publish
+
+# Windows utility script for cleaning the dependency and all the cached file, ensuring correct rebuild and pack for local usage in a .tgz archive
+./clean.bat
+```
 
 ## License
 This project is maintained by the Business Intelligence Group at University of Bologna.
