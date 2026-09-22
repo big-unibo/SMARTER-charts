@@ -11,11 +11,70 @@ const container = ref(null)
 const rDistance = ref(null)
 const chartWidthValue = ref('auto');
 const chartHeightValue = ref('auto');
+const maxDeviation = ref(null)
 
 const props = defineProps(['config', 'selectedTimestamp'])
 const showChart = ref(false)
 const loadingFlag = ref(false)
 const endpoint = 'distanceProfileToOptimal'
+
+const NEGATIVE_STEP_COLORS = [
+  '#fff1e6', '#ffd1d1', '#ffb0b0', '#ff8f8f', '#ff6e6e',
+  '#ff4d4d', '#ff2c2c', '#ff0b0b', '#cc0000'
+]
+const POSITIVE_STEP_COLORS = [
+  '#e6f3f0', '#cde6f6', '#b4d9fc', '#51d1fd', '#46b7e3',
+  '#3b9cc9', '#3081af', '#256795', '#1b4c7c'
+]
+const NEGATIVE_STEP_NAMES = [
+  'Near Neutral', 'Slightly Near Average', 'Near Average', 'Low Average',
+  'Minor Below Average', 'Moderate Below Average', 'Slightly Below Average',
+  'Below Average', 'Low'
+]
+const POSITIVE_STEP_NAMES = [
+  'Near Neutral', 'Slightly Near Average', 'Near Average', 'Low Average',
+  'Minor Above Average', 'Moderate Above Average', 'Slightly Above Average',
+  'Above Average', 'High'
+]
+const OUTLIER_NEGATIVE = { color: '#8c0000', name: 'Very Low' }
+const OUTLIER_POSITIVE = { color: '#053061', name: 'Very High' }
+const NEUTRAL = { color: '#ffffff', name: 'Neutral' }
+
+const STEPS_PER_SIDE = NEGATIVE_STEP_COLORS.length
+
+const OUTLIER_BOUND_MULTIPLIER = 10
+const DAVIATION_RANGE_PERCENTAGE = 0.6;
+
+
+const REFERENCE_MAX_NORMAL_FALLBACK = 24
+
+const buildColorScaleRanges = (maxDeviation) => {
+  const deviation = maxDeviation && maxDeviation > 0 ? maxDeviation : REFERENCE_MAX_NORMAL_FALLBACK
+
+  const step = deviation / (STEPS_PER_SIDE + 0.5)
+  const neutralHalfWidth = step / 2
+  const outlierBound = deviation * OUTLIER_BOUND_MULTIPLIER
+
+  const negativeRanges = NEGATIVE_STEP_COLORS.map((color, i) => {
+    const to = -(neutralHalfWidth + i * step)
+    const from = -(neutralHalfWidth + (i + 1) * step)
+    return { from, to, color, name: NEGATIVE_STEP_NAMES[i] }
+  }).reverse() // dal più esterno al più interno
+
+  const positiveRanges = POSITIVE_STEP_COLORS.map((color, i) => {
+    const from = neutralHalfWidth + i * step
+    const to = neutralHalfWidth + (i + 1) * step
+    return { from, to, color, name: POSITIVE_STEP_NAMES[i] }
+  })
+
+  return [
+    { from: -outlierBound, to: negativeRanges[0].from, ...OUTLIER_NEGATIVE },
+    ...negativeRanges,
+    { from: -neutralHalfWidth, to: neutralHalfWidth, ...NEUTRAL },
+    ...positiveRanges,
+    { from: positiveRanges[positiveRanges.length - 1].to, to: outlierBound, ...OUTLIER_POSITIVE },
+  ]
+}
 
 watchEffect(async () => {
   let value = props.config;
@@ -98,29 +157,7 @@ async function drawImage() {
         enableShades: false,
         radius: 0,
         colorScale: {
-          ranges: [
-            { from: -20, to: -1.9, color: '#8c0000', name: 'Very Low' },
-            { from: -1.9, to: -1.7, color: '#cc0000', name: 'Low' },
-            { from: -1.7, to: -1.5, color: '#ff0b0b', name: 'Below Average' },
-            { from: -1.5, to: -1.3, color: '#ff2c2c', name: 'Slightly Below Average' },
-            { from: -1.3, to: -1.1, color: '#ff4d4d', name: 'Moderate Below Average' },
-            { from: -1.1, to: -0.9, color: '#ff6e6e', name: 'Minor Below Average' },
-            { from: -0.9, to: -0.7, color: '#ff8f8f', name: 'Low Average' },
-            { from: -0.7, to: -0.5, color: '#ffb0b0', name: 'Near Average' },
-            { from: -0.5, to: -0.3, color: '#ffd1d1', name: 'Slightly Near Average' },
-            { from: -0.3, to: -0.1, color: '#fff1e6', name: 'Near Neutral' },
-            { from: -0.1, to: 0.1, color: '#ffffff', name: 'Neutral' },
-            { from: 0.1, to: 0.3, color: '#e6f3f0', name: 'Near Neutral' },
-            { from: 0.3, to: 0.5, color: '#cde6f6', name: 'Slightly Near Average' },
-            { from: 0.5, to: 0.7, color: '#b4d9fc', name: 'Near Average' },
-            { from: 0.7, to: 0.9, color: '#51d1fd', name: 'Low Average' },
-            { from: 0.9, to: 1.1, color: '#46b7e3', name: 'Minor Above Average' },
-            { from: 1.1, to: 1.3, color: '#3b9cc9', name: 'Moderate Above Average' },
-            { from: 1.3, to: 1.5, color: '#3081af', name: 'Slightly Above Average' },
-            { from: 1.5, to: 1.7, color: '#256795', name: 'Above Average' },
-            { from: 1.7, to: 1.9, color: '#1b4c7c', name: 'High' },
-            { from: 1.9, to: 20, color: '#053061', name: 'Very High' },
-          ],
+          ranges: buildColorScaleRanges(maxDeviation.value),
         }
       },
     },
@@ -189,7 +226,6 @@ async function drawImage() {
 }
 
 async function mountChart() {
-  // Snapshot immediato per race condition
   const currentTimestamp = props.selectedTimestamp;
   const currentConfigStr = props.config;
   const configParsed = JSON.parse(props.config)
@@ -202,15 +238,14 @@ async function mountChart() {
       configParsed.environment,
       configParsed.paths,
       { timestamp: currentTimestamp },
-      endpoint,
-      'image'
+      endpoint
     );
 
     if (props.selectedTimestamp !== currentTimestamp || props.config !== currentConfigStr) {
       return;
     }
 
-    const data = chartDataResponse?.data;
+    const data = chartDataResponse?.image;
     
     if (!data || data.length === 0) {
       showChart.value = false;
@@ -219,6 +254,13 @@ async function mountChart() {
 
     image.value = data;
     showChart.value = true;
+
+    const { optimalWetBound, optimalDryBound } = chartDataResponse
+    if (optimalWetBound != null && optimalDryBound != null) {
+      maxDeviation.value = Math.abs(optimalDryBound - optimalWetBound) * DAVIATION_RANGE_PERCENTAGE
+    } else {
+      maxDeviation.value = null
+    }
 
     const totals = data.reduce((acc, item) => {
       acc.valSum += item.value;      

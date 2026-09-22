@@ -353,14 +353,14 @@ function selectedTime(time) {
             <div class="card">
                 <div class="card-header">Temperatura dell'aria</div>
                 <div class="card-body">
-                    <airtemperature-chart-smarter style="height: 300px" :config="JSON.stringify({
+                    <signals-linechart-chart-smarter style="height: 300px" :config="JSON.stringify({
                         ...baseConnectionParams,
                         params: {
                             ...(baseConnectionParams.params ?? {}),
-                            signalTypes: ['AIR_TEMP'],
+                            signalTypes: ['AIR_TEMP', 'SOIL_TEMP'],
                             aggregationType: 'AVG'
                         }
-                    })"></airtemperature-chart-smarter>
+                    })" :hideOnMissingSignal="true" />
                 </div>
             </div>
         </div>

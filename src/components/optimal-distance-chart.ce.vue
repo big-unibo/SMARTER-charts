@@ -34,6 +34,13 @@ const props = defineProps(['config'])
 
 const endpoint = 'optimalDistance'
 
+const OPTIMAL_RANGE_MAX_TYPE = 'Massimo ottimale'
+const OPTIMAL_RANGE_MIN_TYPE = 'Minimo ottimale'
+
+
+const OPTIMAL_RANGE_MAX_LABEL = 'Fascia ottimale (max)'
+const OPTIMAL_RANGE_MIN_LABEL = 'Fascia ottimale (min)'
+
 const createDatasets = (data) => {
   const datasets = [];
 
@@ -55,6 +62,38 @@ const createDatasets = (data) => {
 
   return datasets;
 };
+
+const toChartData = (values) => values.map(v => ({
+  x: v.timestamp * 1000, // secondi → millisecondi
+  y: v.value
+}))
+
+// Dataset "ombra" invisibili in legenda, usati solo per disegnare
+// il riempimento tra Massimo ottimale e Minimo ottimale.
+const buildOptimalRangeFillDatasets = (data) => {
+  const maxSeries = data.filter(({ valueType }) => valueType === OPTIMAL_RANGE_MAX_TYPE)[0]?.values ?? []
+  const minSeries = data.filter(({ valueType }) => valueType === OPTIMAL_RANGE_MIN_TYPE)[0]?.values ?? []
+
+  return [
+    {
+      label: OPTIMAL_RANGE_MAX_LABEL,
+      data: toChartData(maxSeries),
+      borderColor: 'transparent',
+      borderWidth: 0,
+      pointRadius: 0,
+      backgroundColor: 'rgba(76, 175, 80, 0.2)',
+      fill: '+1' // riempie fino al dataset successivo (fascia min)
+    },
+    {
+      label: OPTIMAL_RANGE_MIN_LABEL,
+      data: toChartData(minSeries),
+      borderColor: 'transparent',
+      borderWidth: 0,
+      pointRadius: 0,
+      fill: false
+    }
+  ]
+}
 
 watchEffect(async () => {
   let value = props.config;
@@ -97,7 +136,23 @@ async function mountChart() {
     const dryLevel = Math.max(...data.filter(({_, valueType}) => valueType === 'Asciutto')[0]?.values.map(({value, _}) => value))
 
     const unit = data[0]?.unit ?? "N/A"
-    const datasets = createDatasets(data.filter(({_, valueType}) => valueType !== 'Asciutto' && valueType !== 'Capacità di campo')).map(bin => bin.getDataSet())
+
+    const lineDatasets = createDatasets(
+      data.filter(({_, valueType}) =>
+        valueType !== 'Asciutto' &&
+        valueType !== 'Capacità di campo' &&
+        valueType !== OPTIMAL_RANGE_MAX_TYPE &&
+        valueType !== OPTIMAL_RANGE_MIN_TYPE
+      )
+    ).map(bin => bin.getDataSet())
+
+
+    const optimalRangeFillDatasets = buildOptimalRangeFillDatasets(data)
+    
+    const datasets = [
+      ...optimalRangeFillDatasets,
+      ...lineDatasets
+    ]
 
     chartData.value = {
       datasets: datasets
@@ -106,6 +161,13 @@ async function mountChart() {
     options.value = {
       responsive: true,
       maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: {
+            filter: (legendItem) => ![OPTIMAL_RANGE_MAX_LABEL, OPTIMAL_RANGE_MIN_LABEL].includes(legendItem.text)
+          }
+        }
+      },
       scales: {
         x: {
           type: 'time',
