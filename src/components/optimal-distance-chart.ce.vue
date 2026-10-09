@@ -68,6 +68,20 @@ const toChartData = (values) => values.map(v => ({
   y: v.value
 }))
 
+const hasPositiveOptimalRange = (data) => {
+  const maxSeries = data.find(({ valueType }) => valueType === OPTIMAL_RANGE_MAX_TYPE)?.values ?? []
+  const minValuesByTimestamp = new Map(
+    (data.find(({ valueType }) => valueType === OPTIMAL_RANGE_MIN_TYPE)?.values ?? [])
+      .map(({ timestamp, value }) => [timestamp, Number(value)])
+  )
+
+  return maxSeries.some(({ timestamp, value }) => {
+    const maxValue = Number(value)
+    const minValue = minValuesByTimestamp.get(timestamp)
+    return Number.isFinite(maxValue) && Number.isFinite(minValue) && maxValue > minValue
+  })
+}
+
 // Dataset "ombra" invisibili in legenda, usati solo per disegnare
 // il riempimento tra Massimo ottimale e Minimo ottimale.
 const buildOptimalRangeFillDatasets = (data) => {
@@ -132,8 +146,11 @@ async function mountChart() {
 
     showChart.value = true
 
-    const wetLevel = Math.min(...data.filter(({_, valueType}) => valueType === 'Capacità di campo')[0]?.values.map(({value, _}) => value))
-    const dryLevel = Math.max(...data.filter(({_, valueType}) => valueType === 'Asciutto')[0]?.values.map(({value, _}) => value))
+    const positiveOptimalRange = hasPositiveOptimalRange(data)
+    const levelBounds = positiveOptimalRange ? {} : {
+      suggestedMin: Math.max(...data.filter(({_, valueType}) => valueType === 'Asciutto')[0]?.values.map(({value, _}) => value)),
+      suggestedMax: Math.min(...data.filter(({_, valueType}) => valueType === 'Capacità di campo')[0]?.values.map(({value, _}) => value))
+    }
 
     const unit = data[0]?.unit ?? "N/A"
 
@@ -196,8 +213,7 @@ async function mountChart() {
             display: true,
             text: unit
           },
-          suggestedMin: dryLevel,
-          suggestedMax: wetLevel
+          ...levelBounds
         }
       }
     }

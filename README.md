@@ -34,7 +34,7 @@ config: {
   },  // One or more resource identifiers (e.g., farm IDs, sensors, plots)
   params: {
     timeFilterFrom?: string,  // ISO date string or timestamp (start of time range)
-    timeFilterTo?: string     // ISO date string or timestamp (end of time range)
+    timeFilterTo?: string,     // ISO date string or timestamp (end of time range)
     signalTypes?: string[], // String IDs of the possible signal type retrieved by SMARTER API (e.g. ['AIR_TEMP'])
     aggregationType?: string // Type of aggregation to perform on data. Accepted type: (SUM, AVG, MIN, MAX, MED)
   }
